@@ -67,6 +67,11 @@ String reply;
 // flag for presence of SD card (default false)
 boolean sdcardPresent = false;
 
+int SINGLE_PIN_MODE = 0;
+int DUAL_PIN_MODE = 1;
+
+int MID_OUTPUT_LEVEL = 128;
+
 // for counting main program loops, for periodic status reports
 int loopCounter = 0;
 
@@ -90,7 +95,7 @@ void setup()
 
     // set outputs to default values (better than undefined values, which just output a floating voltage)
     for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
-      writePin(outputPins[i], DEFAULT_OUTPUT_VALUE);
+      snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
     }
   } else {
     Serial.println("SD card initialised!");
@@ -242,17 +247,17 @@ void restoreSavedOutputLevels() {
         sanitiseValue(value);
 
         // set the appropriate pin's value
-        writePin(outputPins[i], value);
+        snapToValue(outputPins[i], value);
 
         filePointer.close();
       } else {
         Serial.println("Couldn't open file even though it exists. Using default value.");
-        writePin(outputPins[i], DEFAULT_OUTPUT_VALUE);
+        snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
       }
     } else {
       Serial.println("Couldn't find value file for pin " + String(outputPins[i]) + ". Using default value.");
 
-      writePin(outputPins[i], DEFAULT_OUTPUT_VALUE);
+      snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
     }
   }
 }
@@ -419,74 +424,239 @@ boolean handleToggleRequest(String request) {
   int setIndex = request.indexOf("set=");
   int httpIndex = request.indexOf("HTTP/1.1");
 
-  if (setIndex > -1 && httpIndex > -1) {
-    // get characters from "input=" to end of request
-    String jsonString = request.substring(setIndex + 4, httpIndex);
-
-    Serial.println("Parsing string: " + jsonString);
-
-    // JSON buffer for receiving JSON messages
-    StaticJsonBuffer<1024> jsonBuffer;
-
-    // parse JSON
-    JsonObject& root = jsonBuffer.parseObject(jsonString);
-
-    if (! root.success()) {
-      Serial.println("Failed to parse JSON object");
-    } else {
-      Serial.println("Successfully parsed JSON object");
-
-      //
-      // check that there is at least one pin toggle defined
-      //
-
-      // initialise list of found pins to false
-      boolean pinsFound[NUMBER_OF_OUTPUTS] = {LOW};
-
-      // initialise list of output settings mapped to the index of the output in outputPins array
-      unsigned int valuesToSet[NUMBER_OF_OUTPUTS];
-
-
-      //// passed in JSON list should have the following data:
-      /*
-       *   coarse pin setting
-       *   fine pin setting
-       *   mapping between coarse and fine (~63)
-       *   midpoint at which coarse and fine are equal (i.e. ~126)
-       *   
-       *   Then the algorithm should move FINE until it reaches the midpoint, then move 63 (or 62?) steps in whatever direction it needs to go
-       *   before then incrementing the COARSE output and simultaneously going back to the midpoint on FINE. Repeat until COARSE setting is reached
-       *   and then continue to set FINE until the desired FINE setting is reached.
-       */
-
-      
-
-      // loop over output pins
-      for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
-        unsigned int outputPin = outputPins[i];
-
-        if (root.containsKey("pin_" + String(outputPin))) {
-          // pin toggle request found
-          pinsFound[i] = HIGH;
-
-          // get the value
-          int value = root["pin_" + String(outputPin)];
-
-          // restrict value to bounds
-          sanitiseValue(value);
-
-          // store value
-          valuesToSet[i] = value;
-        }
-      }
-    }
-
-    Serial.println("Finished parsing");
-  } else {
+  if (setIndex < 0 || httpIndex < 0) {
+    // didn't find required information in request
     return false;
   }
+  
+  // get characters from "input=" to end of request
+  String jsonString = request.substring(setIndex + 4, httpIndex);
 
-  return true;
+  Serial.println("Parsing string: " + jsonString);
+
+  // JSON buffer for receiving JSON messages
+  StaticJsonBuffer<1024> jsonBuffer;
+
+  // parse JSON
+  JsonObject& root = jsonBuffer.parseObject(jsonString);
+
+  if (! root.success()) {
+    Serial.println("Failed to parse JSON object");
+
+    return false;
+  }
+  
+  Serial.println("Successfully parsed JSON object");
+
+  //
+  // check that there is at least one pin toggle defined
+  //
+
+  // check for "single pin" mode
+  if (root.containsKey("mode") && root["mode"].as<int>() == SINGLE_PIN_MODE) {
+    // single pin mode
+    Serial.println("[Single pin mode]");
+
+    /* 
+     * For single pin mode, we require the following information to be specified as keys of the JSON object:
+     *   pin: the output pin to set
+     *   value: the output value to set
+     *   delay: wait time in ms between output levels
+     */
+
+    int outputPin;
+    int outputValue;
+    int rampDelay;
+    
+    if (root.containsKey("pin")) {
+      outputPin = int(root["pin"]);
+
+      if (outputPin == -1) {
+        // invalid pin
+        return false;
+      }
+    } else {
+      // required key not specified
+      return false;
+    }
+
+    if (root.containsKey("value")) {
+      outputValue = int(root["value"]);
+
+      sanitiseValue(outputValue);
+    } else {
+      // output value not specified
+      return false;
+    }
+
+    if (root.containsKey("delay")) {
+      rampDelay = int(root["delay"]);
+
+      if (rampDelay < 0) {
+        // invalid ramp delay
+        return false;
+      }
+    } else {
+      // ramp delay not specified
+      return false;
+    }
+
+    /*
+     * now that we have all the required values sanitised, everything is simple
+     */
+     
+     rampToValue(outputPin, outputValue, rampDelay);
+
+     return true;
+  } else if (root.containsKey("mode") && root["mode"].as<int>() == DUAL_PIN_MODE) {
+    // dual pin mode
+    Serial.println("[Dual pin mode]");
+
+    /* 
+     * For dual pin mode, we require the following information to be specified as keys of the JSON object:
+     *   pin1: the 'coarse' output pin to set
+     *   pin2: the 'fine' output pin to set
+     *   value1: the output value to set for 'coarse' pin
+     *   value2: the output value to set for 'fine' pin
+     *   overlap: the pin setting where 'coarse' pin overlaps with 'fine' pin
+     *   map: a mapping between levels of the 'fine' pin and levels of the 'coarse' pin
+     *   delay: wait time in ms between output levels of 'fine' pin
+     *  
+     * Dual pin mode uses the 'fine' pin to bridge the gap between the 'coarse' output levels. It is assumed
+     * that the 'coarse' and 'fine' pins are connected to the same device, but with different signal magnitudes.
+     * The mapping between signal magnitudes is specified by the 'map' key.
+     */
+
+    int coarsePin;
+    int finePin;
+    int coarseValue;
+    int fineValue;
+    int overlapValue;
+    int mapping;
+    int rampDelay;
+
+    if (root.containsKey("pin1")) {
+      coarsePin = int(root["pin1"]);
+
+      if (coarsePin == -1) {
+        // invalid pin
+        return false;
+      }
+    } else {
+      // required key not specified
+      return false;
+    }
+
+    if (root.containsKey("pin2")) {
+      finePin = int(root["pin2"]);
+
+      if (finePin == -1) {
+        // invalid pin
+        return false;
+      }
+    } else {
+      // required key not specified
+      return false;
+    }
+
+    if (root.containsKey("value1")) {
+      coarseValue = int(root["value1"]);
+
+      sanitiseValue(coarseValue);
+    } else {
+      // output value not specified
+      return false;
+    }
+
+    if (root.containsKey("value2")) {
+      fineValue = int(root["value2"]);
+
+      sanitiseValue(fineValue);
+    } else {
+      // output value not specified
+      return false;
+    }
+
+    if (root.containsKey("overlap")) {
+      overlapValue = int(root["overlap"]);
+
+      sanitiseValue(overlapValue);
+    } else {
+      // overlap value not specified
+      return false;
+    }
+
+    if (root.containsKey("map")) {
+      mapping = int(root["map"]);
+    } else {
+      // mapping not specified
+      return false;
+    }
+
+    if (root.containsKey("delay")) {
+      rampDelay = int(root["delay"]);
+
+      if (rampDelay < 0) {
+        // invalid ramp delay
+        return false;
+      }
+    } else {
+      // ramp delay not specified
+      return false;
+    }
+
+    /*
+     * Now that we've collected valid parameters, we ramp to the correct output.
+     */
+
+    int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+    int currentFineValue = pinValues[getPinPosition(finePin)];
+
+    // number of coarse steps to make
+    int coarseSteps = coarseValue - currentCoarseValue;
+
+    Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
+
+    // true means pin output is to increase, false means decrease
+    int coarseDirection;
+
+    if (coarseSteps > 0) {
+      coarseDirection = 1;
+    } else {
+      coarseDirection = -1;
+    }
+
+    Serial.println("Direction: " + coarseDirection);
+
+    if (coarseSteps != 0) {
+      // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
+
+      // move fine output to middle of range
+      //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
+
+      // loop over coarse steps
+      for (int i = 0; i < abs(coarseSteps); i++) {
+        // move fine pin to next 'coarse' level
+        rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
+
+        // snap coarse pin to next value and fine pins back to mid level
+        snapToValue(coarsePin, currentCoarseValue + coarseDirection);
+        snapToValue(finePin, MID_OUTPUT_LEVEL);
+
+        // update current pin values
+        currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+        currentFineValue = pinValues[getPinPosition(finePin)];
+      }
+    }
+    
+    // adjust fine output
+    rampToValue(finePin, fineValue, rampDelay);
+
+    return true;
+  } else {
+    // invalid mode
+    return false;
+  }
 }
 
 //char* stringToChar(String message, int len) {
@@ -589,8 +759,6 @@ void rampToValue(int pin, int newValue, int stepPause)
       int currentValue = pinValues[getPinPosition(pin)];
       int difference = newValue - currentValue;
 
-      Serial.print("Setting " + String(pin) + String(" from ") + String(currentValue) + String(" to ") + String(newValue) + String("..."));
-
       while (difference != 0) {
           if (difference > 0) {
               // set point is higher than current value
@@ -600,24 +768,28 @@ void rampToValue(int pin, int newValue, int stepPause)
               currentValue--;
           }
           
-          writePin(pin, currentValue);
+          snapToValue(pin, currentValue);
 
           delay(stepPause);
 
           difference = newValue - currentValue;
       }
-
-      Serial.println(" done");
    }
 }
 
-void writePin(int pin, int value)
-{
-      // change the output level
-      analogWrite(pin, value);
+/*
+ * Instantly snaps specified pin to value without delay.
+ */
+void snapToValue(int pin, int value) {
+  Serial.print("Setting " + String(pin) + String(" from ") + String(pinValues[getPinPosition(pin)]) + String(" to ") + String(value) + String("..."));
+  
+  // change the output level
+  analogWrite(pin, value);
 
-      // update pin value array with new value
-      pinValues[getPinPosition(pin)] = value;
+  Serial.println(" done");
+  
+  // update pin value array with new value
+  pinValues[getPinPosition(pin)] = value;
 }
 
 /*
