@@ -3,6 +3,7 @@
 // config settings - TODO: move somewhere else
 define('LOG_FILE', '/var/log/arduinocoildriver.log');
 define('TEMPLATE_DIR', 'templates');
+define('DATETIME_FORMAT', 'Y-m-d H:i:s');
 define('SERVER_NAME', 'Arduino Coil Driver');
 define('SERVER_ROOT', '/arduino-coil-driver/server/');
 define('SESSION_LABEL', 'arduinocoildriver');
@@ -27,7 +28,7 @@ use Monolog\Handler\StreamHandler;
 
 // create logging instance
 $logger = new Logger('logger');
-$logger->pushHandler(new StreamHandler(LOG_FILE, Logger::WARNING));
+$logger->pushHandler(new StreamHandler(LOG_FILE, Logger::INFO));
 
 /*
  * Setup object relationship manager
@@ -69,7 +70,9 @@ if (array_key_exists('userId', $_SESSION)) {
     
     $templates->addData(['user' => $user]);
 } else {
-    if ((basename($_SERVER['SCRIPT_NAME']) !== 'login.php') && (basename($_SERVER['SCRIPT_NAME']) !== 'test.php')) {
+    $exempt = ['login.php', 'registry.php', 'test.php'];
+
+    if (!in_array(basename($_SERVER['SCRIPT_NAME']), $exempt)) {
         header('Location: login.php');
     }
 }

@@ -11,7 +11,7 @@
         <tr>
             <td><?=$this->e($driver->getMac())?></td>
             <td><?=$this->e($driver->getIp())?></td>
-            <td><?=$this->e($driver->getLastCheckIn())?></td>
+            <td><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
             <td class="text-center">
                 <div class="btn-group">
                     <a href="drivers.php?do=addunregistered&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Add</a>
