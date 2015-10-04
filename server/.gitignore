@@ -1,0 +1,6 @@
+/composer.phar
+/generated-classes
+/generated-sql
+/generated-conf
+/vendor
+/test.php

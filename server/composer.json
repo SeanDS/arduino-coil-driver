@@ -1,0 +1,11 @@
+{
+    "autoload": {
+        "psr-4": {"ArduinoCoilDriver\\": "lib/ArduinoCoilDriver/"}
+    },
+    "require": {
+        "league/plates": "3.*",
+        "propel/propel": "~2.0@dev",
+        "monolog/monolog": "1.17.*",
+        "tiesa/ldap": "dev-master"
+    }    
+}
