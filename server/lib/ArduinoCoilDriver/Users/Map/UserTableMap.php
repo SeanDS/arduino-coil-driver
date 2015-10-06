@@ -87,14 +87,14 @@ class UserTableMap extends TableMap
     const COL_ROLE = 'users.role';
 
     /**
-     * the column name for the firstlogin field
+     * the column name for the first_login field
      */
-    const COL_FIRSTLOGIN = 'users.firstlogin';
+    const COL_FIRST_LOGIN = 'users.first_login';
 
     /**
-     * the column name for the lastlogin field
+     * the column name for the last_login field
      */
-    const COL_LASTLOGIN = 'users.lastlogin';
+    const COL_LAST_LOGIN = 'users.last_login';
 
     /**
      * The default string format for model objects of the related table
@@ -110,8 +110,8 @@ class UserTableMap extends TableMap
     protected static $fieldNames = array (
         self::TYPE_PHPNAME       => array('Id', 'Name', 'Role', 'FirstLogin', 'LastLogin', ),
         self::TYPE_CAMELNAME     => array('id', 'name', 'role', 'firstLogin', 'lastLogin', ),
-        self::TYPE_COLNAME       => array(UserTableMap::COL_ID, UserTableMap::COL_NAME, UserTableMap::COL_ROLE, UserTableMap::COL_FIRSTLOGIN, UserTableMap::COL_LASTLOGIN, ),
-        self::TYPE_FIELDNAME     => array('id', 'name', 'role', 'firstlogin', 'lastlogin', ),
+        self::TYPE_COLNAME       => array(UserTableMap::COL_ID, UserTableMap::COL_NAME, UserTableMap::COL_ROLE, UserTableMap::COL_FIRST_LOGIN, UserTableMap::COL_LAST_LOGIN, ),
+        self::TYPE_FIELDNAME     => array('id', 'name', 'role', 'first_login', 'last_login', ),
         self::TYPE_NUM           => array(0, 1, 2, 3, 4, )
     );
 
@@ -124,8 +124,8 @@ class UserTableMap extends TableMap
     protected static $fieldKeys = array (
         self::TYPE_PHPNAME       => array('Id' => 0, 'Name' => 1, 'Role' => 2, 'FirstLogin' => 3, 'LastLogin' => 4, ),
         self::TYPE_CAMELNAME     => array('id' => 0, 'name' => 1, 'role' => 2, 'firstLogin' => 3, 'lastLogin' => 4, ),
-        self::TYPE_COLNAME       => array(UserTableMap::COL_ID => 0, UserTableMap::COL_NAME => 1, UserTableMap::COL_ROLE => 2, UserTableMap::COL_FIRSTLOGIN => 3, UserTableMap::COL_LASTLOGIN => 4, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'name' => 1, 'role' => 2, 'firstlogin' => 3, 'lastlogin' => 4, ),
+        self::TYPE_COLNAME       => array(UserTableMap::COL_ID => 0, UserTableMap::COL_NAME => 1, UserTableMap::COL_ROLE => 2, UserTableMap::COL_FIRST_LOGIN => 3, UserTableMap::COL_LAST_LOGIN => 4, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'name' => 1, 'role' => 2, 'first_login' => 3, 'last_login' => 4, ),
         self::TYPE_NUM           => array(0, 1, 2, 3, 4, )
     );
 
@@ -149,8 +149,8 @@ class UserTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addColumn('name', 'Name', 'VARCHAR', true, 32, null);
         $this->addColumn('role', 'Role', 'VARCHAR', true, 32, null);
-        $this->addColumn('firstlogin', 'FirstLogin', 'TIMESTAMP', true, null, null);
-        $this->addColumn('lastlogin', 'LastLogin', 'TIMESTAMP', true, null, null);
+        $this->addColumn('first_login', 'FirstLogin', 'TIMESTAMP', true, null, null);
+        $this->addColumn('last_login', 'LastLogin', 'TIMESTAMP', true, null, null);
     } // initialize()
 
     /**
@@ -311,14 +311,14 @@ class UserTableMap extends TableMap
             $criteria->addSelectColumn(UserTableMap::COL_ID);
             $criteria->addSelectColumn(UserTableMap::COL_NAME);
             $criteria->addSelectColumn(UserTableMap::COL_ROLE);
-            $criteria->addSelectColumn(UserTableMap::COL_FIRSTLOGIN);
-            $criteria->addSelectColumn(UserTableMap::COL_LASTLOGIN);
+            $criteria->addSelectColumn(UserTableMap::COL_FIRST_LOGIN);
+            $criteria->addSelectColumn(UserTableMap::COL_LAST_LOGIN);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.name');
             $criteria->addSelectColumn($alias . '.role');
-            $criteria->addSelectColumn($alias . '.firstlogin');
-            $criteria->addSelectColumn($alias . '.lastlogin');
+            $criteria->addSelectColumn($alias . '.first_login');
+            $criteria->addSelectColumn($alias . '.last_login');
         }
     }
 

@@ -2,7 +2,9 @@
 
 namespace ArduinoCoilDriver\Drivers;
 
+use Propel\Runtime\Propel;
 use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
+use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_pins' table.
@@ -16,5 +18,29 @@ use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
  */
 class DriverPin extends BaseDriverPin
 {
-
+    public static function createFromPin($driverId, $stateId, $pin, $value) {
+        // create driver pin
+        $driverPin = new self();
+    
+        // get a write connection
+        $connection = Propel::getWriteConnection(DriverPinTableMap::DATABASE_NAME);
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // set parameters
+        $driverPin->setDriverId($driverId);
+        $driverPin->setPin($pin);
+        
+        // save
+        $driverPin->save();
+        
+        // create and set driver pin value
+        DriverPinValue::createFromValue($driverPin->getId(), $stateId, $value);
+        
+        // commit transaction
+        $connection->commit();
+        
+        return $driverPin;
+    }
 }

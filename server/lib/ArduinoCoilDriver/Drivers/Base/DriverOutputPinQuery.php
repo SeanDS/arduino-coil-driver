@@ -22,12 +22,12 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildDriverOutputPinQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildDriverOutputPinQuery orderByDriverOutputId($order = Criteria::ASC) Order by the driver_output_id column
- * @method     ChildDriverOutputPinQuery orderByPin($order = Criteria::ASC) Order by the pin column
+ * @method     ChildDriverOutputPinQuery orderByDriverPinId($order = Criteria::ASC) Order by the driver_pin_id column
  * @method     ChildDriverOutputPinQuery orderByType($order = Criteria::ASC) Order by the type column
  *
  * @method     ChildDriverOutputPinQuery groupById() Group by the id column
  * @method     ChildDriverOutputPinQuery groupByDriverOutputId() Group by the driver_output_id column
- * @method     ChildDriverOutputPinQuery groupByPin() Group by the pin column
+ * @method     ChildDriverOutputPinQuery groupByDriverPinId() Group by the driver_pin_id column
  * @method     ChildDriverOutputPinQuery groupByType() Group by the type column
  *
  * @method     ChildDriverOutputPinQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
@@ -48,24 +48,24 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutputPinQuery rightJoinWithDriverOutput() Adds a RIGHT JOIN clause and with to the query using the DriverOutput relation
  * @method     ChildDriverOutputPinQuery innerJoinWithDriverOutput() Adds a INNER JOIN clause and with to the query using the DriverOutput relation
  *
- * @method     ChildDriverOutputPinQuery leftJoinDriverOutputPinValue($relationAlias = null) Adds a LEFT JOIN clause to the query using the DriverOutputPinValue relation
- * @method     ChildDriverOutputPinQuery rightJoinDriverOutputPinValue($relationAlias = null) Adds a RIGHT JOIN clause to the query using the DriverOutputPinValue relation
- * @method     ChildDriverOutputPinQuery innerJoinDriverOutputPinValue($relationAlias = null) Adds a INNER JOIN clause to the query using the DriverOutputPinValue relation
+ * @method     ChildDriverOutputPinQuery leftJoinDriverPin($relationAlias = null) Adds a LEFT JOIN clause to the query using the DriverPin relation
+ * @method     ChildDriverOutputPinQuery rightJoinDriverPin($relationAlias = null) Adds a RIGHT JOIN clause to the query using the DriverPin relation
+ * @method     ChildDriverOutputPinQuery innerJoinDriverPin($relationAlias = null) Adds a INNER JOIN clause to the query using the DriverPin relation
  *
- * @method     ChildDriverOutputPinQuery joinWithDriverOutputPinValue($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the DriverOutputPinValue relation
+ * @method     ChildDriverOutputPinQuery joinWithDriverPin($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the DriverPin relation
  *
- * @method     ChildDriverOutputPinQuery leftJoinWithDriverOutputPinValue() Adds a LEFT JOIN clause and with to the query using the DriverOutputPinValue relation
- * @method     ChildDriverOutputPinQuery rightJoinWithDriverOutputPinValue() Adds a RIGHT JOIN clause and with to the query using the DriverOutputPinValue relation
- * @method     ChildDriverOutputPinQuery innerJoinWithDriverOutputPinValue() Adds a INNER JOIN clause and with to the query using the DriverOutputPinValue relation
+ * @method     ChildDriverOutputPinQuery leftJoinWithDriverPin() Adds a LEFT JOIN clause and with to the query using the DriverPin relation
+ * @method     ChildDriverOutputPinQuery rightJoinWithDriverPin() Adds a RIGHT JOIN clause and with to the query using the DriverPin relation
+ * @method     ChildDriverOutputPinQuery innerJoinWithDriverPin() Adds a INNER JOIN clause and with to the query using the DriverPin relation
  *
- * @method     \ArduinoCoilDriver\Drivers\DriverOutputQuery|\ArduinoCoilDriver\Drivers\DriverOutputPinValueQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
+ * @method     \ArduinoCoilDriver\Drivers\DriverOutputQuery|\ArduinoCoilDriver\Drivers\DriverPinQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
  *
  * @method     ChildDriverOutputPin findOne(ConnectionInterface $con = null) Return the first ChildDriverOutputPin matching the query
  * @method     ChildDriverOutputPin findOneOrCreate(ConnectionInterface $con = null) Return the first ChildDriverOutputPin matching the query, or a new ChildDriverOutputPin object populated from the query conditions when no match is found
  *
  * @method     ChildDriverOutputPin findOneById(int $id) Return the first ChildDriverOutputPin filtered by the id column
  * @method     ChildDriverOutputPin findOneByDriverOutputId(int $driver_output_id) Return the first ChildDriverOutputPin filtered by the driver_output_id column
- * @method     ChildDriverOutputPin findOneByPin(int $pin) Return the first ChildDriverOutputPin filtered by the pin column
+ * @method     ChildDriverOutputPin findOneByDriverPinId(int $driver_pin_id) Return the first ChildDriverOutputPin filtered by the driver_pin_id column
  * @method     ChildDriverOutputPin findOneByType(string $type) Return the first ChildDriverOutputPin filtered by the type column *
 
  * @method     ChildDriverOutputPin requirePk($key, ConnectionInterface $con = null) Return the ChildDriverOutputPin by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -73,13 +73,13 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildDriverOutputPin requireOneById(int $id) Return the first ChildDriverOutputPin filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutputPin requireOneByDriverOutputId(int $driver_output_id) Return the first ChildDriverOutputPin filtered by the driver_output_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildDriverOutputPin requireOneByPin(int $pin) Return the first ChildDriverOutputPin filtered by the pin column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutputPin requireOneByDriverPinId(int $driver_pin_id) Return the first ChildDriverOutputPin filtered by the driver_pin_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutputPin requireOneByType(string $type) Return the first ChildDriverOutputPin filtered by the type column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildDriverOutputPin[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildDriverOutputPin objects based on current ModelCriteria
  * @method     ChildDriverOutputPin[]|ObjectCollection findById(int $id) Return ChildDriverOutputPin objects filtered by the id column
  * @method     ChildDriverOutputPin[]|ObjectCollection findByDriverOutputId(int $driver_output_id) Return ChildDriverOutputPin objects filtered by the driver_output_id column
- * @method     ChildDriverOutputPin[]|ObjectCollection findByPin(int $pin) Return ChildDriverOutputPin objects filtered by the pin column
+ * @method     ChildDriverOutputPin[]|ObjectCollection findByDriverPinId(int $driver_pin_id) Return ChildDriverOutputPin objects filtered by the driver_pin_id column
  * @method     ChildDriverOutputPin[]|ObjectCollection findByType(string $type) Return ChildDriverOutputPin objects filtered by the type column
  * @method     ChildDriverOutputPin[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
@@ -173,7 +173,7 @@ abstract class DriverOutputPinQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, driver_output_id, pin, type FROM driver_output_pins WHERE id = :p0';
+        $sql = 'SELECT id, driver_output_id, driver_pin_id, type FROM driver_output_pins WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -348,16 +348,18 @@ abstract class DriverOutputPinQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the pin column
+     * Filter the query on the driver_pin_id column
      *
      * Example usage:
      * <code>
-     * $query->filterByPin(1234); // WHERE pin = 1234
-     * $query->filterByPin(array(12, 34)); // WHERE pin IN (12, 34)
-     * $query->filterByPin(array('min' => 12)); // WHERE pin > 12
+     * $query->filterByDriverPinId(1234); // WHERE driver_pin_id = 1234
+     * $query->filterByDriverPinId(array(12, 34)); // WHERE driver_pin_id IN (12, 34)
+     * $query->filterByDriverPinId(array('min' => 12)); // WHERE driver_pin_id > 12
      * </code>
      *
-     * @param     mixed $pin The value to use as filter.
+     * @see       filterByDriverPin()
+     *
+     * @param     mixed $driverPinId The value to use as filter.
      *              Use scalar values for equality.
      *              Use array values for in_array() equivalent.
      *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
@@ -365,16 +367,16 @@ abstract class DriverOutputPinQuery extends ModelCriteria
      *
      * @return $this|ChildDriverOutputPinQuery The current query, for fluid interface
      */
-    public function filterByPin($pin = null, $comparison = null)
+    public function filterByDriverPinId($driverPinId = null, $comparison = null)
     {
-        if (is_array($pin)) {
+        if (is_array($driverPinId)) {
             $useMinMax = false;
-            if (isset($pin['min'])) {
-                $this->addUsingAlias(DriverOutputPinTableMap::COL_PIN, $pin['min'], Criteria::GREATER_EQUAL);
+            if (isset($driverPinId['min'])) {
+                $this->addUsingAlias(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $driverPinId['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
-            if (isset($pin['max'])) {
-                $this->addUsingAlias(DriverOutputPinTableMap::COL_PIN, $pin['max'], Criteria::LESS_EQUAL);
+            if (isset($driverPinId['max'])) {
+                $this->addUsingAlias(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $driverPinId['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -385,7 +387,7 @@ abstract class DriverOutputPinQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(DriverOutputPinTableMap::COL_PIN, $pin, $comparison);
+        return $this->addUsingAlias(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $driverPinId, $comparison);
     }
 
     /**
@@ -495,40 +497,44 @@ abstract class DriverOutputPinQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query by a related \ArduinoCoilDriver\Drivers\DriverOutputPinValue object
+     * Filter the query by a related \ArduinoCoilDriver\Drivers\DriverPin object
      *
-     * @param \ArduinoCoilDriver\Drivers\DriverOutputPinValue|ObjectCollection $driverOutputPinValue the related object to use as filter
+     * @param \ArduinoCoilDriver\Drivers\DriverPin|ObjectCollection $driverPin The related object(s) to use as filter
      * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @throws \Propel\Runtime\Exception\PropelException
      *
      * @return ChildDriverOutputPinQuery The current query, for fluid interface
      */
-    public function filterByDriverOutputPinValue($driverOutputPinValue, $comparison = null)
+    public function filterByDriverPin($driverPin, $comparison = null)
     {
-        if ($driverOutputPinValue instanceof \ArduinoCoilDriver\Drivers\DriverOutputPinValue) {
+        if ($driverPin instanceof \ArduinoCoilDriver\Drivers\DriverPin) {
             return $this
-                ->addUsingAlias(DriverOutputPinTableMap::COL_ID, $driverOutputPinValue->getDriverOutputPinId(), $comparison);
-        } elseif ($driverOutputPinValue instanceof ObjectCollection) {
+                ->addUsingAlias(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $driverPin->getId(), $comparison);
+        } elseif ($driverPin instanceof ObjectCollection) {
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+
             return $this
-                ->useDriverOutputPinValueQuery()
-                ->filterByPrimaryKeys($driverOutputPinValue->getPrimaryKeys())
-                ->endUse();
+                ->addUsingAlias(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $driverPin->toKeyValue('PrimaryKey', 'Id'), $comparison);
         } else {
-            throw new PropelException('filterByDriverOutputPinValue() only accepts arguments of type \ArduinoCoilDriver\Drivers\DriverOutputPinValue or Collection');
+            throw new PropelException('filterByDriverPin() only accepts arguments of type \ArduinoCoilDriver\Drivers\DriverPin or Collection');
         }
     }
 
     /**
-     * Adds a JOIN clause to the query using the DriverOutputPinValue relation
+     * Adds a JOIN clause to the query using the DriverPin relation
      *
      * @param     string $relationAlias optional alias for the relation
      * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
      * @return $this|ChildDriverOutputPinQuery The current query, for fluid interface
      */
-    public function joinDriverOutputPinValue($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    public function joinDriverPin($relationAlias = null, $joinType = Criteria::INNER_JOIN)
     {
         $tableMap = $this->getTableMap();
-        $relationMap = $tableMap->getRelation('DriverOutputPinValue');
+        $relationMap = $tableMap->getRelation('DriverPin');
 
         // create a ModelJoin object for this join
         $join = new ModelJoin();
@@ -543,14 +549,14 @@ abstract class DriverOutputPinQuery extends ModelCriteria
             $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
             $this->addJoinObject($join, $relationAlias);
         } else {
-            $this->addJoinObject($join, 'DriverOutputPinValue');
+            $this->addJoinObject($join, 'DriverPin');
         }
 
         return $this;
     }
 
     /**
-     * Use the DriverOutputPinValue relation DriverOutputPinValue object
+     * Use the DriverPin relation DriverPin object
      *
      * @see useQuery()
      *
@@ -558,13 +564,13 @@ abstract class DriverOutputPinQuery extends ModelCriteria
      *                                   to be used as main alias in the secondary query
      * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
-     * @return \ArduinoCoilDriver\Drivers\DriverOutputPinValueQuery A secondary query class using the current class as primary query
+     * @return \ArduinoCoilDriver\Drivers\DriverPinQuery A secondary query class using the current class as primary query
      */
-    public function useDriverOutputPinValueQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    public function useDriverPinQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
     {
         return $this
-            ->joinDriverOutputPinValue($relationAlias, $joinType)
-            ->useQuery($relationAlias ? $relationAlias : 'DriverOutputPinValue', '\ArduinoCoilDriver\Drivers\DriverOutputPinValueQuery');
+            ->joinDriverPin($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'DriverPin', '\ArduinoCoilDriver\Drivers\DriverPinQuery');
     }
 
     /**

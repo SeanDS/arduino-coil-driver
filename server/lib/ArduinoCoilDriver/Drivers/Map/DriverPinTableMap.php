@@ -59,7 +59,7 @@ class DriverPinTableMap extends TableMap
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 4;
+    const NUM_COLUMNS = 3;
 
     /**
      * The number of lazy-loaded columns
@@ -69,7 +69,7 @@ class DriverPinTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 4;
+    const NUM_HYDRATE_COLUMNS = 3;
 
     /**
      * the column name for the id field
@@ -87,11 +87,6 @@ class DriverPinTableMap extends TableMap
     const COL_PIN = 'driver_pins.pin';
 
     /**
-     * the column name for the type field
-     */
-    const COL_TYPE = 'driver_pins.type';
-
-    /**
      * The default string format for model objects of the related table
      */
     const DEFAULT_STRING_FORMAT = 'YAML';
@@ -103,11 +98,11 @@ class DriverPinTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'DriverId', 'Pin', 'Type', ),
-        self::TYPE_CAMELNAME     => array('id', 'driverId', 'pin', 'type', ),
-        self::TYPE_COLNAME       => array(DriverPinTableMap::COL_ID, DriverPinTableMap::COL_DRIVER_ID, DriverPinTableMap::COL_PIN, DriverPinTableMap::COL_TYPE, ),
-        self::TYPE_FIELDNAME     => array('id', 'driver_id', 'pin', 'type', ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, )
+        self::TYPE_PHPNAME       => array('Id', 'DriverId', 'Pin', ),
+        self::TYPE_CAMELNAME     => array('id', 'driverId', 'pin', ),
+        self::TYPE_COLNAME       => array(DriverPinTableMap::COL_ID, DriverPinTableMap::COL_DRIVER_ID, DriverPinTableMap::COL_PIN, ),
+        self::TYPE_FIELDNAME     => array('id', 'driver_id', 'pin', ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -117,11 +112,11 @@ class DriverPinTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverId' => 1, 'Pin' => 2, 'Type' => 3, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'driverId' => 1, 'pin' => 2, 'type' => 3, ),
-        self::TYPE_COLNAME       => array(DriverPinTableMap::COL_ID => 0, DriverPinTableMap::COL_DRIVER_ID => 1, DriverPinTableMap::COL_PIN => 2, DriverPinTableMap::COL_TYPE => 3, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_id' => 1, 'pin' => 2, 'type' => 3, ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverId' => 1, 'Pin' => 2, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'driverId' => 1, 'pin' => 2, ),
+        self::TYPE_COLNAME       => array(DriverPinTableMap::COL_ID => 0, DriverPinTableMap::COL_DRIVER_ID => 1, DriverPinTableMap::COL_PIN => 2, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_id' => 1, 'pin' => 2, ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -144,7 +139,6 @@ class DriverPinTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addForeignKey('driver_id', 'DriverId', 'INTEGER', 'drivers', 'id', true, 10, null);
         $this->addColumn('pin', 'Pin', 'TINYINT', true, 3, null);
-        $this->addColumn('type', 'Type', 'CHAR', true, null, 'coarse');
     } // initialize()
 
     /**
@@ -166,13 +160,13 @@ class DriverPinTableMap extends TableMap
     1 => ':id',
   ),
 ), null, null, 'DriverPinValues', false);
-        $this->addRelation('OutputPin', '\\ArduinoCoilDriver\\Outputs\\OutputPin', RelationMap::ONE_TO_MANY, array (
+        $this->addRelation('DriverOutputPin', '\\ArduinoCoilDriver\\Drivers\\DriverOutputPin', RelationMap::ONE_TO_MANY, array (
   0 =>
   array (
     0 => ':driver_pin_id',
     1 => ':id',
   ),
-), null, null, 'OutputPins', false);
+), null, null, 'DriverOutputPins', false);
     } // buildRelations()
 
     /**
@@ -319,12 +313,10 @@ class DriverPinTableMap extends TableMap
             $criteria->addSelectColumn(DriverPinTableMap::COL_ID);
             $criteria->addSelectColumn(DriverPinTableMap::COL_DRIVER_ID);
             $criteria->addSelectColumn(DriverPinTableMap::COL_PIN);
-            $criteria->addSelectColumn(DriverPinTableMap::COL_TYPE);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.driver_id');
             $criteria->addSelectColumn($alias . '.pin');
-            $criteria->addSelectColumn($alias . '.type');
         }
     }
 

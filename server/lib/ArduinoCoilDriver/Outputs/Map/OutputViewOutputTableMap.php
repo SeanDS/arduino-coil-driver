@@ -1,9 +1,9 @@
 <?php
 
-namespace ArduinoCoilDriver\Drivers\Map;
+namespace ArduinoCoilDriver\Outputs\Map;
 
-use ArduinoCoilDriver\Drivers\Driver;
-use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Outputs\OutputViewOutput;
+use ArduinoCoilDriver\Outputs\OutputViewOutputQuery;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -16,7 +16,7 @@ use Propel\Runtime\Map\TableMapTrait;
 
 
 /**
- * This class defines the structure of the 'drivers' table.
+ * This class defines the structure of the 'output_view_output' table.
  *
  *
  *
@@ -26,7 +26,7 @@ use Propel\Runtime\Map\TableMapTrait;
  * (i.e. if it's a text column type).
  *
  */
-class DriverTableMap extends TableMap
+class OutputViewOutputTableMap extends TableMap
 {
     use InstancePoolTrait;
     use TableMapTrait;
@@ -34,7 +34,7 @@ class DriverTableMap extends TableMap
     /**
      * The (dot-path) name of this class
      */
-    const CLASS_NAME = 'ArduinoCoilDriver.Drivers.Map.DriverTableMap';
+    const CLASS_NAME = 'ArduinoCoilDriver.Outputs.Map.OutputViewOutputTableMap';
 
     /**
      * The default database name for this class
@@ -44,22 +44,22 @@ class DriverTableMap extends TableMap
     /**
      * The table name for this class
      */
-    const TABLE_NAME = 'drivers';
+    const TABLE_NAME = 'output_view_output';
 
     /**
      * The related Propel class for this table
      */
-    const OM_CLASS = '\\ArduinoCoilDriver\\Drivers\\Driver';
+    const OM_CLASS = '\\ArduinoCoilDriver\\Outputs\\OutputViewOutput';
 
     /**
      * A class that can be returned by this tableMap
      */
-    const CLASS_DEFAULT = 'ArduinoCoilDriver.Drivers.Driver';
+    const CLASS_DEFAULT = 'ArduinoCoilDriver.Outputs.OutputViewOutput';
 
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 7;
+    const NUM_COLUMNS = 3;
 
     /**
      * The number of lazy-loaded columns
@@ -69,42 +69,22 @@ class DriverTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 7;
+    const NUM_HYDRATE_COLUMNS = 3;
 
     /**
      * the column name for the id field
      */
-    const COL_ID = 'drivers.id';
+    const COL_ID = 'output_view_output.id';
 
     /**
-     * the column name for the name field
+     * the column name for the output_id field
      */
-    const COL_NAME = 'drivers.name';
+    const COL_OUTPUT_ID = 'output_view_output.output_id';
 
     /**
-     * the column name for the mac field
+     * the column name for the driver_output_id field
      */
-    const COL_MAC = 'drivers.mac';
-
-    /**
-     * the column name for the ip field
-     */
-    const COL_IP = 'drivers.ip';
-
-    /**
-     * the column name for the added field
-     */
-    const COL_ADDED = 'drivers.added';
-
-    /**
-     * the column name for the last_check_in field
-     */
-    const COL_LAST_CHECK_IN = 'drivers.last_check_in';
-
-    /**
-     * the column name for the coil_contact field
-     */
-    const COL_COIL_CONTACT = 'drivers.coil_contact';
+    const COL_DRIVER_OUTPUT_ID = 'output_view_output.driver_output_id';
 
     /**
      * The default string format for model objects of the related table
@@ -118,11 +98,11 @@ class DriverTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'Name', 'Mac', 'Ip', 'Added', 'LastCheckIn', 'CoilContact', ),
-        self::TYPE_CAMELNAME     => array('id', 'name', 'mac', 'ip', 'added', 'lastCheckIn', 'coilContact', ),
-        self::TYPE_COLNAME       => array(DriverTableMap::COL_ID, DriverTableMap::COL_NAME, DriverTableMap::COL_MAC, DriverTableMap::COL_IP, DriverTableMap::COL_ADDED, DriverTableMap::COL_LAST_CHECK_IN, DriverTableMap::COL_COIL_CONTACT, ),
-        self::TYPE_FIELDNAME     => array('id', 'name', 'mac', 'ip', 'added', 'last_check_in', 'coil_contact', ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, )
+        self::TYPE_PHPNAME       => array('Id', 'OutputId', 'DriverOutputId', ),
+        self::TYPE_CAMELNAME     => array('id', 'outputId', 'driverOutputId', ),
+        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID, OutputViewOutputTableMap::COL_OUTPUT_ID, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID, ),
+        self::TYPE_FIELDNAME     => array('id', 'output_id', 'driver_output_id', ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -132,11 +112,11 @@ class DriverTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'Name' => 1, 'Mac' => 2, 'Ip' => 3, 'Added' => 4, 'LastCheckIn' => 5, 'CoilContact' => 6, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'name' => 1, 'mac' => 2, 'ip' => 3, 'added' => 4, 'lastCheckIn' => 5, 'coilContact' => 6, ),
-        self::TYPE_COLNAME       => array(DriverTableMap::COL_ID => 0, DriverTableMap::COL_NAME => 1, DriverTableMap::COL_MAC => 2, DriverTableMap::COL_IP => 3, DriverTableMap::COL_ADDED => 4, DriverTableMap::COL_LAST_CHECK_IN => 5, DriverTableMap::COL_COIL_CONTACT => 6, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'name' => 1, 'mac' => 2, 'ip' => 3, 'added' => 4, 'last_check_in' => 5, 'coil_contact' => 6, ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'OutputId' => 1, 'DriverOutputId' => 2, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'outputId' => 1, 'driverOutputId' => 2, ),
+        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID => 0, OutputViewOutputTableMap::COL_OUTPUT_ID => 1, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID => 2, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'output_id' => 1, 'driver_output_id' => 2, ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -149,20 +129,16 @@ class DriverTableMap extends TableMap
     public function initialize()
     {
         // attributes
-        $this->setName('drivers');
-        $this->setPhpName('Driver');
+        $this->setName('output_view_output');
+        $this->setPhpName('OutputViewOutput');
         $this->setIdentifierQuoting(false);
-        $this->setClassName('\\ArduinoCoilDriver\\Drivers\\Driver');
-        $this->setPackage('ArduinoCoilDriver.Drivers');
+        $this->setClassName('\\ArduinoCoilDriver\\Outputs\\OutputViewOutput');
+        $this->setPackage('ArduinoCoilDriver.Outputs');
         $this->setUseIdGenerator(true);
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
-        $this->addColumn('name', 'Name', 'VARCHAR', true, 32, null);
-        $this->addColumn('mac', 'Mac', 'CHAR', true, 17, null);
-        $this->addColumn('ip', 'Ip', 'VARCHAR', true, 15, null);
-        $this->addColumn('added', 'Added', 'TIMESTAMP', true, null, null);
-        $this->addColumn('last_check_in', 'LastCheckIn', 'TIMESTAMP', true, null, null);
-        $this->addColumn('coil_contact', 'CoilContact', 'BOOLEAN', true, 1, null);
+        $this->addForeignKey('output_id', 'OutputId', 'INTEGER', 'output_views', 'id', true, 10, null);
+        $this->addForeignKey('driver_output_id', 'DriverOutputId', 'INTEGER', 'driver_outputs', 'id', true, 10, null);
     } // initialize()
 
     /**
@@ -170,20 +146,20 @@ class DriverTableMap extends TableMap
      */
     public function buildRelations()
     {
-        $this->addRelation('DriverPin', '\\ArduinoCoilDriver\\Drivers\\DriverPin', RelationMap::ONE_TO_MANY, array (
+        $this->addRelation('OutputView', '\\ArduinoCoilDriver\\Outputs\\OutputView', RelationMap::MANY_TO_ONE, array (
   0 =>
   array (
-    0 => ':driver_id',
+    0 => ':output_id',
     1 => ':id',
   ),
-), null, null, 'DriverPins', false);
-        $this->addRelation('DriverOutput', '\\ArduinoCoilDriver\\Drivers\\DriverOutput', RelationMap::ONE_TO_MANY, array (
+), null, null, null, false);
+        $this->addRelation('DriverOutput', '\\ArduinoCoilDriver\\Drivers\\DriverOutput', RelationMap::MANY_TO_ONE, array (
   0 =>
   array (
-    0 => ':driver_id',
+    0 => ':driver_output_id',
     1 => ':id',
   ),
-), null, null, 'DriverOutputs', false);
+), null, null, null, false);
     } // buildRelations()
 
     /**
@@ -243,7 +219,7 @@ class DriverTableMap extends TableMap
      */
     public static function getOMClass($withPrefix = true)
     {
-        return $withPrefix ? DriverTableMap::CLASS_DEFAULT : DriverTableMap::OM_CLASS;
+        return $withPrefix ? OutputViewOutputTableMap::CLASS_DEFAULT : OutputViewOutputTableMap::OM_CLASS;
     }
 
     /**
@@ -257,22 +233,22 @@ class DriverTableMap extends TableMap
      *
      * @throws PropelException Any exceptions caught during processing will be
      *                         rethrown wrapped into a PropelException.
-     * @return array           (Driver object, last column rank)
+     * @return array           (OutputViewOutput object, last column rank)
      */
     public static function populateObject($row, $offset = 0, $indexType = TableMap::TYPE_NUM)
     {
-        $key = DriverTableMap::getPrimaryKeyHashFromRow($row, $offset, $indexType);
-        if (null !== ($obj = DriverTableMap::getInstanceFromPool($key))) {
+        $key = OutputViewOutputTableMap::getPrimaryKeyHashFromRow($row, $offset, $indexType);
+        if (null !== ($obj = OutputViewOutputTableMap::getInstanceFromPool($key))) {
             // We no longer rehydrate the object, since this can cause data loss.
             // See http://www.propelorm.org/ticket/509
             // $obj->hydrate($row, $offset, true); // rehydrate
-            $col = $offset + DriverTableMap::NUM_HYDRATE_COLUMNS;
+            $col = $offset + OutputViewOutputTableMap::NUM_HYDRATE_COLUMNS;
         } else {
-            $cls = DriverTableMap::OM_CLASS;
-            /** @var Driver $obj */
+            $cls = OutputViewOutputTableMap::OM_CLASS;
+            /** @var OutputViewOutput $obj */
             $obj = new $cls();
             $col = $obj->hydrate($row, $offset, false, $indexType);
-            DriverTableMap::addInstanceToPool($obj, $key);
+            OutputViewOutputTableMap::addInstanceToPool($obj, $key);
         }
 
         return array($obj, $col);
@@ -295,18 +271,18 @@ class DriverTableMap extends TableMap
         $cls = static::getOMClass(false);
         // populate the object(s)
         while ($row = $dataFetcher->fetch()) {
-            $key = DriverTableMap::getPrimaryKeyHashFromRow($row, 0, $dataFetcher->getIndexType());
-            if (null !== ($obj = DriverTableMap::getInstanceFromPool($key))) {
+            $key = OutputViewOutputTableMap::getPrimaryKeyHashFromRow($row, 0, $dataFetcher->getIndexType());
+            if (null !== ($obj = OutputViewOutputTableMap::getInstanceFromPool($key))) {
                 // We no longer rehydrate the object, since this can cause data loss.
                 // See http://www.propelorm.org/ticket/509
                 // $obj->hydrate($row, 0, true); // rehydrate
                 $results[] = $obj;
             } else {
-                /** @var Driver $obj */
+                /** @var OutputViewOutput $obj */
                 $obj = new $cls();
                 $obj->hydrate($row);
                 $results[] = $obj;
-                DriverTableMap::addInstanceToPool($obj, $key);
+                OutputViewOutputTableMap::addInstanceToPool($obj, $key);
             } // if key exists
         }
 
@@ -327,21 +303,13 @@ class DriverTableMap extends TableMap
     public static function addSelectColumns(Criteria $criteria, $alias = null)
     {
         if (null === $alias) {
-            $criteria->addSelectColumn(DriverTableMap::COL_ID);
-            $criteria->addSelectColumn(DriverTableMap::COL_NAME);
-            $criteria->addSelectColumn(DriverTableMap::COL_MAC);
-            $criteria->addSelectColumn(DriverTableMap::COL_IP);
-            $criteria->addSelectColumn(DriverTableMap::COL_ADDED);
-            $criteria->addSelectColumn(DriverTableMap::COL_LAST_CHECK_IN);
-            $criteria->addSelectColumn(DriverTableMap::COL_COIL_CONTACT);
+            $criteria->addSelectColumn(OutputViewOutputTableMap::COL_ID);
+            $criteria->addSelectColumn(OutputViewOutputTableMap::COL_OUTPUT_ID);
+            $criteria->addSelectColumn(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID);
         } else {
             $criteria->addSelectColumn($alias . '.id');
-            $criteria->addSelectColumn($alias . '.name');
-            $criteria->addSelectColumn($alias . '.mac');
-            $criteria->addSelectColumn($alias . '.ip');
-            $criteria->addSelectColumn($alias . '.added');
-            $criteria->addSelectColumn($alias . '.last_check_in');
-            $criteria->addSelectColumn($alias . '.coil_contact');
+            $criteria->addSelectColumn($alias . '.output_id');
+            $criteria->addSelectColumn($alias . '.driver_output_id');
         }
     }
 
@@ -354,7 +322,7 @@ class DriverTableMap extends TableMap
      */
     public static function getTableMap()
     {
-        return Propel::getServiceContainer()->getDatabaseMap(DriverTableMap::DATABASE_NAME)->getTable(DriverTableMap::TABLE_NAME);
+        return Propel::getServiceContainer()->getDatabaseMap(OutputViewOutputTableMap::DATABASE_NAME)->getTable(OutputViewOutputTableMap::TABLE_NAME);
     }
 
     /**
@@ -362,16 +330,16 @@ class DriverTableMap extends TableMap
      */
     public static function buildTableMap()
     {
-        $dbMap = Propel::getServiceContainer()->getDatabaseMap(DriverTableMap::DATABASE_NAME);
-        if (!$dbMap->hasTable(DriverTableMap::TABLE_NAME)) {
-            $dbMap->addTableObject(new DriverTableMap());
+        $dbMap = Propel::getServiceContainer()->getDatabaseMap(OutputViewOutputTableMap::DATABASE_NAME);
+        if (!$dbMap->hasTable(OutputViewOutputTableMap::TABLE_NAME)) {
+            $dbMap->addTableObject(new OutputViewOutputTableMap());
         }
     }
 
     /**
-     * Performs a DELETE on the database, given a Driver or Criteria object OR a primary key value.
+     * Performs a DELETE on the database, given a OutputViewOutput or Criteria object OR a primary key value.
      *
-     * @param mixed               $values Criteria or Driver object or primary key or array of primary keys
+     * @param mixed               $values Criteria or OutputViewOutput object or primary key or array of primary keys
      *              which is used to create the DELETE statement
      * @param  ConnectionInterface $con the connection to use
      * @return int             The number of affected rows (if supported by underlying database driver).  This includes CASCADE-related rows
@@ -382,27 +350,27 @@ class DriverTableMap extends TableMap
      public static function doDelete($values, ConnectionInterface $con = null)
      {
         if (null === $con) {
-            $con = Propel::getServiceContainer()->getWriteConnection(DriverTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(OutputViewOutputTableMap::DATABASE_NAME);
         }
 
         if ($values instanceof Criteria) {
             // rename for clarity
             $criteria = $values;
-        } elseif ($values instanceof \ArduinoCoilDriver\Drivers\Driver) { // it's a model object
+        } elseif ($values instanceof \ArduinoCoilDriver\Outputs\OutputViewOutput) { // it's a model object
             // create criteria based on pk values
             $criteria = $values->buildPkeyCriteria();
         } else { // it's a primary key, or an array of pks
-            $criteria = new Criteria(DriverTableMap::DATABASE_NAME);
-            $criteria->add(DriverTableMap::COL_ID, (array) $values, Criteria::IN);
+            $criteria = new Criteria(OutputViewOutputTableMap::DATABASE_NAME);
+            $criteria->add(OutputViewOutputTableMap::COL_ID, (array) $values, Criteria::IN);
         }
 
-        $query = DriverQuery::create()->mergeWith($criteria);
+        $query = OutputViewOutputQuery::create()->mergeWith($criteria);
 
         if ($values instanceof Criteria) {
-            DriverTableMap::clearInstancePool();
+            OutputViewOutputTableMap::clearInstancePool();
         } elseif (!is_object($values)) { // it's a primary key, or an array of pks
             foreach ((array) $values as $singleval) {
-                DriverTableMap::removeInstanceFromPool($singleval);
+                OutputViewOutputTableMap::removeInstanceFromPool($singleval);
             }
         }
 
@@ -410,20 +378,20 @@ class DriverTableMap extends TableMap
     }
 
     /**
-     * Deletes all rows from the drivers table.
+     * Deletes all rows from the output_view_output table.
      *
      * @param ConnectionInterface $con the connection to use
      * @return int The number of affected rows (if supported by underlying database driver).
      */
     public static function doDeleteAll(ConnectionInterface $con = null)
     {
-        return DriverQuery::create()->doDeleteAll($con);
+        return OutputViewOutputQuery::create()->doDeleteAll($con);
     }
 
     /**
-     * Performs an INSERT on the database, given a Driver or Criteria object.
+     * Performs an INSERT on the database, given a OutputViewOutput or Criteria object.
      *
-     * @param mixed               $criteria Criteria or Driver object containing data that is used to create the INSERT statement.
+     * @param mixed               $criteria Criteria or OutputViewOutput object containing data that is used to create the INSERT statement.
      * @param ConnectionInterface $con the ConnectionInterface connection to use
      * @return mixed           The new primary key.
      * @throws PropelException Any exceptions caught during processing will be
@@ -432,22 +400,22 @@ class DriverTableMap extends TableMap
     public static function doInsert($criteria, ConnectionInterface $con = null)
     {
         if (null === $con) {
-            $con = Propel::getServiceContainer()->getWriteConnection(DriverTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(OutputViewOutputTableMap::DATABASE_NAME);
         }
 
         if ($criteria instanceof Criteria) {
             $criteria = clone $criteria; // rename for clarity
         } else {
-            $criteria = $criteria->buildCriteria(); // build Criteria from Driver object
+            $criteria = $criteria->buildCriteria(); // build Criteria from OutputViewOutput object
         }
 
-        if ($criteria->containsKey(DriverTableMap::COL_ID) && $criteria->keyContainsValue(DriverTableMap::COL_ID) ) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key ('.DriverTableMap::COL_ID.')');
+        if ($criteria->containsKey(OutputViewOutputTableMap::COL_ID) && $criteria->keyContainsValue(OutputViewOutputTableMap::COL_ID) ) {
+            throw new PropelException('Cannot insert a value for auto-increment primary key ('.OutputViewOutputTableMap::COL_ID.')');
         }
 
 
         // Set the correct dbName
-        $query = DriverQuery::create()->mergeWith($criteria);
+        $query = OutputViewOutputQuery::create()->mergeWith($criteria);
 
         // use transaction because $criteria could contain info
         // for more than one table (I guess, conceivably)
@@ -456,7 +424,7 @@ class DriverTableMap extends TableMap
         });
     }
 
-} // DriverTableMap
+} // OutputViewOutputTableMap
 // This is the static code needed to register the TableMap for this table with the main Propel class.
 //
-DriverTableMap::buildTableMap();
+OutputViewOutputTableMap::buildTableMap();

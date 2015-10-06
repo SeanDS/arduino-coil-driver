@@ -25,16 +25,16 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverQuery orderByMac($order = Criteria::ASC) Order by the mac column
  * @method     ChildDriverQuery orderByIp($order = Criteria::ASC) Order by the ip column
  * @method     ChildDriverQuery orderByAdded($order = Criteria::ASC) Order by the added column
- * @method     ChildDriverQuery orderByLastCheckIn($order = Criteria::ASC) Order by the lastcheckin column
- * @method     ChildDriverQuery orderByCoilContact($order = Criteria::ASC) Order by the coilcontact column
+ * @method     ChildDriverQuery orderByLastCheckIn($order = Criteria::ASC) Order by the last_check_in column
+ * @method     ChildDriverQuery orderByCoilContact($order = Criteria::ASC) Order by the coil_contact column
  *
  * @method     ChildDriverQuery groupById() Group by the id column
  * @method     ChildDriverQuery groupByName() Group by the name column
  * @method     ChildDriverQuery groupByMac() Group by the mac column
  * @method     ChildDriverQuery groupByIp() Group by the ip column
  * @method     ChildDriverQuery groupByAdded() Group by the added column
- * @method     ChildDriverQuery groupByLastCheckIn() Group by the lastcheckin column
- * @method     ChildDriverQuery groupByCoilContact() Group by the coilcontact column
+ * @method     ChildDriverQuery groupByLastCheckIn() Group by the last_check_in column
+ * @method     ChildDriverQuery groupByCoilContact() Group by the coil_contact column
  *
  * @method     ChildDriverQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildDriverQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -54,7 +54,17 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverQuery rightJoinWithDriverPin() Adds a RIGHT JOIN clause and with to the query using the DriverPin relation
  * @method     ChildDriverQuery innerJoinWithDriverPin() Adds a INNER JOIN clause and with to the query using the DriverPin relation
  *
- * @method     \ArduinoCoilDriver\Drivers\DriverPinQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
+ * @method     ChildDriverQuery leftJoinDriverOutput($relationAlias = null) Adds a LEFT JOIN clause to the query using the DriverOutput relation
+ * @method     ChildDriverQuery rightJoinDriverOutput($relationAlias = null) Adds a RIGHT JOIN clause to the query using the DriverOutput relation
+ * @method     ChildDriverQuery innerJoinDriverOutput($relationAlias = null) Adds a INNER JOIN clause to the query using the DriverOutput relation
+ *
+ * @method     ChildDriverQuery joinWithDriverOutput($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the DriverOutput relation
+ *
+ * @method     ChildDriverQuery leftJoinWithDriverOutput() Adds a LEFT JOIN clause and with to the query using the DriverOutput relation
+ * @method     ChildDriverQuery rightJoinWithDriverOutput() Adds a RIGHT JOIN clause and with to the query using the DriverOutput relation
+ * @method     ChildDriverQuery innerJoinWithDriverOutput() Adds a INNER JOIN clause and with to the query using the DriverOutput relation
+ *
+ * @method     \ArduinoCoilDriver\Drivers\DriverPinQuery|\ArduinoCoilDriver\Drivers\DriverOutputQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
  *
  * @method     ChildDriver findOne(ConnectionInterface $con = null) Return the first ChildDriver matching the query
  * @method     ChildDriver findOneOrCreate(ConnectionInterface $con = null) Return the first ChildDriver matching the query, or a new ChildDriver object populated from the query conditions when no match is found
@@ -64,8 +74,8 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriver findOneByMac(string $mac) Return the first ChildDriver filtered by the mac column
  * @method     ChildDriver findOneByIp(string $ip) Return the first ChildDriver filtered by the ip column
  * @method     ChildDriver findOneByAdded(string $added) Return the first ChildDriver filtered by the added column
- * @method     ChildDriver findOneByLastCheckIn(string $lastcheckin) Return the first ChildDriver filtered by the lastcheckin column
- * @method     ChildDriver findOneByCoilContact(boolean $coilcontact) Return the first ChildDriver filtered by the coilcontact column *
+ * @method     ChildDriver findOneByLastCheckIn(string $last_check_in) Return the first ChildDriver filtered by the last_check_in column
+ * @method     ChildDriver findOneByCoilContact(boolean $coil_contact) Return the first ChildDriver filtered by the coil_contact column *
 
  * @method     ChildDriver requirePk($key, ConnectionInterface $con = null) Return the ChildDriver by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriver requireOne(ConnectionInterface $con = null) Return the first ChildDriver matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -75,8 +85,8 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriver requireOneByMac(string $mac) Return the first ChildDriver filtered by the mac column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriver requireOneByIp(string $ip) Return the first ChildDriver filtered by the ip column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriver requireOneByAdded(string $added) Return the first ChildDriver filtered by the added column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildDriver requireOneByLastCheckIn(string $lastcheckin) Return the first ChildDriver filtered by the lastcheckin column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildDriver requireOneByCoilContact(boolean $coilcontact) Return the first ChildDriver filtered by the coilcontact column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriver requireOneByLastCheckIn(string $last_check_in) Return the first ChildDriver filtered by the last_check_in column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriver requireOneByCoilContact(boolean $coil_contact) Return the first ChildDriver filtered by the coil_contact column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildDriver[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildDriver objects based on current ModelCriteria
  * @method     ChildDriver[]|ObjectCollection findById(int $id) Return ChildDriver objects filtered by the id column
@@ -84,8 +94,8 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriver[]|ObjectCollection findByMac(string $mac) Return ChildDriver objects filtered by the mac column
  * @method     ChildDriver[]|ObjectCollection findByIp(string $ip) Return ChildDriver objects filtered by the ip column
  * @method     ChildDriver[]|ObjectCollection findByAdded(string $added) Return ChildDriver objects filtered by the added column
- * @method     ChildDriver[]|ObjectCollection findByLastCheckIn(string $lastcheckin) Return ChildDriver objects filtered by the lastcheckin column
- * @method     ChildDriver[]|ObjectCollection findByCoilContact(boolean $coilcontact) Return ChildDriver objects filtered by the coilcontact column
+ * @method     ChildDriver[]|ObjectCollection findByLastCheckIn(string $last_check_in) Return ChildDriver objects filtered by the last_check_in column
+ * @method     ChildDriver[]|ObjectCollection findByCoilContact(boolean $coil_contact) Return ChildDriver objects filtered by the coil_contact column
  * @method     ChildDriver[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -178,7 +188,7 @@ abstract class DriverQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, name, mac, ip, added, lastcheckin, coilcontact FROM drivers WHERE id = :p0';
+        $sql = 'SELECT id, name, mac, ip, added, last_check_in, coil_contact FROM drivers WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -440,13 +450,13 @@ abstract class DriverQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the lastcheckin column
+     * Filter the query on the last_check_in column
      *
      * Example usage:
      * <code>
-     * $query->filterByLastCheckIn('2011-03-14'); // WHERE lastcheckin = '2011-03-14'
-     * $query->filterByLastCheckIn('now'); // WHERE lastcheckin = '2011-03-14'
-     * $query->filterByLastCheckIn(array('max' => 'yesterday')); // WHERE lastcheckin > '2011-03-13'
+     * $query->filterByLastCheckIn('2011-03-14'); // WHERE last_check_in = '2011-03-14'
+     * $query->filterByLastCheckIn('now'); // WHERE last_check_in = '2011-03-14'
+     * $query->filterByLastCheckIn(array('max' => 'yesterday')); // WHERE last_check_in > '2011-03-13'
      * </code>
      *
      * @param     mixed $lastCheckIn The value to use as filter.
@@ -464,11 +474,11 @@ abstract class DriverQuery extends ModelCriteria
         if (is_array($lastCheckIn)) {
             $useMinMax = false;
             if (isset($lastCheckIn['min'])) {
-                $this->addUsingAlias(DriverTableMap::COL_LASTCHECKIN, $lastCheckIn['min'], Criteria::GREATER_EQUAL);
+                $this->addUsingAlias(DriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
             if (isset($lastCheckIn['max'])) {
-                $this->addUsingAlias(DriverTableMap::COL_LASTCHECKIN, $lastCheckIn['max'], Criteria::LESS_EQUAL);
+                $this->addUsingAlias(DriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -479,16 +489,16 @@ abstract class DriverQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(DriverTableMap::COL_LASTCHECKIN, $lastCheckIn, $comparison);
+        return $this->addUsingAlias(DriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn, $comparison);
     }
 
     /**
-     * Filter the query on the coilcontact column
+     * Filter the query on the coil_contact column
      *
      * Example usage:
      * <code>
-     * $query->filterByCoilContact(true); // WHERE coilcontact = true
-     * $query->filterByCoilContact('yes'); // WHERE coilcontact = true
+     * $query->filterByCoilContact(true); // WHERE coil_contact = true
+     * $query->filterByCoilContact('yes'); // WHERE coil_contact = true
      * </code>
      *
      * @param     boolean|string $coilContact The value to use as filter.
@@ -506,7 +516,7 @@ abstract class DriverQuery extends ModelCriteria
             $coilContact = in_array(strtolower($coilContact), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
         }
 
-        return $this->addUsingAlias(DriverTableMap::COL_COILCONTACT, $coilContact, $comparison);
+        return $this->addUsingAlias(DriverTableMap::COL_COIL_CONTACT, $coilContact, $comparison);
     }
 
     /**
@@ -580,6 +590,79 @@ abstract class DriverQuery extends ModelCriteria
         return $this
             ->joinDriverPin($relationAlias, $joinType)
             ->useQuery($relationAlias ? $relationAlias : 'DriverPin', '\ArduinoCoilDriver\Drivers\DriverPinQuery');
+    }
+
+    /**
+     * Filter the query by a related \ArduinoCoilDriver\Drivers\DriverOutput object
+     *
+     * @param \ArduinoCoilDriver\Drivers\DriverOutput|ObjectCollection $driverOutput the related object to use as filter
+     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return ChildDriverQuery The current query, for fluid interface
+     */
+    public function filterByDriverOutput($driverOutput, $comparison = null)
+    {
+        if ($driverOutput instanceof \ArduinoCoilDriver\Drivers\DriverOutput) {
+            return $this
+                ->addUsingAlias(DriverTableMap::COL_ID, $driverOutput->getDriverId(), $comparison);
+        } elseif ($driverOutput instanceof ObjectCollection) {
+            return $this
+                ->useDriverOutputQuery()
+                ->filterByPrimaryKeys($driverOutput->getPrimaryKeys())
+                ->endUse();
+        } else {
+            throw new PropelException('filterByDriverOutput() only accepts arguments of type \ArduinoCoilDriver\Drivers\DriverOutput or Collection');
+        }
+    }
+
+    /**
+     * Adds a JOIN clause to the query using the DriverOutput relation
+     *
+     * @param     string $relationAlias optional alias for the relation
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return $this|ChildDriverQuery The current query, for fluid interface
+     */
+    public function joinDriverOutput($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        $tableMap = $this->getTableMap();
+        $relationMap = $tableMap->getRelation('DriverOutput');
+
+        // create a ModelJoin object for this join
+        $join = new ModelJoin();
+        $join->setJoinType($joinType);
+        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+        if ($previousJoin = $this->getPreviousJoin()) {
+            $join->setPreviousJoin($previousJoin);
+        }
+
+        // add the ModelJoin to the current object
+        if ($relationAlias) {
+            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+            $this->addJoinObject($join, $relationAlias);
+        } else {
+            $this->addJoinObject($join, 'DriverOutput');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Use the DriverOutput relation DriverOutput object
+     *
+     * @see useQuery()
+     *
+     * @param     string $relationAlias optional alias for the relation,
+     *                                   to be used as main alias in the secondary query
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return \ArduinoCoilDriver\Drivers\DriverOutputQuery A secondary query class using the current class as primary query
+     */
+    public function useDriverOutputQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        return $this
+            ->joinDriverOutput($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'DriverOutput', '\ArduinoCoilDriver\Drivers\DriverOutputQuery');
     }
 
     /**

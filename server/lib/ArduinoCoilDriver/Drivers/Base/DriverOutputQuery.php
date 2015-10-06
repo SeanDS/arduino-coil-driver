@@ -7,6 +7,7 @@ use \PDO;
 use ArduinoCoilDriver\Drivers\DriverOutput as ChildDriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery as ChildDriverOutputQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
+use ArduinoCoilDriver\Outputs\OutputViewOutput;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
@@ -56,7 +57,17 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutputQuery rightJoinWithDriverOutputPin() Adds a RIGHT JOIN clause and with to the query using the DriverOutputPin relation
  * @method     ChildDriverOutputQuery innerJoinWithDriverOutputPin() Adds a INNER JOIN clause and with to the query using the DriverOutputPin relation
  *
- * @method     \ArduinoCoilDriver\Drivers\DriverQuery|\ArduinoCoilDriver\Drivers\DriverOutputPinQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
+ * @method     ChildDriverOutputQuery leftJoinOutputViewOutput($relationAlias = null) Adds a LEFT JOIN clause to the query using the OutputViewOutput relation
+ * @method     ChildDriverOutputQuery rightJoinOutputViewOutput($relationAlias = null) Adds a RIGHT JOIN clause to the query using the OutputViewOutput relation
+ * @method     ChildDriverOutputQuery innerJoinOutputViewOutput($relationAlias = null) Adds a INNER JOIN clause to the query using the OutputViewOutput relation
+ *
+ * @method     ChildDriverOutputQuery joinWithOutputViewOutput($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the OutputViewOutput relation
+ *
+ * @method     ChildDriverOutputQuery leftJoinWithOutputViewOutput() Adds a LEFT JOIN clause and with to the query using the OutputViewOutput relation
+ * @method     ChildDriverOutputQuery rightJoinWithOutputViewOutput() Adds a RIGHT JOIN clause and with to the query using the OutputViewOutput relation
+ * @method     ChildDriverOutputQuery innerJoinWithOutputViewOutput() Adds a INNER JOIN clause and with to the query using the OutputViewOutput relation
+ *
+ * @method     \ArduinoCoilDriver\Drivers\DriverQuery|\ArduinoCoilDriver\Drivers\DriverOutputPinQuery|\ArduinoCoilDriver\Outputs\OutputViewOutputQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
  *
  * @method     ChildDriverOutput findOne(ConnectionInterface $con = null) Return the first ChildDriverOutput matching the query
  * @method     ChildDriverOutput findOneOrCreate(ConnectionInterface $con = null) Return the first ChildDriverOutput matching the query, or a new ChildDriverOutput object populated from the query conditions when no match is found
@@ -519,6 +530,79 @@ abstract class DriverOutputQuery extends ModelCriteria
         return $this
             ->joinDriverOutputPin($relationAlias, $joinType)
             ->useQuery($relationAlias ? $relationAlias : 'DriverOutputPin', '\ArduinoCoilDriver\Drivers\DriverOutputPinQuery');
+    }
+
+    /**
+     * Filter the query by a related \ArduinoCoilDriver\Outputs\OutputViewOutput object
+     *
+     * @param \ArduinoCoilDriver\Outputs\OutputViewOutput|ObjectCollection $outputViewOutput the related object to use as filter
+     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function filterByOutputViewOutput($outputViewOutput, $comparison = null)
+    {
+        if ($outputViewOutput instanceof \ArduinoCoilDriver\Outputs\OutputViewOutput) {
+            return $this
+                ->addUsingAlias(DriverOutputTableMap::COL_ID, $outputViewOutput->getDriverOutputId(), $comparison);
+        } elseif ($outputViewOutput instanceof ObjectCollection) {
+            return $this
+                ->useOutputViewOutputQuery()
+                ->filterByPrimaryKeys($outputViewOutput->getPrimaryKeys())
+                ->endUse();
+        } else {
+            throw new PropelException('filterByOutputViewOutput() only accepts arguments of type \ArduinoCoilDriver\Outputs\OutputViewOutput or Collection');
+        }
+    }
+
+    /**
+     * Adds a JOIN clause to the query using the OutputViewOutput relation
+     *
+     * @param     string $relationAlias optional alias for the relation
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return $this|ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function joinOutputViewOutput($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        $tableMap = $this->getTableMap();
+        $relationMap = $tableMap->getRelation('OutputViewOutput');
+
+        // create a ModelJoin object for this join
+        $join = new ModelJoin();
+        $join->setJoinType($joinType);
+        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+        if ($previousJoin = $this->getPreviousJoin()) {
+            $join->setPreviousJoin($previousJoin);
+        }
+
+        // add the ModelJoin to the current object
+        if ($relationAlias) {
+            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+            $this->addJoinObject($join, $relationAlias);
+        } else {
+            $this->addJoinObject($join, 'OutputViewOutput');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Use the OutputViewOutput relation OutputViewOutput object
+     *
+     * @see useQuery()
+     *
+     * @param     string $relationAlias optional alias for the relation,
+     *                                   to be used as main alias in the secondary query
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return \ArduinoCoilDriver\Outputs\OutputViewOutputQuery A secondary query class using the current class as primary query
+     */
+    public function useOutputViewOutputQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        return $this
+            ->joinOutputViewOutput($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'OutputViewOutput', '\ArduinoCoilDriver\Outputs\OutputViewOutputQuery');
     }
 
     /**

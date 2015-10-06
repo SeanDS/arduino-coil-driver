@@ -13,6 +13,8 @@ $minutes = floor($seconds / 60);
 <span class="text-warning"><?=$this->e($minutes)?> minute ago</span>
 <?php elseif ($minutes < 60): ?>
 <span class="text-warning"><?=$this->e($minutes)?> minutes ago</span>
+<?php elseif ($seconds >= time()): ?>
+<span class="text-danger">never</span>
 <?php else: ?>
 <span class="text-danger"><?=$this->e($time->format(DATETIME_FORMAT))?></span>
 <?php endif; ?>

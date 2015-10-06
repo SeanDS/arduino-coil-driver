@@ -160,6 +160,13 @@ class DriverOutputTableMap extends TableMap
     1 => ':id',
   ),
 ), null, null, 'DriverOutputPins', false);
+        $this->addRelation('OutputViewOutput', '\\ArduinoCoilDriver\\Outputs\\OutputViewOutput', RelationMap::ONE_TO_MANY, array (
+  0 =>
+  array (
+    0 => ':driver_output_id',
+    1 => ':id',
+  ),
+), null, null, 'OutputViewOutputs', false);
     } // buildRelations()
 
     /**

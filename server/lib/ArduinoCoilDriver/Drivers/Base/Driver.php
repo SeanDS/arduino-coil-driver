@@ -6,6 +6,8 @@ use \DateTime;
 use \Exception;
 use \PDO;
 use ArduinoCoilDriver\Drivers\Driver as ChildDriver;
+use ArduinoCoilDriver\Drivers\DriverOutput as ChildDriverOutput;
+use ArduinoCoilDriver\Drivers\DriverOutputQuery as ChildDriverOutputQuery;
 use ArduinoCoilDriver\Drivers\DriverPin as ChildDriverPin;
 use ArduinoCoilDriver\Drivers\DriverPinQuery as ChildDriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverQuery as ChildDriverQuery;
@@ -101,24 +103,30 @@ abstract class Driver implements ActiveRecordInterface
     protected $added;
 
     /**
-     * The value for the lastcheckin field.
+     * The value for the last_check_in field.
      *
      * @var        \DateTime
      */
-    protected $lastcheckin;
+    protected $last_check_in;
 
     /**
-     * The value for the coilcontact field.
+     * The value for the coil_contact field.
      *
      * @var        boolean
      */
-    protected $coilcontact;
+    protected $coil_contact;
 
     /**
      * @var        ObjectCollection|ChildDriverPin[] Collection to store aggregation of ChildDriverPin objects.
      */
     protected $collDriverPins;
     protected $collDriverPinsPartial;
+
+    /**
+     * @var        ObjectCollection|ChildDriverOutput[] Collection to store aggregation of ChildDriverOutput objects.
+     */
+    protected $collDriverOutputs;
+    protected $collDriverOutputsPartial;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -133,6 +141,12 @@ abstract class Driver implements ActiveRecordInterface
      * @var ObjectCollection|ChildDriverPin[]
      */
     protected $driverPinsScheduledForDeletion = null;
+
+    /**
+     * An array of objects scheduled for deletion.
+     * @var ObjectCollection|ChildDriverOutput[]
+     */
+    protected $driverOutputsScheduledForDeletion = null;
 
     /**
      * Initializes internal state of ArduinoCoilDriver\Drivers\Base\Driver object.
@@ -417,7 +431,7 @@ abstract class Driver implements ActiveRecordInterface
     }
 
     /**
-     * Get the [optionally formatted] temporal [lastcheckin] column value.
+     * Get the [optionally formatted] temporal [last_check_in] column value.
      *
      *
      * @param      string $format The date/time format string (either date()-style or strftime()-style).
@@ -430,24 +444,24 @@ abstract class Driver implements ActiveRecordInterface
     public function getLastCheckIn($format = NULL)
     {
         if ($format === null) {
-            return $this->lastcheckin;
+            return $this->last_check_in;
         } else {
-            return $this->lastcheckin instanceof \DateTime ? $this->lastcheckin->format($format) : null;
+            return $this->last_check_in instanceof \DateTime ? $this->last_check_in->format($format) : null;
         }
     }
 
     /**
-     * Get the [coilcontact] column value.
+     * Get the [coil_contact] column value.
      *
      * @return boolean
      */
     public function getCoilContact()
     {
-        return $this->coilcontact;
+        return $this->coil_contact;
     }
 
     /**
-     * Get the [coilcontact] column value.
+     * Get the [coil_contact] column value.
      *
      * @return boolean
      */
@@ -557,7 +571,7 @@ abstract class Driver implements ActiveRecordInterface
     } // setAdded()
 
     /**
-     * Sets the value of [lastcheckin] column to a normalized version of the date/time value specified.
+     * Sets the value of [last_check_in] column to a normalized version of the date/time value specified.
      *
      * @param  mixed $v string, integer (timestamp), or \DateTime value.
      *               Empty strings are treated as NULL.
@@ -566,10 +580,10 @@ abstract class Driver implements ActiveRecordInterface
     public function setLastCheckIn($v)
     {
         $dt = PropelDateTime::newInstance($v, null, 'DateTime');
-        if ($this->lastcheckin !== null || $dt !== null) {
-            if ($this->lastcheckin === null || $dt === null || $dt->format("Y-m-d H:i:s") !== $this->lastcheckin->format("Y-m-d H:i:s")) {
-                $this->lastcheckin = $dt === null ? null : clone $dt;
-                $this->modifiedColumns[DriverTableMap::COL_LASTCHECKIN] = true;
+        if ($this->last_check_in !== null || $dt !== null) {
+            if ($this->last_check_in === null || $dt === null || $dt->format("Y-m-d H:i:s") !== $this->last_check_in->format("Y-m-d H:i:s")) {
+                $this->last_check_in = $dt === null ? null : clone $dt;
+                $this->modifiedColumns[DriverTableMap::COL_LAST_CHECK_IN] = true;
             }
         } // if either are not null
 
@@ -577,7 +591,7 @@ abstract class Driver implements ActiveRecordInterface
     } // setLastCheckIn()
 
     /**
-     * Sets the value of the [coilcontact] column.
+     * Sets the value of the [coil_contact] column.
      * Non-boolean arguments are converted using the following rules:
      *   * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
      *   * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
@@ -596,9 +610,9 @@ abstract class Driver implements ActiveRecordInterface
             }
         }
 
-        if ($this->coilcontact !== $v) {
-            $this->coilcontact = $v;
-            $this->modifiedColumns[DriverTableMap::COL_COILCONTACT] = true;
+        if ($this->coil_contact !== $v) {
+            $this->coil_contact = $v;
+            $this->modifiedColumns[DriverTableMap::COL_COIL_CONTACT] = true;
         }
 
         return $this;
@@ -662,10 +676,10 @@ abstract class Driver implements ActiveRecordInterface
             if ($col === '0000-00-00 00:00:00') {
                 $col = null;
             }
-            $this->lastcheckin = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
+            $this->last_check_in = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 6 + $startcol : DriverTableMap::translateFieldName('CoilContact', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->coilcontact = (null !== $col) ? (boolean) $col : null;
+            $this->coil_contact = (null !== $col) ? (boolean) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -736,6 +750,8 @@ abstract class Driver implements ActiveRecordInterface
         if ($deep) {  // also de-associate any related objects?
 
             $this->collDriverPins = null;
+
+            $this->collDriverOutputs = null;
 
         } // if (deep)
     }
@@ -864,6 +880,23 @@ abstract class Driver implements ActiveRecordInterface
                 }
             }
 
+            if ($this->driverOutputsScheduledForDeletion !== null) {
+                if (!$this->driverOutputsScheduledForDeletion->isEmpty()) {
+                    \ArduinoCoilDriver\Drivers\DriverOutputQuery::create()
+                        ->filterByPrimaryKeys($this->driverOutputsScheduledForDeletion->getPrimaryKeys(false))
+                        ->delete($con);
+                    $this->driverOutputsScheduledForDeletion = null;
+                }
+            }
+
+            if ($this->collDriverOutputs !== null) {
+                foreach ($this->collDriverOutputs as $referrerFK) {
+                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
+                        $affectedRows += $referrerFK->save($con);
+                    }
+                }
+            }
+
             $this->alreadyInSave = false;
 
         }
@@ -905,11 +938,11 @@ abstract class Driver implements ActiveRecordInterface
         if ($this->isColumnModified(DriverTableMap::COL_ADDED)) {
             $modifiedColumns[':p' . $index++]  = 'added';
         }
-        if ($this->isColumnModified(DriverTableMap::COL_LASTCHECKIN)) {
-            $modifiedColumns[':p' . $index++]  = 'lastcheckin';
+        if ($this->isColumnModified(DriverTableMap::COL_LAST_CHECK_IN)) {
+            $modifiedColumns[':p' . $index++]  = 'last_check_in';
         }
-        if ($this->isColumnModified(DriverTableMap::COL_COILCONTACT)) {
-            $modifiedColumns[':p' . $index++]  = 'coilcontact';
+        if ($this->isColumnModified(DriverTableMap::COL_COIL_CONTACT)) {
+            $modifiedColumns[':p' . $index++]  = 'coil_contact';
         }
 
         $sql = sprintf(
@@ -937,11 +970,11 @@ abstract class Driver implements ActiveRecordInterface
                     case 'added':
                         $stmt->bindValue($identifier, $this->added ? $this->added->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
                         break;
-                    case 'lastcheckin':
-                        $stmt->bindValue($identifier, $this->lastcheckin ? $this->lastcheckin->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
+                    case 'last_check_in':
+                        $stmt->bindValue($identifier, $this->last_check_in ? $this->last_check_in->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
                         break;
-                    case 'coilcontact':
-                        $stmt->bindValue($identifier, (int) $this->coilcontact, PDO::PARAM_INT);
+                    case 'coil_contact':
+                        $stmt->bindValue($identifier, (int) $this->coil_contact, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -1098,6 +1131,21 @@ abstract class Driver implements ActiveRecordInterface
                 }
 
                 $result[$key] = $this->collDriverPins->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+            }
+            if (null !== $this->collDriverOutputs) {
+
+                switch ($keyType) {
+                    case TableMap::TYPE_CAMELNAME:
+                        $key = 'driverOutputs';
+                        break;
+                    case TableMap::TYPE_FIELDNAME:
+                        $key = 'driver_outputss';
+                        break;
+                    default:
+                        $key = 'DriverOutputs';
+                }
+
+                $result[$key] = $this->collDriverOutputs->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
             }
         }
 
@@ -1257,11 +1305,11 @@ abstract class Driver implements ActiveRecordInterface
         if ($this->isColumnModified(DriverTableMap::COL_ADDED)) {
             $criteria->add(DriverTableMap::COL_ADDED, $this->added);
         }
-        if ($this->isColumnModified(DriverTableMap::COL_LASTCHECKIN)) {
-            $criteria->add(DriverTableMap::COL_LASTCHECKIN, $this->lastcheckin);
+        if ($this->isColumnModified(DriverTableMap::COL_LAST_CHECK_IN)) {
+            $criteria->add(DriverTableMap::COL_LAST_CHECK_IN, $this->last_check_in);
         }
-        if ($this->isColumnModified(DriverTableMap::COL_COILCONTACT)) {
-            $criteria->add(DriverTableMap::COL_COILCONTACT, $this->coilcontact);
+        if ($this->isColumnModified(DriverTableMap::COL_COIL_CONTACT)) {
+            $criteria->add(DriverTableMap::COL_COIL_CONTACT, $this->coil_contact);
         }
 
         return $criteria;
@@ -1367,6 +1415,12 @@ abstract class Driver implements ActiveRecordInterface
                 }
             }
 
+            foreach ($this->getDriverOutputs() as $relObj) {
+                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+                    $copyObj->addDriverOutput($relObj->copy($deepCopy));
+                }
+            }
+
         } // if ($deepCopy)
 
         if ($makeNew) {
@@ -1410,6 +1464,9 @@ abstract class Driver implements ActiveRecordInterface
     {
         if ('DriverPin' == $relationName) {
             return $this->initDriverPins();
+        }
+        if ('DriverOutput' == $relationName) {
+            return $this->initDriverOutputs();
         }
     }
 
@@ -1632,6 +1689,224 @@ abstract class Driver implements ActiveRecordInterface
     }
 
     /**
+     * Clears out the collDriverOutputs collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     * @see        addDriverOutputs()
+     */
+    public function clearDriverOutputs()
+    {
+        $this->collDriverOutputs = null; // important to set this to NULL since that means it is uninitialized
+    }
+
+    /**
+     * Reset is the collDriverOutputs collection loaded partially.
+     */
+    public function resetPartialDriverOutputs($v = true)
+    {
+        $this->collDriverOutputsPartial = $v;
+    }
+
+    /**
+     * Initializes the collDriverOutputs collection.
+     *
+     * By default this just sets the collDriverOutputs collection to an empty array (like clearcollDriverOutputs());
+     * however, you may wish to override this method in your stub class to provide setting appropriate
+     * to your application -- for example, setting the initial array to the values stored in database.
+     *
+     * @param      boolean $overrideExisting If set to true, the method call initializes
+     *                                        the collection even if it is not empty
+     *
+     * @return void
+     */
+    public function initDriverOutputs($overrideExisting = true)
+    {
+        if (null !== $this->collDriverOutputs && !$overrideExisting) {
+            return;
+        }
+        $this->collDriverOutputs = new ObjectCollection();
+        $this->collDriverOutputs->setModel('\ArduinoCoilDriver\Drivers\DriverOutput');
+    }
+
+    /**
+     * Gets an array of ChildDriverOutput objects which contain a foreign key that references this object.
+     *
+     * If the $criteria is not null, it is used to always fetch the results from the database.
+     * Otherwise the results are fetched from the database the first time, then cached.
+     * Next time the same method is called without $criteria, the cached collection is returned.
+     * If this ChildDriver is new, it will return
+     * an empty collection or the current collection; the criteria is ignored on a new object.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @return ObjectCollection|ChildDriverOutput[] List of ChildDriverOutput objects
+     * @throws PropelException
+     */
+    public function getDriverOutputs(Criteria $criteria = null, ConnectionInterface $con = null)
+    {
+        $partial = $this->collDriverOutputsPartial && !$this->isNew();
+        if (null === $this->collDriverOutputs || null !== $criteria  || $partial) {
+            if ($this->isNew() && null === $this->collDriverOutputs) {
+                // return empty collection
+                $this->initDriverOutputs();
+            } else {
+                $collDriverOutputs = ChildDriverOutputQuery::create(null, $criteria)
+                    ->filterByDriver($this)
+                    ->find($con);
+
+                if (null !== $criteria) {
+                    if (false !== $this->collDriverOutputsPartial && count($collDriverOutputs)) {
+                        $this->initDriverOutputs(false);
+
+                        foreach ($collDriverOutputs as $obj) {
+                            if (false == $this->collDriverOutputs->contains($obj)) {
+                                $this->collDriverOutputs->append($obj);
+                            }
+                        }
+
+                        $this->collDriverOutputsPartial = true;
+                    }
+
+                    return $collDriverOutputs;
+                }
+
+                if ($partial && $this->collDriverOutputs) {
+                    foreach ($this->collDriverOutputs as $obj) {
+                        if ($obj->isNew()) {
+                            $collDriverOutputs[] = $obj;
+                        }
+                    }
+                }
+
+                $this->collDriverOutputs = $collDriverOutputs;
+                $this->collDriverOutputsPartial = false;
+            }
+        }
+
+        return $this->collDriverOutputs;
+    }
+
+    /**
+     * Sets a collection of ChildDriverOutput objects related by a one-to-many relationship
+     * to the current object.
+     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+     * and new objects from the given Propel collection.
+     *
+     * @param      Collection $driverOutputs A Propel collection.
+     * @param      ConnectionInterface $con Optional connection object
+     * @return $this|ChildDriver The current object (for fluent API support)
+     */
+    public function setDriverOutputs(Collection $driverOutputs, ConnectionInterface $con = null)
+    {
+        /** @var ChildDriverOutput[] $driverOutputsToDelete */
+        $driverOutputsToDelete = $this->getDriverOutputs(new Criteria(), $con)->diff($driverOutputs);
+
+
+        $this->driverOutputsScheduledForDeletion = $driverOutputsToDelete;
+
+        foreach ($driverOutputsToDelete as $driverOutputRemoved) {
+            $driverOutputRemoved->setDriver(null);
+        }
+
+        $this->collDriverOutputs = null;
+        foreach ($driverOutputs as $driverOutput) {
+            $this->addDriverOutput($driverOutput);
+        }
+
+        $this->collDriverOutputs = $driverOutputs;
+        $this->collDriverOutputsPartial = false;
+
+        return $this;
+    }
+
+    /**
+     * Returns the number of related DriverOutput objects.
+     *
+     * @param      Criteria $criteria
+     * @param      boolean $distinct
+     * @param      ConnectionInterface $con
+     * @return int             Count of related DriverOutput objects.
+     * @throws PropelException
+     */
+    public function countDriverOutputs(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
+    {
+        $partial = $this->collDriverOutputsPartial && !$this->isNew();
+        if (null === $this->collDriverOutputs || null !== $criteria || $partial) {
+            if ($this->isNew() && null === $this->collDriverOutputs) {
+                return 0;
+            }
+
+            if ($partial && !$criteria) {
+                return count($this->getDriverOutputs());
+            }
+
+            $query = ChildDriverOutputQuery::create(null, $criteria);
+            if ($distinct) {
+                $query->distinct();
+            }
+
+            return $query
+                ->filterByDriver($this)
+                ->count($con);
+        }
+
+        return count($this->collDriverOutputs);
+    }
+
+    /**
+     * Method called to associate a ChildDriverOutput object to this object
+     * through the ChildDriverOutput foreign key attribute.
+     *
+     * @param  ChildDriverOutput $l ChildDriverOutput
+     * @return $this|\ArduinoCoilDriver\Drivers\Driver The current object (for fluent API support)
+     */
+    public function addDriverOutput(ChildDriverOutput $l)
+    {
+        if ($this->collDriverOutputs === null) {
+            $this->initDriverOutputs();
+            $this->collDriverOutputsPartial = true;
+        }
+
+        if (!$this->collDriverOutputs->contains($l)) {
+            $this->doAddDriverOutput($l);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param ChildDriverOutput $driverOutput The ChildDriverOutput object to add.
+     */
+    protected function doAddDriverOutput(ChildDriverOutput $driverOutput)
+    {
+        $this->collDriverOutputs[]= $driverOutput;
+        $driverOutput->setDriver($this);
+    }
+
+    /**
+     * @param  ChildDriverOutput $driverOutput The ChildDriverOutput object to remove.
+     * @return $this|ChildDriver The current object (for fluent API support)
+     */
+    public function removeDriverOutput(ChildDriverOutput $driverOutput)
+    {
+        if ($this->getDriverOutputs()->contains($driverOutput)) {
+            $pos = $this->collDriverOutputs->search($driverOutput);
+            $this->collDriverOutputs->remove($pos);
+            if (null === $this->driverOutputsScheduledForDeletion) {
+                $this->driverOutputsScheduledForDeletion = clone $this->collDriverOutputs;
+                $this->driverOutputsScheduledForDeletion->clear();
+            }
+            $this->driverOutputsScheduledForDeletion[]= clone $driverOutput;
+            $driverOutput->setDriver(null);
+        }
+
+        return $this;
+    }
+
+    /**
      * Clears the current object, sets all attributes to their default values and removes
      * outgoing references as well as back-references (from other objects to this one. Results probably in a database
      * change of those foreign objects when you call `save` there).
@@ -1643,8 +1918,8 @@ abstract class Driver implements ActiveRecordInterface
         $this->mac = null;
         $this->ip = null;
         $this->added = null;
-        $this->lastcheckin = null;
-        $this->coilcontact = null;
+        $this->last_check_in = null;
+        $this->coil_contact = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->resetModified();
@@ -1668,9 +1943,15 @@ abstract class Driver implements ActiveRecordInterface
                     $o->clearAllReferences($deep);
                 }
             }
+            if ($this->collDriverOutputs) {
+                foreach ($this->collDriverOutputs as $o) {
+                    $o->clearAllReferences($deep);
+                }
+            }
         } // if ($deep)
 
         $this->collDriverPins = null;
+        $this->collDriverOutputs = null;
     }
 
     /**

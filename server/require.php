@@ -5,6 +5,8 @@ define('LOG_FILE', '/var/log/arduinocoildriver.log');
 define('TEMPLATE_DIR', 'templates');
 define('DATETIME_FORMAT', 'Y-m-d H:i:s');
 define('SERVER_NAME', 'Arduino Coil Driver');
+define('DEFAULT_SOCKET_TIMEOUT', 5); // default timeout for communication with Arduinos
+define('MAXIMUM_SOCKET_LINE_LENGTH', 1024);
 define('SERVER_ROOT', '/arduino-coil-driver/server/');
 define('SESSION_LABEL', 'arduinocoildriver');
 define('SESSION_TIME', 60 * 60);

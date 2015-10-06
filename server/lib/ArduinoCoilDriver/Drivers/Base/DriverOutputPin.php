@@ -5,18 +5,16 @@ namespace ArduinoCoilDriver\Drivers\Base;
 use \Exception;
 use \PDO;
 use ArduinoCoilDriver\Drivers\DriverOutput as ChildDriverOutput;
-use ArduinoCoilDriver\Drivers\DriverOutputPin as ChildDriverOutputPin;
 use ArduinoCoilDriver\Drivers\DriverOutputPinQuery as ChildDriverOutputPinQuery;
-use ArduinoCoilDriver\Drivers\DriverOutputPinValue as ChildDriverOutputPinValue;
-use ArduinoCoilDriver\Drivers\DriverOutputPinValueQuery as ChildDriverOutputPinValueQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery as ChildDriverOutputQuery;
+use ArduinoCoilDriver\Drivers\DriverPin as ChildDriverPin;
+use ArduinoCoilDriver\Drivers\DriverPinQuery as ChildDriverPinQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\Collection\Collection;
-use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Exception\BadMethodCallException;
 use Propel\Runtime\Exception\LogicException;
@@ -80,11 +78,11 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     protected $driver_output_id;
 
     /**
-     * The value for the pin field.
+     * The value for the driver_pin_id field.
      *
      * @var        int
      */
-    protected $pin;
+    protected $driver_pin_id;
 
     /**
      * The value for the type field.
@@ -100,10 +98,9 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     protected $aDriverOutput;
 
     /**
-     * @var        ObjectCollection|ChildDriverOutputPinValue[] Collection to store aggregation of ChildDriverOutputPinValue objects.
+     * @var        ChildDriverPin
      */
-    protected $collDriverOutputPinValues;
-    protected $collDriverOutputPinValuesPartial;
+    protected $aDriverPin;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -112,12 +109,6 @@ abstract class DriverOutputPin implements ActiveRecordInterface
      * @var boolean
      */
     protected $alreadyInSave = false;
-
-    /**
-     * An array of objects scheduled for deletion.
-     * @var ObjectCollection|ChildDriverOutputPinValue[]
-     */
-    protected $driverOutputPinValuesScheduledForDeletion = null;
 
     /**
      * Applies default values to this object.
@@ -375,13 +366,13 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     }
 
     /**
-     * Get the [pin] column value.
+     * Get the [driver_pin_id] column value.
      *
      * @return int
      */
-    public function getPin()
+    public function getDriverPinId()
     {
-        return $this->pin;
+        return $this->driver_pin_id;
     }
 
     /**
@@ -439,24 +430,28 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     } // setDriverOutputId()
 
     /**
-     * Set the value of [pin] column.
+     * Set the value of [driver_pin_id] column.
      *
      * @param int $v new value
      * @return $this|\ArduinoCoilDriver\Drivers\DriverOutputPin The current object (for fluent API support)
      */
-    public function setPin($v)
+    public function setDriverPinId($v)
     {
         if ($v !== null) {
             $v = (int) $v;
         }
 
-        if ($this->pin !== $v) {
-            $this->pin = $v;
-            $this->modifiedColumns[DriverOutputPinTableMap::COL_PIN] = true;
+        if ($this->driver_pin_id !== $v) {
+            $this->driver_pin_id = $v;
+            $this->modifiedColumns[DriverOutputPinTableMap::COL_DRIVER_PIN_ID] = true;
+        }
+
+        if ($this->aDriverPin !== null && $this->aDriverPin->getId() !== $v) {
+            $this->aDriverPin = null;
         }
 
         return $this;
-    } // setPin()
+    } // setDriverPinId()
 
     /**
      * Set the value of [type] column.
@@ -524,8 +519,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
             $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : DriverOutputPinTableMap::translateFieldName('DriverOutputId', TableMap::TYPE_PHPNAME, $indexType)];
             $this->driver_output_id = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : DriverOutputPinTableMap::translateFieldName('Pin', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->pin = (null !== $col) ? (int) $col : null;
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : DriverOutputPinTableMap::translateFieldName('DriverPinId', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->driver_pin_id = (null !== $col) ? (int) $col : null;
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : DriverOutputPinTableMap::translateFieldName('Type', TableMap::TYPE_PHPNAME, $indexType)];
             $this->type = (null !== $col) ? (string) $col : null;
@@ -561,6 +556,9 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     {
         if ($this->aDriverOutput !== null && $this->driver_output_id !== $this->aDriverOutput->getId()) {
             $this->aDriverOutput = null;
+        }
+        if ($this->aDriverPin !== null && $this->driver_pin_id !== $this->aDriverPin->getId()) {
+            $this->aDriverPin = null;
         }
     } // ensureConsistency
 
@@ -602,8 +600,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         if ($deep) {  // also de-associate any related objects?
 
             $this->aDriverOutput = null;
-            $this->collDriverOutputPinValues = null;
-
+            $this->aDriverPin = null;
         } // if (deep)
     }
 
@@ -715,6 +712,13 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                 $this->setDriverOutput($this->aDriverOutput);
             }
 
+            if ($this->aDriverPin !== null) {
+                if ($this->aDriverPin->isModified() || $this->aDriverPin->isNew()) {
+                    $affectedRows += $this->aDriverPin->save($con);
+                }
+                $this->setDriverPin($this->aDriverPin);
+            }
+
             if ($this->isNew() || $this->isModified()) {
                 // persist changes
                 if ($this->isNew()) {
@@ -724,23 +728,6 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                     $affectedRows += $this->doUpdate($con);
                 }
                 $this->resetModified();
-            }
-
-            if ($this->driverOutputPinValuesScheduledForDeletion !== null) {
-                if (!$this->driverOutputPinValuesScheduledForDeletion->isEmpty()) {
-                    \ArduinoCoilDriver\Drivers\DriverOutputPinValueQuery::create()
-                        ->filterByPrimaryKeys($this->driverOutputPinValuesScheduledForDeletion->getPrimaryKeys(false))
-                        ->delete($con);
-                    $this->driverOutputPinValuesScheduledForDeletion = null;
-                }
-            }
-
-            if ($this->collDriverOutputPinValues !== null) {
-                foreach ($this->collDriverOutputPinValues as $referrerFK) {
-                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
-                        $affectedRows += $referrerFK->save($con);
-                    }
-                }
             }
 
             $this->alreadyInSave = false;
@@ -775,8 +762,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         if ($this->isColumnModified(DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID)) {
             $modifiedColumns[':p' . $index++]  = 'driver_output_id';
         }
-        if ($this->isColumnModified(DriverOutputPinTableMap::COL_PIN)) {
-            $modifiedColumns[':p' . $index++]  = 'pin';
+        if ($this->isColumnModified(DriverOutputPinTableMap::COL_DRIVER_PIN_ID)) {
+            $modifiedColumns[':p' . $index++]  = 'driver_pin_id';
         }
         if ($this->isColumnModified(DriverOutputPinTableMap::COL_TYPE)) {
             $modifiedColumns[':p' . $index++]  = 'type';
@@ -798,8 +785,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                     case 'driver_output_id':
                         $stmt->bindValue($identifier, $this->driver_output_id, PDO::PARAM_INT);
                         break;
-                    case 'pin':
-                        $stmt->bindValue($identifier, $this->pin, PDO::PARAM_INT);
+                    case 'driver_pin_id':
+                        $stmt->bindValue($identifier, $this->driver_pin_id, PDO::PARAM_INT);
                         break;
                     case 'type':
                         $stmt->bindValue($identifier, $this->type, PDO::PARAM_STR);
@@ -873,7 +860,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                 return $this->getDriverOutputId();
                 break;
             case 2:
-                return $this->getPin();
+                return $this->getDriverPinId();
                 break;
             case 3:
                 return $this->getType();
@@ -910,7 +897,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         $result = array(
             $keys[0] => $this->getId(),
             $keys[1] => $this->getDriverOutputId(),
-            $keys[2] => $this->getPin(),
+            $keys[2] => $this->getDriverPinId(),
             $keys[3] => $this->getType(),
         );
         $virtualColumns = $this->virtualColumns;
@@ -934,20 +921,20 @@ abstract class DriverOutputPin implements ActiveRecordInterface
 
                 $result[$key] = $this->aDriverOutput->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
             }
-            if (null !== $this->collDriverOutputPinValues) {
+            if (null !== $this->aDriverPin) {
 
                 switch ($keyType) {
                     case TableMap::TYPE_CAMELNAME:
-                        $key = 'driverOutputPinValues';
+                        $key = 'driverPin';
                         break;
                     case TableMap::TYPE_FIELDNAME:
-                        $key = 'driver_output_pin_valuess';
+                        $key = 'driver_pins';
                         break;
                     default:
-                        $key = 'DriverOutputPinValues';
+                        $key = 'DriverPin';
                 }
 
-                $result[$key] = $this->collDriverOutputPinValues->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+                $result[$key] = $this->aDriverPin->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
             }
         }
 
@@ -990,7 +977,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                 $this->setDriverOutputId($value);
                 break;
             case 2:
-                $this->setPin($value);
+                $this->setDriverPinId($value);
                 break;
             case 3:
                 $this->setType($value);
@@ -1028,7 +1015,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
             $this->setDriverOutputId($arr[$keys[1]]);
         }
         if (array_key_exists($keys[2], $arr)) {
-            $this->setPin($arr[$keys[2]]);
+            $this->setDriverPinId($arr[$keys[2]]);
         }
         if (array_key_exists($keys[3], $arr)) {
             $this->setType($arr[$keys[3]]);
@@ -1080,8 +1067,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         if ($this->isColumnModified(DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID)) {
             $criteria->add(DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID, $this->driver_output_id);
         }
-        if ($this->isColumnModified(DriverOutputPinTableMap::COL_PIN)) {
-            $criteria->add(DriverOutputPinTableMap::COL_PIN, $this->pin);
+        if ($this->isColumnModified(DriverOutputPinTableMap::COL_DRIVER_PIN_ID)) {
+            $criteria->add(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, $this->driver_pin_id);
         }
         if ($this->isColumnModified(DriverOutputPinTableMap::COL_TYPE)) {
             $criteria->add(DriverOutputPinTableMap::COL_TYPE, $this->type);
@@ -1173,22 +1160,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
         $copyObj->setDriverOutputId($this->getDriverOutputId());
-        $copyObj->setPin($this->getPin());
+        $copyObj->setDriverPinId($this->getDriverPinId());
         $copyObj->setType($this->getType());
-
-        if ($deepCopy) {
-            // important: temporarily setNew(false) because this affects the behavior of
-            // the getter/setter methods for fkey referrer objects.
-            $copyObj->setNew(false);
-
-            foreach ($this->getDriverOutputPinValues() as $relObj) {
-                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-                    $copyObj->addDriverOutputPinValue($relObj->copy($deepCopy));
-                }
-            }
-
-        } // if ($deepCopy)
-
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1268,263 +1241,55 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         return $this->aDriverOutput;
     }
 
-
     /**
-     * Initializes a collection based on the name of a relation.
-     * Avoids crafting an 'init[$relationName]s' method name
-     * that wouldn't work when StandardEnglishPluralizer is used.
+     * Declares an association between this object and a ChildDriverPin object.
      *
-     * @param      string $relationName The name of the relation to initialize
-     * @return void
-     */
-    public function initRelation($relationName)
-    {
-        if ('DriverOutputPinValue' == $relationName) {
-            return $this->initDriverOutputPinValues();
-        }
-    }
-
-    /**
-     * Clears out the collDriverOutputPinValues collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     * @see        addDriverOutputPinValues()
-     */
-    public function clearDriverOutputPinValues()
-    {
-        $this->collDriverOutputPinValues = null; // important to set this to NULL since that means it is uninitialized
-    }
-
-    /**
-     * Reset is the collDriverOutputPinValues collection loaded partially.
-     */
-    public function resetPartialDriverOutputPinValues($v = true)
-    {
-        $this->collDriverOutputPinValuesPartial = $v;
-    }
-
-    /**
-     * Initializes the collDriverOutputPinValues collection.
-     *
-     * By default this just sets the collDriverOutputPinValues collection to an empty array (like clearcollDriverOutputPinValues());
-     * however, you may wish to override this method in your stub class to provide setting appropriate
-     * to your application -- for example, setting the initial array to the values stored in database.
-     *
-     * @param      boolean $overrideExisting If set to true, the method call initializes
-     *                                        the collection even if it is not empty
-     *
-     * @return void
-     */
-    public function initDriverOutputPinValues($overrideExisting = true)
-    {
-        if (null !== $this->collDriverOutputPinValues && !$overrideExisting) {
-            return;
-        }
-        $this->collDriverOutputPinValues = new ObjectCollection();
-        $this->collDriverOutputPinValues->setModel('\ArduinoCoilDriver\Drivers\DriverOutputPinValue');
-    }
-
-    /**
-     * Gets an array of ChildDriverOutputPinValue objects which contain a foreign key that references this object.
-     *
-     * If the $criteria is not null, it is used to always fetch the results from the database.
-     * Otherwise the results are fetched from the database the first time, then cached.
-     * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this ChildDriverOutputPin is new, it will return
-     * an empty collection or the current collection; the criteria is ignored on a new object.
-     *
-     * @param      Criteria $criteria optional Criteria object to narrow the query
-     * @param      ConnectionInterface $con optional connection object
-     * @return ObjectCollection|ChildDriverOutputPinValue[] List of ChildDriverOutputPinValue objects
-     * @throws PropelException
-     */
-    public function getDriverOutputPinValues(Criteria $criteria = null, ConnectionInterface $con = null)
-    {
-        $partial = $this->collDriverOutputPinValuesPartial && !$this->isNew();
-        if (null === $this->collDriverOutputPinValues || null !== $criteria  || $partial) {
-            if ($this->isNew() && null === $this->collDriverOutputPinValues) {
-                // return empty collection
-                $this->initDriverOutputPinValues();
-            } else {
-                $collDriverOutputPinValues = ChildDriverOutputPinValueQuery::create(null, $criteria)
-                    ->filterByDriverOutputPin($this)
-                    ->find($con);
-
-                if (null !== $criteria) {
-                    if (false !== $this->collDriverOutputPinValuesPartial && count($collDriverOutputPinValues)) {
-                        $this->initDriverOutputPinValues(false);
-
-                        foreach ($collDriverOutputPinValues as $obj) {
-                            if (false == $this->collDriverOutputPinValues->contains($obj)) {
-                                $this->collDriverOutputPinValues->append($obj);
-                            }
-                        }
-
-                        $this->collDriverOutputPinValuesPartial = true;
-                    }
-
-                    return $collDriverOutputPinValues;
-                }
-
-                if ($partial && $this->collDriverOutputPinValues) {
-                    foreach ($this->collDriverOutputPinValues as $obj) {
-                        if ($obj->isNew()) {
-                            $collDriverOutputPinValues[] = $obj;
-                        }
-                    }
-                }
-
-                $this->collDriverOutputPinValues = $collDriverOutputPinValues;
-                $this->collDriverOutputPinValuesPartial = false;
-            }
-        }
-
-        return $this->collDriverOutputPinValues;
-    }
-
-    /**
-     * Sets a collection of ChildDriverOutputPinValue objects related by a one-to-many relationship
-     * to the current object.
-     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
-     * and new objects from the given Propel collection.
-     *
-     * @param      Collection $driverOutputPinValues A Propel collection.
-     * @param      ConnectionInterface $con Optional connection object
-     * @return $this|ChildDriverOutputPin The current object (for fluent API support)
-     */
-    public function setDriverOutputPinValues(Collection $driverOutputPinValues, ConnectionInterface $con = null)
-    {
-        /** @var ChildDriverOutputPinValue[] $driverOutputPinValuesToDelete */
-        $driverOutputPinValuesToDelete = $this->getDriverOutputPinValues(new Criteria(), $con)->diff($driverOutputPinValues);
-
-
-        $this->driverOutputPinValuesScheduledForDeletion = $driverOutputPinValuesToDelete;
-
-        foreach ($driverOutputPinValuesToDelete as $driverOutputPinValueRemoved) {
-            $driverOutputPinValueRemoved->setDriverOutputPin(null);
-        }
-
-        $this->collDriverOutputPinValues = null;
-        foreach ($driverOutputPinValues as $driverOutputPinValue) {
-            $this->addDriverOutputPinValue($driverOutputPinValue);
-        }
-
-        $this->collDriverOutputPinValues = $driverOutputPinValues;
-        $this->collDriverOutputPinValuesPartial = false;
-
-        return $this;
-    }
-
-    /**
-     * Returns the number of related DriverOutputPinValue objects.
-     *
-     * @param      Criteria $criteria
-     * @param      boolean $distinct
-     * @param      ConnectionInterface $con
-     * @return int             Count of related DriverOutputPinValue objects.
-     * @throws PropelException
-     */
-    public function countDriverOutputPinValues(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
-    {
-        $partial = $this->collDriverOutputPinValuesPartial && !$this->isNew();
-        if (null === $this->collDriverOutputPinValues || null !== $criteria || $partial) {
-            if ($this->isNew() && null === $this->collDriverOutputPinValues) {
-                return 0;
-            }
-
-            if ($partial && !$criteria) {
-                return count($this->getDriverOutputPinValues());
-            }
-
-            $query = ChildDriverOutputPinValueQuery::create(null, $criteria);
-            if ($distinct) {
-                $query->distinct();
-            }
-
-            return $query
-                ->filterByDriverOutputPin($this)
-                ->count($con);
-        }
-
-        return count($this->collDriverOutputPinValues);
-    }
-
-    /**
-     * Method called to associate a ChildDriverOutputPinValue object to this object
-     * through the ChildDriverOutputPinValue foreign key attribute.
-     *
-     * @param  ChildDriverOutputPinValue $l ChildDriverOutputPinValue
+     * @param  ChildDriverPin $v
      * @return $this|\ArduinoCoilDriver\Drivers\DriverOutputPin The current object (for fluent API support)
+     * @throws PropelException
      */
-    public function addDriverOutputPinValue(ChildDriverOutputPinValue $l)
+    public function setDriverPin(ChildDriverPin $v = null)
     {
-        if ($this->collDriverOutputPinValues === null) {
-            $this->initDriverOutputPinValues();
-            $this->collDriverOutputPinValuesPartial = true;
+        if ($v === null) {
+            $this->setDriverPinId(NULL);
+        } else {
+            $this->setDriverPinId($v->getId());
         }
 
-        if (!$this->collDriverOutputPinValues->contains($l)) {
-            $this->doAddDriverOutputPinValue($l);
+        $this->aDriverPin = $v;
+
+        // Add binding for other direction of this n:n relationship.
+        // If this object has already been added to the ChildDriverPin object, it will not be re-added.
+        if ($v !== null) {
+            $v->addDriverOutputPin($this);
         }
 
-        return $this;
-    }
-
-    /**
-     * @param ChildDriverOutputPinValue $driverOutputPinValue The ChildDriverOutputPinValue object to add.
-     */
-    protected function doAddDriverOutputPinValue(ChildDriverOutputPinValue $driverOutputPinValue)
-    {
-        $this->collDriverOutputPinValues[]= $driverOutputPinValue;
-        $driverOutputPinValue->setDriverOutputPin($this);
-    }
-
-    /**
-     * @param  ChildDriverOutputPinValue $driverOutputPinValue The ChildDriverOutputPinValue object to remove.
-     * @return $this|ChildDriverOutputPin The current object (for fluent API support)
-     */
-    public function removeDriverOutputPinValue(ChildDriverOutputPinValue $driverOutputPinValue)
-    {
-        if ($this->getDriverOutputPinValues()->contains($driverOutputPinValue)) {
-            $pos = $this->collDriverOutputPinValues->search($driverOutputPinValue);
-            $this->collDriverOutputPinValues->remove($pos);
-            if (null === $this->driverOutputPinValuesScheduledForDeletion) {
-                $this->driverOutputPinValuesScheduledForDeletion = clone $this->collDriverOutputPinValues;
-                $this->driverOutputPinValuesScheduledForDeletion->clear();
-            }
-            $this->driverOutputPinValuesScheduledForDeletion[]= clone $driverOutputPinValue;
-            $driverOutputPinValue->setDriverOutputPin(null);
-        }
 
         return $this;
     }
 
 
     /**
-     * If this collection has already been initialized with
-     * an identical criteria, it returns the collection.
-     * Otherwise if this DriverOutputPin is new, it will return
-     * an empty collection; or if this DriverOutputPin has previously
-     * been saved, it will retrieve related DriverOutputPinValues from storage.
+     * Get the associated ChildDriverPin object
      *
-     * This method is protected by default in order to keep the public
-     * api reasonable.  You can provide public methods for those you
-     * actually need in DriverOutputPin.
-     *
-     * @param      Criteria $criteria optional Criteria object to narrow the query
-     * @param      ConnectionInterface $con optional connection object
-     * @param      string $joinBehavior optional join type to use (defaults to Criteria::LEFT_JOIN)
-     * @return ObjectCollection|ChildDriverOutputPinValue[] List of ChildDriverOutputPinValue objects
+     * @param  ConnectionInterface $con Optional Connection object.
+     * @return ChildDriverPin The associated ChildDriverPin object.
+     * @throws PropelException
      */
-    public function getDriverOutputPinValuesJoinState(Criteria $criteria = null, ConnectionInterface $con = null, $joinBehavior = Criteria::LEFT_JOIN)
+    public function getDriverPin(ConnectionInterface $con = null)
     {
-        $query = ChildDriverOutputPinValueQuery::create(null, $criteria);
-        $query->joinWith('State', $joinBehavior);
+        if ($this->aDriverPin === null && ($this->driver_pin_id !== null)) {
+            $this->aDriverPin = ChildDriverPinQuery::create()->findPk($this->driver_pin_id, $con);
+            /* The following can be used additionally to
+                guarantee the related object contains a reference
+                to this object.  This level of coupling may, however, be
+                undesirable since it could result in an only partially populated collection
+                in the referenced object.
+                $this->aDriverPin->addDriverOutputPins($this);
+             */
+        }
 
-        return $this->getDriverOutputPinValues($query, $con);
+        return $this->aDriverPin;
     }
 
     /**
@@ -1537,9 +1302,12 @@ abstract class DriverOutputPin implements ActiveRecordInterface
         if (null !== $this->aDriverOutput) {
             $this->aDriverOutput->removeDriverOutputPin($this);
         }
+        if (null !== $this->aDriverPin) {
+            $this->aDriverPin->removeDriverOutputPin($this);
+        }
         $this->id = null;
         $this->driver_output_id = null;
-        $this->pin = null;
+        $this->driver_pin_id = null;
         $this->type = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
@@ -1560,15 +1328,10 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     public function clearAllReferences($deep = false)
     {
         if ($deep) {
-            if ($this->collDriverOutputPinValues) {
-                foreach ($this->collDriverOutputPinValues as $o) {
-                    $o->clearAllReferences($deep);
-                }
-            }
         } // if ($deep)
 
-        $this->collDriverOutputPinValues = null;
         $this->aDriverOutput = null;
+        $this->aDriverPin = null;
     }
 
     /**

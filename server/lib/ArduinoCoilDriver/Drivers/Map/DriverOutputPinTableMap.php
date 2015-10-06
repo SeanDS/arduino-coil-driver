@@ -82,9 +82,9 @@ class DriverOutputPinTableMap extends TableMap
     const COL_DRIVER_OUTPUT_ID = 'driver_output_pins.driver_output_id';
 
     /**
-     * the column name for the pin field
+     * the column name for the driver_pin_id field
      */
-    const COL_PIN = 'driver_output_pins.pin';
+    const COL_DRIVER_PIN_ID = 'driver_output_pins.driver_pin_id';
 
     /**
      * the column name for the type field
@@ -103,10 +103,10 @@ class DriverOutputPinTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'DriverOutputId', 'Pin', 'Type', ),
-        self::TYPE_CAMELNAME     => array('id', 'driverOutputId', 'pin', 'type', ),
-        self::TYPE_COLNAME       => array(DriverOutputPinTableMap::COL_ID, DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID, DriverOutputPinTableMap::COL_PIN, DriverOutputPinTableMap::COL_TYPE, ),
-        self::TYPE_FIELDNAME     => array('id', 'driver_output_id', 'pin', 'type', ),
+        self::TYPE_PHPNAME       => array('Id', 'DriverOutputId', 'DriverPinId', 'Type', ),
+        self::TYPE_CAMELNAME     => array('id', 'driverOutputId', 'driverPinId', 'type', ),
+        self::TYPE_COLNAME       => array(DriverOutputPinTableMap::COL_ID, DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID, DriverOutputPinTableMap::COL_DRIVER_PIN_ID, DriverOutputPinTableMap::COL_TYPE, ),
+        self::TYPE_FIELDNAME     => array('id', 'driver_output_id', 'driver_pin_id', 'type', ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -117,10 +117,10 @@ class DriverOutputPinTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverOutputId' => 1, 'Pin' => 2, 'Type' => 3, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'driverOutputId' => 1, 'pin' => 2, 'type' => 3, ),
-        self::TYPE_COLNAME       => array(DriverOutputPinTableMap::COL_ID => 0, DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID => 1, DriverOutputPinTableMap::COL_PIN => 2, DriverOutputPinTableMap::COL_TYPE => 3, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_output_id' => 1, 'pin' => 2, 'type' => 3, ),
+        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverOutputId' => 1, 'DriverPinId' => 2, 'Type' => 3, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'driverOutputId' => 1, 'driverPinId' => 2, 'type' => 3, ),
+        self::TYPE_COLNAME       => array(DriverOutputPinTableMap::COL_ID => 0, DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID => 1, DriverOutputPinTableMap::COL_DRIVER_PIN_ID => 2, DriverOutputPinTableMap::COL_TYPE => 3, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_output_id' => 1, 'driver_pin_id' => 2, 'type' => 3, ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -143,7 +143,7 @@ class DriverOutputPinTableMap extends TableMap
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addForeignKey('driver_output_id', 'DriverOutputId', 'INTEGER', 'driver_outputs', 'id', true, 10, null);
-        $this->addColumn('pin', 'Pin', 'TINYINT', true, 3, null);
+        $this->addForeignKey('driver_pin_id', 'DriverPinId', 'INTEGER', 'driver_pins', 'id', true, 10, null);
         $this->addColumn('type', 'Type', 'CHAR', true, null, 'coarse');
     } // initialize()
 
@@ -159,13 +159,13 @@ class DriverOutputPinTableMap extends TableMap
     1 => ':id',
   ),
 ), null, null, null, false);
-        $this->addRelation('DriverOutputPinValue', '\\ArduinoCoilDriver\\Drivers\\DriverOutputPinValue', RelationMap::ONE_TO_MANY, array (
+        $this->addRelation('DriverPin', '\\ArduinoCoilDriver\\Drivers\\DriverPin', RelationMap::MANY_TO_ONE, array (
   0 =>
   array (
-    0 => ':driver_output_pin_id',
+    0 => ':driver_pin_id',
     1 => ':id',
   ),
-), null, null, 'DriverOutputPinValues', false);
+), null, null, null, false);
     } // buildRelations()
 
     /**
@@ -311,12 +311,12 @@ class DriverOutputPinTableMap extends TableMap
         if (null === $alias) {
             $criteria->addSelectColumn(DriverOutputPinTableMap::COL_ID);
             $criteria->addSelectColumn(DriverOutputPinTableMap::COL_DRIVER_OUTPUT_ID);
-            $criteria->addSelectColumn(DriverOutputPinTableMap::COL_PIN);
+            $criteria->addSelectColumn(DriverOutputPinTableMap::COL_DRIVER_PIN_ID);
             $criteria->addSelectColumn(DriverOutputPinTableMap::COL_TYPE);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.driver_output_id');
-            $criteria->addSelectColumn($alias . '.pin');
+            $criteria->addSelectColumn($alias . '.driver_pin_id');
             $criteria->addSelectColumn($alias . '.type');
         }
     }

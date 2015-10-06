@@ -11,6 +11,9 @@ use ArduinoCoilDriver\Drivers\DriverOutputPinQuery as ChildDriverOutputPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery as ChildDriverOutputQuery;
 use ArduinoCoilDriver\Drivers\DriverQuery as ChildDriverQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
+use ArduinoCoilDriver\Outputs\OutputViewOutput;
+use ArduinoCoilDriver\Outputs\OutputViewOutputQuery;
+use ArduinoCoilDriver\Outputs\Base\OutputViewOutput as BaseOutputViewOutput;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
@@ -98,6 +101,12 @@ abstract class DriverOutput implements ActiveRecordInterface
     protected $collDriverOutputPinsPartial;
 
     /**
+     * @var        ObjectCollection|OutputViewOutput[] Collection to store aggregation of OutputViewOutput objects.
+     */
+    protected $collOutputViewOutputs;
+    protected $collOutputViewOutputsPartial;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      *
@@ -110,6 +119,12 @@ abstract class DriverOutput implements ActiveRecordInterface
      * @var ObjectCollection|ChildDriverOutputPin[]
      */
     protected $driverOutputPinsScheduledForDeletion = null;
+
+    /**
+     * An array of objects scheduled for deletion.
+     * @var ObjectCollection|OutputViewOutput[]
+     */
+    protected $outputViewOutputsScheduledForDeletion = null;
 
     /**
      * Initializes internal state of ArduinoCoilDriver\Drivers\Base\DriverOutput object.
@@ -546,6 +561,8 @@ abstract class DriverOutput implements ActiveRecordInterface
             $this->aDriver = null;
             $this->collDriverOutputPins = null;
 
+            $this->collOutputViewOutputs = null;
+
         } // if (deep)
     }
 
@@ -679,6 +696,23 @@ abstract class DriverOutput implements ActiveRecordInterface
 
             if ($this->collDriverOutputPins !== null) {
                 foreach ($this->collDriverOutputPins as $referrerFK) {
+                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
+                        $affectedRows += $referrerFK->save($con);
+                    }
+                }
+            }
+
+            if ($this->outputViewOutputsScheduledForDeletion !== null) {
+                if (!$this->outputViewOutputsScheduledForDeletion->isEmpty()) {
+                    \ArduinoCoilDriver\Outputs\OutputViewOutputQuery::create()
+                        ->filterByPrimaryKeys($this->outputViewOutputsScheduledForDeletion->getPrimaryKeys(false))
+                        ->delete($con);
+                    $this->outputViewOutputsScheduledForDeletion = null;
+                }
+            }
+
+            if ($this->collOutputViewOutputs !== null) {
+                foreach ($this->collOutputViewOutputs as $referrerFK) {
                     if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
                         $affectedRows += $referrerFK->save($con);
                     }
@@ -880,6 +914,21 @@ abstract class DriverOutput implements ActiveRecordInterface
                 }
 
                 $result[$key] = $this->collDriverOutputPins->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+            }
+            if (null !== $this->collOutputViewOutputs) {
+
+                switch ($keyType) {
+                    case TableMap::TYPE_CAMELNAME:
+                        $key = 'outputViewOutputs';
+                        break;
+                    case TableMap::TYPE_FIELDNAME:
+                        $key = 'output_view_outputs';
+                        break;
+                    default:
+                        $key = 'OutputViewOutputs';
+                }
+
+                $result[$key] = $this->collOutputViewOutputs->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
             }
         }
 
@@ -1109,6 +1158,12 @@ abstract class DriverOutput implements ActiveRecordInterface
                 }
             }
 
+            foreach ($this->getOutputViewOutputs() as $relObj) {
+                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+                    $copyObj->addOutputViewOutput($relObj->copy($deepCopy));
+                }
+            }
+
         } // if ($deepCopy)
 
         if ($makeNew) {
@@ -1203,6 +1258,9 @@ abstract class DriverOutput implements ActiveRecordInterface
     {
         if ('DriverOutputPin' == $relationName) {
             return $this->initDriverOutputPins();
+        }
+        if ('OutputViewOutput' == $relationName) {
+            return $this->initOutputViewOutputs();
         }
     }
 
@@ -1424,6 +1482,274 @@ abstract class DriverOutput implements ActiveRecordInterface
         return $this;
     }
 
+
+    /**
+     * If this collection has already been initialized with
+     * an identical criteria, it returns the collection.
+     * Otherwise if this DriverOutput is new, it will return
+     * an empty collection; or if this DriverOutput has previously
+     * been saved, it will retrieve related DriverOutputPins from storage.
+     *
+     * This method is protected by default in order to keep the public
+     * api reasonable.  You can provide public methods for those you
+     * actually need in DriverOutput.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @param      string $joinBehavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+     * @return ObjectCollection|ChildDriverOutputPin[] List of ChildDriverOutputPin objects
+     */
+    public function getDriverOutputPinsJoinDriverPin(Criteria $criteria = null, ConnectionInterface $con = null, $joinBehavior = Criteria::LEFT_JOIN)
+    {
+        $query = ChildDriverOutputPinQuery::create(null, $criteria);
+        $query->joinWith('DriverPin', $joinBehavior);
+
+        return $this->getDriverOutputPins($query, $con);
+    }
+
+    /**
+     * Clears out the collOutputViewOutputs collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     * @see        addOutputViewOutputs()
+     */
+    public function clearOutputViewOutputs()
+    {
+        $this->collOutputViewOutputs = null; // important to set this to NULL since that means it is uninitialized
+    }
+
+    /**
+     * Reset is the collOutputViewOutputs collection loaded partially.
+     */
+    public function resetPartialOutputViewOutputs($v = true)
+    {
+        $this->collOutputViewOutputsPartial = $v;
+    }
+
+    /**
+     * Initializes the collOutputViewOutputs collection.
+     *
+     * By default this just sets the collOutputViewOutputs collection to an empty array (like clearcollOutputViewOutputs());
+     * however, you may wish to override this method in your stub class to provide setting appropriate
+     * to your application -- for example, setting the initial array to the values stored in database.
+     *
+     * @param      boolean $overrideExisting If set to true, the method call initializes
+     *                                        the collection even if it is not empty
+     *
+     * @return void
+     */
+    public function initOutputViewOutputs($overrideExisting = true)
+    {
+        if (null !== $this->collOutputViewOutputs && !$overrideExisting) {
+            return;
+        }
+        $this->collOutputViewOutputs = new ObjectCollection();
+        $this->collOutputViewOutputs->setModel('\ArduinoCoilDriver\Outputs\OutputViewOutput');
+    }
+
+    /**
+     * Gets an array of OutputViewOutput objects which contain a foreign key that references this object.
+     *
+     * If the $criteria is not null, it is used to always fetch the results from the database.
+     * Otherwise the results are fetched from the database the first time, then cached.
+     * Next time the same method is called without $criteria, the cached collection is returned.
+     * If this ChildDriverOutput is new, it will return
+     * an empty collection or the current collection; the criteria is ignored on a new object.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @return ObjectCollection|OutputViewOutput[] List of OutputViewOutput objects
+     * @throws PropelException
+     */
+    public function getOutputViewOutputs(Criteria $criteria = null, ConnectionInterface $con = null)
+    {
+        $partial = $this->collOutputViewOutputsPartial && !$this->isNew();
+        if (null === $this->collOutputViewOutputs || null !== $criteria  || $partial) {
+            if ($this->isNew() && null === $this->collOutputViewOutputs) {
+                // return empty collection
+                $this->initOutputViewOutputs();
+            } else {
+                $collOutputViewOutputs = OutputViewOutputQuery::create(null, $criteria)
+                    ->filterByDriverOutput($this)
+                    ->find($con);
+
+                if (null !== $criteria) {
+                    if (false !== $this->collOutputViewOutputsPartial && count($collOutputViewOutputs)) {
+                        $this->initOutputViewOutputs(false);
+
+                        foreach ($collOutputViewOutputs as $obj) {
+                            if (false == $this->collOutputViewOutputs->contains($obj)) {
+                                $this->collOutputViewOutputs->append($obj);
+                            }
+                        }
+
+                        $this->collOutputViewOutputsPartial = true;
+                    }
+
+                    return $collOutputViewOutputs;
+                }
+
+                if ($partial && $this->collOutputViewOutputs) {
+                    foreach ($this->collOutputViewOutputs as $obj) {
+                        if ($obj->isNew()) {
+                            $collOutputViewOutputs[] = $obj;
+                        }
+                    }
+                }
+
+                $this->collOutputViewOutputs = $collOutputViewOutputs;
+                $this->collOutputViewOutputsPartial = false;
+            }
+        }
+
+        return $this->collOutputViewOutputs;
+    }
+
+    /**
+     * Sets a collection of OutputViewOutput objects related by a one-to-many relationship
+     * to the current object.
+     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+     * and new objects from the given Propel collection.
+     *
+     * @param      Collection $outputViewOutputs A Propel collection.
+     * @param      ConnectionInterface $con Optional connection object
+     * @return $this|ChildDriverOutput The current object (for fluent API support)
+     */
+    public function setOutputViewOutputs(Collection $outputViewOutputs, ConnectionInterface $con = null)
+    {
+        /** @var OutputViewOutput[] $outputViewOutputsToDelete */
+        $outputViewOutputsToDelete = $this->getOutputViewOutputs(new Criteria(), $con)->diff($outputViewOutputs);
+
+
+        $this->outputViewOutputsScheduledForDeletion = $outputViewOutputsToDelete;
+
+        foreach ($outputViewOutputsToDelete as $outputViewOutputRemoved) {
+            $outputViewOutputRemoved->setDriverOutput(null);
+        }
+
+        $this->collOutputViewOutputs = null;
+        foreach ($outputViewOutputs as $outputViewOutput) {
+            $this->addOutputViewOutput($outputViewOutput);
+        }
+
+        $this->collOutputViewOutputs = $outputViewOutputs;
+        $this->collOutputViewOutputsPartial = false;
+
+        return $this;
+    }
+
+    /**
+     * Returns the number of related BaseOutputViewOutput objects.
+     *
+     * @param      Criteria $criteria
+     * @param      boolean $distinct
+     * @param      ConnectionInterface $con
+     * @return int             Count of related BaseOutputViewOutput objects.
+     * @throws PropelException
+     */
+    public function countOutputViewOutputs(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
+    {
+        $partial = $this->collOutputViewOutputsPartial && !$this->isNew();
+        if (null === $this->collOutputViewOutputs || null !== $criteria || $partial) {
+            if ($this->isNew() && null === $this->collOutputViewOutputs) {
+                return 0;
+            }
+
+            if ($partial && !$criteria) {
+                return count($this->getOutputViewOutputs());
+            }
+
+            $query = OutputViewOutputQuery::create(null, $criteria);
+            if ($distinct) {
+                $query->distinct();
+            }
+
+            return $query
+                ->filterByDriverOutput($this)
+                ->count($con);
+        }
+
+        return count($this->collOutputViewOutputs);
+    }
+
+    /**
+     * Method called to associate a OutputViewOutput object to this object
+     * through the OutputViewOutput foreign key attribute.
+     *
+     * @param  OutputViewOutput $l OutputViewOutput
+     * @return $this|\ArduinoCoilDriver\Drivers\DriverOutput The current object (for fluent API support)
+     */
+    public function addOutputViewOutput(OutputViewOutput $l)
+    {
+        if ($this->collOutputViewOutputs === null) {
+            $this->initOutputViewOutputs();
+            $this->collOutputViewOutputsPartial = true;
+        }
+
+        if (!$this->collOutputViewOutputs->contains($l)) {
+            $this->doAddOutputViewOutput($l);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param OutputViewOutput $outputViewOutput The OutputViewOutput object to add.
+     */
+    protected function doAddOutputViewOutput(OutputViewOutput $outputViewOutput)
+    {
+        $this->collOutputViewOutputs[]= $outputViewOutput;
+        $outputViewOutput->setDriverOutput($this);
+    }
+
+    /**
+     * @param  OutputViewOutput $outputViewOutput The OutputViewOutput object to remove.
+     * @return $this|ChildDriverOutput The current object (for fluent API support)
+     */
+    public function removeOutputViewOutput(OutputViewOutput $outputViewOutput)
+    {
+        if ($this->getOutputViewOutputs()->contains($outputViewOutput)) {
+            $pos = $this->collOutputViewOutputs->search($outputViewOutput);
+            $this->collOutputViewOutputs->remove($pos);
+            if (null === $this->outputViewOutputsScheduledForDeletion) {
+                $this->outputViewOutputsScheduledForDeletion = clone $this->collOutputViewOutputs;
+                $this->outputViewOutputsScheduledForDeletion->clear();
+            }
+            $this->outputViewOutputsScheduledForDeletion[]= clone $outputViewOutput;
+            $outputViewOutput->setDriverOutput(null);
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * If this collection has already been initialized with
+     * an identical criteria, it returns the collection.
+     * Otherwise if this DriverOutput is new, it will return
+     * an empty collection; or if this DriverOutput has previously
+     * been saved, it will retrieve related OutputViewOutputs from storage.
+     *
+     * This method is protected by default in order to keep the public
+     * api reasonable.  You can provide public methods for those you
+     * actually need in DriverOutput.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @param      string $joinBehavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+     * @return ObjectCollection|OutputViewOutput[] List of OutputViewOutput objects
+     */
+    public function getOutputViewOutputsJoinOutputView(Criteria $criteria = null, ConnectionInterface $con = null, $joinBehavior = Criteria::LEFT_JOIN)
+    {
+        $query = OutputViewOutputQuery::create(null, $criteria);
+        $query->joinWith('OutputView', $joinBehavior);
+
+        return $this->getOutputViewOutputs($query, $con);
+    }
+
     /**
      * Clears the current object, sets all attributes to their default values and removes
      * outgoing references as well as back-references (from other objects to this one. Results probably in a database
@@ -1460,9 +1786,15 @@ abstract class DriverOutput implements ActiveRecordInterface
                     $o->clearAllReferences($deep);
                 }
             }
+            if ($this->collOutputViewOutputs) {
+                foreach ($this->collOutputViewOutputs as $o) {
+                    $o->clearAllReferences($deep);
+                }
+            }
         } // if ($deep)
 
         $this->collDriverOutputPins = null;
+        $this->collOutputViewOutputs = null;
         $this->aDriver = null;
     }
 

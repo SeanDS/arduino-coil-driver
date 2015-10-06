@@ -87,9 +87,9 @@ class UnregisteredDriverTableMap extends TableMap
     const COL_IP = 'drivers_unregistered.ip';
 
     /**
-     * the column name for the lastcheckin field
+     * the column name for the last_check_in field
      */
-    const COL_LASTCHECKIN = 'drivers_unregistered.lastcheckin';
+    const COL_LAST_CHECK_IN = 'drivers_unregistered.last_check_in';
 
     /**
      * The default string format for model objects of the related table
@@ -105,8 +105,8 @@ class UnregisteredDriverTableMap extends TableMap
     protected static $fieldNames = array (
         self::TYPE_PHPNAME       => array('Id', 'Mac', 'Ip', 'LastCheckIn', ),
         self::TYPE_CAMELNAME     => array('id', 'mac', 'ip', 'lastCheckIn', ),
-        self::TYPE_COLNAME       => array(UnregisteredDriverTableMap::COL_ID, UnregisteredDriverTableMap::COL_MAC, UnregisteredDriverTableMap::COL_IP, UnregisteredDriverTableMap::COL_LASTCHECKIN, ),
-        self::TYPE_FIELDNAME     => array('id', 'mac', 'ip', 'lastcheckin', ),
+        self::TYPE_COLNAME       => array(UnregisteredDriverTableMap::COL_ID, UnregisteredDriverTableMap::COL_MAC, UnregisteredDriverTableMap::COL_IP, UnregisteredDriverTableMap::COL_LAST_CHECK_IN, ),
+        self::TYPE_FIELDNAME     => array('id', 'mac', 'ip', 'last_check_in', ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -119,8 +119,8 @@ class UnregisteredDriverTableMap extends TableMap
     protected static $fieldKeys = array (
         self::TYPE_PHPNAME       => array('Id' => 0, 'Mac' => 1, 'Ip' => 2, 'LastCheckIn' => 3, ),
         self::TYPE_CAMELNAME     => array('id' => 0, 'mac' => 1, 'ip' => 2, 'lastCheckIn' => 3, ),
-        self::TYPE_COLNAME       => array(UnregisteredDriverTableMap::COL_ID => 0, UnregisteredDriverTableMap::COL_MAC => 1, UnregisteredDriverTableMap::COL_IP => 2, UnregisteredDriverTableMap::COL_LASTCHECKIN => 3, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'mac' => 1, 'ip' => 2, 'lastcheckin' => 3, ),
+        self::TYPE_COLNAME       => array(UnregisteredDriverTableMap::COL_ID => 0, UnregisteredDriverTableMap::COL_MAC => 1, UnregisteredDriverTableMap::COL_IP => 2, UnregisteredDriverTableMap::COL_LAST_CHECK_IN => 3, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'mac' => 1, 'ip' => 2, 'last_check_in' => 3, ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -144,7 +144,7 @@ class UnregisteredDriverTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addColumn('mac', 'Mac', 'CHAR', true, 17, null);
         $this->addColumn('ip', 'Ip', 'VARCHAR', true, 15, null);
-        $this->addColumn('lastcheckin', 'LastCheckIn', 'TIMESTAMP', true, null, null);
+        $this->addColumn('last_check_in', 'LastCheckIn', 'TIMESTAMP', true, null, null);
     } // initialize()
 
     /**
@@ -298,12 +298,12 @@ class UnregisteredDriverTableMap extends TableMap
             $criteria->addSelectColumn(UnregisteredDriverTableMap::COL_ID);
             $criteria->addSelectColumn(UnregisteredDriverTableMap::COL_MAC);
             $criteria->addSelectColumn(UnregisteredDriverTableMap::COL_IP);
-            $criteria->addSelectColumn(UnregisteredDriverTableMap::COL_LASTCHECKIN);
+            $criteria->addSelectColumn(UnregisteredDriverTableMap::COL_LAST_CHECK_IN);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.mac');
             $criteria->addSelectColumn($alias . '.ip');
-            $criteria->addSelectColumn($alias . '.lastcheckin');
+            $criteria->addSelectColumn($alias . '.last_check_in');
         }
     }
 

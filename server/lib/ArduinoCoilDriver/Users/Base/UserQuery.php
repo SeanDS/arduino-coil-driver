@@ -24,14 +24,14 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUserQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildUserQuery orderByName($order = Criteria::ASC) Order by the name column
  * @method     ChildUserQuery orderByRole($order = Criteria::ASC) Order by the role column
- * @method     ChildUserQuery orderByFirstLogin($order = Criteria::ASC) Order by the firstlogin column
- * @method     ChildUserQuery orderByLastLogin($order = Criteria::ASC) Order by the lastlogin column
+ * @method     ChildUserQuery orderByFirstLogin($order = Criteria::ASC) Order by the first_login column
+ * @method     ChildUserQuery orderByLastLogin($order = Criteria::ASC) Order by the last_login column
  *
  * @method     ChildUserQuery groupById() Group by the id column
  * @method     ChildUserQuery groupByName() Group by the name column
  * @method     ChildUserQuery groupByRole() Group by the role column
- * @method     ChildUserQuery groupByFirstLogin() Group by the firstlogin column
- * @method     ChildUserQuery groupByLastLogin() Group by the lastlogin column
+ * @method     ChildUserQuery groupByFirstLogin() Group by the first_login column
+ * @method     ChildUserQuery groupByLastLogin() Group by the last_login column
  *
  * @method     ChildUserQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildUserQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -59,8 +59,8 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUser findOneById(int $id) Return the first ChildUser filtered by the id column
  * @method     ChildUser findOneByName(string $name) Return the first ChildUser filtered by the name column
  * @method     ChildUser findOneByRole(string $role) Return the first ChildUser filtered by the role column
- * @method     ChildUser findOneByFirstLogin(string $firstlogin) Return the first ChildUser filtered by the firstlogin column
- * @method     ChildUser findOneByLastLogin(string $lastlogin) Return the first ChildUser filtered by the lastlogin column *
+ * @method     ChildUser findOneByFirstLogin(string $first_login) Return the first ChildUser filtered by the first_login column
+ * @method     ChildUser findOneByLastLogin(string $last_login) Return the first ChildUser filtered by the last_login column *
 
  * @method     ChildUser requirePk($key, ConnectionInterface $con = null) Return the ChildUser by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOne(ConnectionInterface $con = null) Return the first ChildUser matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -68,15 +68,15 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUser requireOneById(int $id) Return the first ChildUser filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOneByName(string $name) Return the first ChildUser filtered by the name column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOneByRole(string $role) Return the first ChildUser filtered by the role column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildUser requireOneByFirstLogin(string $firstlogin) Return the first ChildUser filtered by the firstlogin column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildUser requireOneByLastLogin(string $lastlogin) Return the first ChildUser filtered by the lastlogin column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildUser requireOneByFirstLogin(string $first_login) Return the first ChildUser filtered by the first_login column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildUser requireOneByLastLogin(string $last_login) Return the first ChildUser filtered by the last_login column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildUser[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildUser objects based on current ModelCriteria
  * @method     ChildUser[]|ObjectCollection findById(int $id) Return ChildUser objects filtered by the id column
  * @method     ChildUser[]|ObjectCollection findByName(string $name) Return ChildUser objects filtered by the name column
  * @method     ChildUser[]|ObjectCollection findByRole(string $role) Return ChildUser objects filtered by the role column
- * @method     ChildUser[]|ObjectCollection findByFirstLogin(string $firstlogin) Return ChildUser objects filtered by the firstlogin column
- * @method     ChildUser[]|ObjectCollection findByLastLogin(string $lastlogin) Return ChildUser objects filtered by the lastlogin column
+ * @method     ChildUser[]|ObjectCollection findByFirstLogin(string $first_login) Return ChildUser objects filtered by the first_login column
+ * @method     ChildUser[]|ObjectCollection findByLastLogin(string $last_login) Return ChildUser objects filtered by the last_login column
  * @method     ChildUser[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -169,7 +169,7 @@ abstract class UserQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, name, role, firstlogin, lastlogin FROM users WHERE id = :p0';
+        $sql = 'SELECT id, name, role, first_login, last_login FROM users WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -359,13 +359,13 @@ abstract class UserQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the firstlogin column
+     * Filter the query on the first_login column
      *
      * Example usage:
      * <code>
-     * $query->filterByFirstLogin('2011-03-14'); // WHERE firstlogin = '2011-03-14'
-     * $query->filterByFirstLogin('now'); // WHERE firstlogin = '2011-03-14'
-     * $query->filterByFirstLogin(array('max' => 'yesterday')); // WHERE firstlogin > '2011-03-13'
+     * $query->filterByFirstLogin('2011-03-14'); // WHERE first_login = '2011-03-14'
+     * $query->filterByFirstLogin('now'); // WHERE first_login = '2011-03-14'
+     * $query->filterByFirstLogin(array('max' => 'yesterday')); // WHERE first_login > '2011-03-13'
      * </code>
      *
      * @param     mixed $firstLogin The value to use as filter.
@@ -383,11 +383,11 @@ abstract class UserQuery extends ModelCriteria
         if (is_array($firstLogin)) {
             $useMinMax = false;
             if (isset($firstLogin['min'])) {
-                $this->addUsingAlias(UserTableMap::COL_FIRSTLOGIN, $firstLogin['min'], Criteria::GREATER_EQUAL);
+                $this->addUsingAlias(UserTableMap::COL_FIRST_LOGIN, $firstLogin['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
             if (isset($firstLogin['max'])) {
-                $this->addUsingAlias(UserTableMap::COL_FIRSTLOGIN, $firstLogin['max'], Criteria::LESS_EQUAL);
+                $this->addUsingAlias(UserTableMap::COL_FIRST_LOGIN, $firstLogin['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -398,17 +398,17 @@ abstract class UserQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(UserTableMap::COL_FIRSTLOGIN, $firstLogin, $comparison);
+        return $this->addUsingAlias(UserTableMap::COL_FIRST_LOGIN, $firstLogin, $comparison);
     }
 
     /**
-     * Filter the query on the lastlogin column
+     * Filter the query on the last_login column
      *
      * Example usage:
      * <code>
-     * $query->filterByLastLogin('2011-03-14'); // WHERE lastlogin = '2011-03-14'
-     * $query->filterByLastLogin('now'); // WHERE lastlogin = '2011-03-14'
-     * $query->filterByLastLogin(array('max' => 'yesterday')); // WHERE lastlogin > '2011-03-13'
+     * $query->filterByLastLogin('2011-03-14'); // WHERE last_login = '2011-03-14'
+     * $query->filterByLastLogin('now'); // WHERE last_login = '2011-03-14'
+     * $query->filterByLastLogin(array('max' => 'yesterday')); // WHERE last_login > '2011-03-13'
      * </code>
      *
      * @param     mixed $lastLogin The value to use as filter.
@@ -426,11 +426,11 @@ abstract class UserQuery extends ModelCriteria
         if (is_array($lastLogin)) {
             $useMinMax = false;
             if (isset($lastLogin['min'])) {
-                $this->addUsingAlias(UserTableMap::COL_LASTLOGIN, $lastLogin['min'], Criteria::GREATER_EQUAL);
+                $this->addUsingAlias(UserTableMap::COL_LAST_LOGIN, $lastLogin['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
             if (isset($lastLogin['max'])) {
-                $this->addUsingAlias(UserTableMap::COL_LASTLOGIN, $lastLogin['max'], Criteria::LESS_EQUAL);
+                $this->addUsingAlias(UserTableMap::COL_LAST_LOGIN, $lastLogin['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -441,7 +441,7 @@ abstract class UserQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(UserTableMap::COL_LASTLOGIN, $lastLogin, $comparison);
+        return $this->addUsingAlias(UserTableMap::COL_LAST_LOGIN, $lastLogin, $comparison);
     }
 
     /**

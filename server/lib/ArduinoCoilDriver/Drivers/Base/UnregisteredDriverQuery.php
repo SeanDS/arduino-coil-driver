@@ -22,12 +22,12 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUnregisteredDriverQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildUnregisteredDriverQuery orderByMac($order = Criteria::ASC) Order by the mac column
  * @method     ChildUnregisteredDriverQuery orderByIp($order = Criteria::ASC) Order by the ip column
- * @method     ChildUnregisteredDriverQuery orderByLastCheckIn($order = Criteria::ASC) Order by the lastcheckin column
+ * @method     ChildUnregisteredDriverQuery orderByLastCheckIn($order = Criteria::ASC) Order by the last_check_in column
  *
  * @method     ChildUnregisteredDriverQuery groupById() Group by the id column
  * @method     ChildUnregisteredDriverQuery groupByMac() Group by the mac column
  * @method     ChildUnregisteredDriverQuery groupByIp() Group by the ip column
- * @method     ChildUnregisteredDriverQuery groupByLastCheckIn() Group by the lastcheckin column
+ * @method     ChildUnregisteredDriverQuery groupByLastCheckIn() Group by the last_check_in column
  *
  * @method     ChildUnregisteredDriverQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildUnregisteredDriverQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -43,7 +43,7 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUnregisteredDriver findOneById(int $id) Return the first ChildUnregisteredDriver filtered by the id column
  * @method     ChildUnregisteredDriver findOneByMac(string $mac) Return the first ChildUnregisteredDriver filtered by the mac column
  * @method     ChildUnregisteredDriver findOneByIp(string $ip) Return the first ChildUnregisteredDriver filtered by the ip column
- * @method     ChildUnregisteredDriver findOneByLastCheckIn(string $lastcheckin) Return the first ChildUnregisteredDriver filtered by the lastcheckin column *
+ * @method     ChildUnregisteredDriver findOneByLastCheckIn(string $last_check_in) Return the first ChildUnregisteredDriver filtered by the last_check_in column *
 
  * @method     ChildUnregisteredDriver requirePk($key, ConnectionInterface $con = null) Return the ChildUnregisteredDriver by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUnregisteredDriver requireOne(ConnectionInterface $con = null) Return the first ChildUnregisteredDriver matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -51,13 +51,13 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildUnregisteredDriver requireOneById(int $id) Return the first ChildUnregisteredDriver filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUnregisteredDriver requireOneByMac(string $mac) Return the first ChildUnregisteredDriver filtered by the mac column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUnregisteredDriver requireOneByIp(string $ip) Return the first ChildUnregisteredDriver filtered by the ip column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildUnregisteredDriver requireOneByLastCheckIn(string $lastcheckin) Return the first ChildUnregisteredDriver filtered by the lastcheckin column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildUnregisteredDriver requireOneByLastCheckIn(string $last_check_in) Return the first ChildUnregisteredDriver filtered by the last_check_in column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildUnregisteredDriver[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildUnregisteredDriver objects based on current ModelCriteria
  * @method     ChildUnregisteredDriver[]|ObjectCollection findById(int $id) Return ChildUnregisteredDriver objects filtered by the id column
  * @method     ChildUnregisteredDriver[]|ObjectCollection findByMac(string $mac) Return ChildUnregisteredDriver objects filtered by the mac column
  * @method     ChildUnregisteredDriver[]|ObjectCollection findByIp(string $ip) Return ChildUnregisteredDriver objects filtered by the ip column
- * @method     ChildUnregisteredDriver[]|ObjectCollection findByLastCheckIn(string $lastcheckin) Return ChildUnregisteredDriver objects filtered by the lastcheckin column
+ * @method     ChildUnregisteredDriver[]|ObjectCollection findByLastCheckIn(string $last_check_in) Return ChildUnregisteredDriver objects filtered by the last_check_in column
  * @method     ChildUnregisteredDriver[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -150,7 +150,7 @@ abstract class UnregisteredDriverQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, mac, ip, lastcheckin FROM drivers_unregistered WHERE id = :p0';
+        $sql = 'SELECT id, mac, ip, last_check_in FROM drivers_unregistered WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -340,13 +340,13 @@ abstract class UnregisteredDriverQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the lastcheckin column
+     * Filter the query on the last_check_in column
      *
      * Example usage:
      * <code>
-     * $query->filterByLastCheckIn('2011-03-14'); // WHERE lastcheckin = '2011-03-14'
-     * $query->filterByLastCheckIn('now'); // WHERE lastcheckin = '2011-03-14'
-     * $query->filterByLastCheckIn(array('max' => 'yesterday')); // WHERE lastcheckin > '2011-03-13'
+     * $query->filterByLastCheckIn('2011-03-14'); // WHERE last_check_in = '2011-03-14'
+     * $query->filterByLastCheckIn('now'); // WHERE last_check_in = '2011-03-14'
+     * $query->filterByLastCheckIn(array('max' => 'yesterday')); // WHERE last_check_in > '2011-03-13'
      * </code>
      *
      * @param     mixed $lastCheckIn The value to use as filter.
@@ -364,11 +364,11 @@ abstract class UnregisteredDriverQuery extends ModelCriteria
         if (is_array($lastCheckIn)) {
             $useMinMax = false;
             if (isset($lastCheckIn['min'])) {
-                $this->addUsingAlias(UnregisteredDriverTableMap::COL_LASTCHECKIN, $lastCheckIn['min'], Criteria::GREATER_EQUAL);
+                $this->addUsingAlias(UnregisteredDriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
             if (isset($lastCheckIn['max'])) {
-                $this->addUsingAlias(UnregisteredDriverTableMap::COL_LASTCHECKIN, $lastCheckIn['max'], Criteria::LESS_EQUAL);
+                $this->addUsingAlias(UnregisteredDriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -379,7 +379,7 @@ abstract class UnregisteredDriverQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(UnregisteredDriverTableMap::COL_LASTCHECKIN, $lastCheckIn, $comparison);
+        return $this->addUsingAlias(UnregisteredDriverTableMap::COL_LAST_CHECK_IN, $lastCheckIn, $comparison);
     }
 
     /**

@@ -14,7 +14,7 @@
             <td><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
             <td class="text-center">
                 <div class="btn-group">
-                    <a href="drivers.php?do=addunregistered&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Add</a>
+                    <a href="drivers.php?do=register&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Add</a>
                 </div>
             </td>
         </tr>

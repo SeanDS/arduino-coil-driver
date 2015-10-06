@@ -83,11 +83,11 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
     protected $ip;
 
     /**
-     * The value for the lastcheckin field.
+     * The value for the last_check_in field.
      *
      * @var        \DateTime
      */
-    protected $lastcheckin;
+    protected $last_check_in;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -350,7 +350,7 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
     }
 
     /**
-     * Get the [optionally formatted] temporal [lastcheckin] column value.
+     * Get the [optionally formatted] temporal [last_check_in] column value.
      *
      *
      * @param      string $format The date/time format string (either date()-style or strftime()-style).
@@ -363,9 +363,9 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
     public function getLastCheckIn($format = NULL)
     {
         if ($format === null) {
-            return $this->lastcheckin;
+            return $this->last_check_in;
         } else {
-            return $this->lastcheckin instanceof \DateTime ? $this->lastcheckin->format($format) : null;
+            return $this->last_check_in instanceof \DateTime ? $this->last_check_in->format($format) : null;
         }
     }
 
@@ -430,7 +430,7 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
     } // setIp()
 
     /**
-     * Sets the value of [lastcheckin] column to a normalized version of the date/time value specified.
+     * Sets the value of [last_check_in] column to a normalized version of the date/time value specified.
      *
      * @param  mixed $v string, integer (timestamp), or \DateTime value.
      *               Empty strings are treated as NULL.
@@ -439,10 +439,10 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
     public function setLastCheckIn($v)
     {
         $dt = PropelDateTime::newInstance($v, null, 'DateTime');
-        if ($this->lastcheckin !== null || $dt !== null) {
-            if ($this->lastcheckin === null || $dt === null || $dt->format("Y-m-d H:i:s") !== $this->lastcheckin->format("Y-m-d H:i:s")) {
-                $this->lastcheckin = $dt === null ? null : clone $dt;
-                $this->modifiedColumns[UnregisteredDriverTableMap::COL_LASTCHECKIN] = true;
+        if ($this->last_check_in !== null || $dt !== null) {
+            if ($this->last_check_in === null || $dt === null || $dt->format("Y-m-d H:i:s") !== $this->last_check_in->format("Y-m-d H:i:s")) {
+                $this->last_check_in = $dt === null ? null : clone $dt;
+                $this->modifiedColumns[UnregisteredDriverTableMap::COL_LAST_CHECK_IN] = true;
             }
         } // if either are not null
 
@@ -498,7 +498,7 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
             if ($col === '0000-00-00 00:00:00') {
                 $col = null;
             }
-            $this->lastcheckin = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
+            $this->last_check_in = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -713,8 +713,8 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
         if ($this->isColumnModified(UnregisteredDriverTableMap::COL_IP)) {
             $modifiedColumns[':p' . $index++]  = 'ip';
         }
-        if ($this->isColumnModified(UnregisteredDriverTableMap::COL_LASTCHECKIN)) {
-            $modifiedColumns[':p' . $index++]  = 'lastcheckin';
+        if ($this->isColumnModified(UnregisteredDriverTableMap::COL_LAST_CHECK_IN)) {
+            $modifiedColumns[':p' . $index++]  = 'last_check_in';
         }
 
         $sql = sprintf(
@@ -736,8 +736,8 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
                     case 'ip':
                         $stmt->bindValue($identifier, $this->ip, PDO::PARAM_STR);
                         break;
-                    case 'lastcheckin':
-                        $stmt->bindValue($identifier, $this->lastcheckin ? $this->lastcheckin->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
+                    case 'last_check_in':
+                        $stmt->bindValue($identifier, $this->last_check_in ? $this->last_check_in->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
                         break;
                 }
             }
@@ -993,8 +993,8 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
         if ($this->isColumnModified(UnregisteredDriverTableMap::COL_IP)) {
             $criteria->add(UnregisteredDriverTableMap::COL_IP, $this->ip);
         }
-        if ($this->isColumnModified(UnregisteredDriverTableMap::COL_LASTCHECKIN)) {
-            $criteria->add(UnregisteredDriverTableMap::COL_LASTCHECKIN, $this->lastcheckin);
+        if ($this->isColumnModified(UnregisteredDriverTableMap::COL_LAST_CHECK_IN)) {
+            $criteria->add(UnregisteredDriverTableMap::COL_LAST_CHECK_IN, $this->last_check_in);
         }
 
         return $criteria;
@@ -1123,7 +1123,7 @@ abstract class UnregisteredDriver implements ActiveRecordInterface
         $this->id = null;
         $this->mac = null;
         $this->ip = null;
-        $this->lastcheckin = null;
+        $this->last_check_in = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->resetModified();
