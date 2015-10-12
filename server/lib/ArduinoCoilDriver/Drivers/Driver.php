@@ -3,12 +3,15 @@
 namespace ArduinoCoilDriver\Drivers;
 
 use Propel\Runtime\Propel;
+use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\Driver as BaseDriver;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\ConflictingStatusException;
+use ArduinoCoilDriver\Payload\StatusPayload;
+use ArduinoCoilDriver\Payload\OutputPayload;
 
 /**
  * Skeleton subclass for representing a row from the 'drivers' table.
@@ -26,8 +29,6 @@ class Driver extends BaseDriver
         global $logger;
         global $user;
     
-        $logger->addInfo(sprintf('User wants to register unregistered driver id %d', $unregisteredDriver->getId()));
-        
         // get the unregistered driver's status and output payloads
         try {
             $statusPayload = $unregisteredDriver->getStatus();
@@ -94,11 +95,128 @@ class Driver extends BaseDriver
         return $driver;
     }
     
+    public function postInsert(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver inserted with id %d', $this->getId()));
+    }
+    
+    public function postUpdate(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver id %d updated', $this->getId()));
+    }
+    
+    public function preDelete(ConnectionInterface $connection = null) {
+        if (is_null($connection)) {
+            // get a write connection
+            $connection = Propel::getWriteConnection(DriverTableMap::DATABASE_NAME);
+        }
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // delete driver pins
+        foreach ($this->getDriverPins() as $driverPin) {
+            $driverPin->delete();
+        }
+        
+        // delete driver outputs
+        foreach ($this->getDriverOutputs() as $driverOutput) {
+            $driverOutput->delete();
+        }
+        
+        // commit transaction
+        $connection->commit();
+        
+        return true;
+    }
+    
+    public function postDelete(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver id %d deleted', $this->getId()));
+    }
+    
     public function getDriverPinCount() {
         return DriverPinQuery::create()->filterByDriverId($this->getId())->count();
     }
     
     public function getDriverOutputCount() {
         return DriverOutputQuery::create()->filterByDriverId($this->getId())->count();
+    }
+    
+    private function contact($path) {
+        global $logger;
+    
+        // start clock
+        $startTime = microtime(true);
+        
+        $logger->addInfo(sprintf('Contacting driver id %d', $this->getId()));
+        
+        // open socket
+        $socket = @fsockopen($this->getIp(), 80, $errorCode, $errorString, DEFAULT_SOCKET_TIMEOUT);
+        
+        // if socket isn't open
+        if (! $socket) {            
+            throw new NoContactException($errorCode, $errorString);
+        }
+        
+        // ask for status
+        fwrite($socket, "GET " . $path . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
+
+        $message = "";
+        
+        $contentFlag = false;
+        
+        // compile returned message
+        while (! feof($socket)) {
+            $line = fgets($socket, MAXIMUM_SOCKET_LINE_LENGTH);
+            
+            if ($contentFlag) {
+                $message .= $line;
+            } else {
+                if ($line == "\r\n" && !$contentFlag) {
+                    // this is the last line
+                    $contentFlag = true;
+                }
+            }
+        }
+        
+        // close socket
+        fclose($socket);
+        
+        // stop clock
+        $endTime = microtime(true);
+        
+        return $message;
+    }
+    
+    public function getStatus() {
+        global $logger;
+    
+        $startTime = microtime(true);
+        
+        $logger->addInfo(sprintf('Getting status of driver id %d', $this->getId()));
+        
+        $message = $this->contact("/status");
+        
+        $endTime = microtime(true);
+        
+        return new StatusPayload($message, $endTime - $startTime);
+    }
+    
+    public function getOutputs() {
+        global $logger;
+    
+        $startTime = microtime(true);
+        
+        $logger->addInfo(sprintf('Getting outputs of driver id %d', $this->getId()));
+        
+        $message = $this->contact("/outputs");
+        
+        $endTime = microtime(true);
+        
+        return new OutputPayload($message, $endTime - $startTime);
     }
 }

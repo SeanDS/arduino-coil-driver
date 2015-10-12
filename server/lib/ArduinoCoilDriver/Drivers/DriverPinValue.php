@@ -3,6 +3,7 @@
 namespace ArduinoCoilDriver\Drivers;
 
 use Propel\Runtime\Propel;
+use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverPinValue as BaseDriverPinValue;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 
@@ -40,5 +41,23 @@ class DriverPinValue extends BaseDriverPinValue
         $connection->commit();
         
         return $driverPinValue;
+    }
+    
+    public function postInsert(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver pin value inserted with id %d', $this->getId()));
+    }
+    
+    public function postUpdate(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver pin value id %d updated', $this->getId()));
+    }
+    
+    public function postDelete(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver pin value id %d deleted', $this->getId()));
     }
 }

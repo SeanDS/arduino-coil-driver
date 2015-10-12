@@ -8,6 +8,12 @@
     <column name="added" phpName="Added" type="TIMESTAMP" required="true"/>
     <column name="last_check_in" phpName="LastCheckIn" type="TIMESTAMP" required="true"/>
     <column name="coil_contact" phpName="CoilContact" type="BOOLEAN" size="1" required="true"/>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: name, validator: NotBlank}" />
+      <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: mac, validator: Length, options: {min: 17, max: 17}}" />
+      <parameter name="rule4" value="{column: ip, validator: Length, options: {min: 7, max: 15}}" />
+    </behavior>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>
     </vendor>

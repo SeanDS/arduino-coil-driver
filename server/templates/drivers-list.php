@@ -3,6 +3,16 @@
     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     Driver added.
 </div>
+<?php elseif ($messageId === 2): ?>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    Driver saved.
+</div>
+<?php elseif ($messageId === 3): ?>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    Driver deleted.
+</div>
 <?php endif; ?>
 <table class="table table-bordered table-hover table-striped">
     <thead>
@@ -25,6 +35,7 @@
             <td class="text-center">
                 <div class="btn-group">
                     <a href="drivers.php?do=edit&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Edit</a>
+                    <a href="drivers.php?do=status&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Status</a>
                     <a href="drivers.php?do=delete&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-danger">Delete</a>
                 </div>
             </td>

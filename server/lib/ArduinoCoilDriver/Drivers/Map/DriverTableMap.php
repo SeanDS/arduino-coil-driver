@@ -187,6 +187,19 @@ class DriverTableMap extends TableMap
     } // buildRelations()
 
     /**
+     *
+     * Gets the list of behaviors registered for this table
+     *
+     * @return array Associative array (name => parameters) of behaviors
+     */
+    public function getBehaviors()
+    {
+        return array(
+            'validate' => array('rule1' => array ('column' => 'name','validator' => 'NotBlank',), 'rule2' => array ('column' => 'name','validator' => 'Length','options' => array ('min' => 3,'max' => 32,),), 'rule3' => array ('column' => 'mac','validator' => 'Length','options' => array ('min' => 17,'max' => 17,),), 'rule4' => array ('column' => 'ip','validator' => 'Length','options' => array ('min' => 7,'max' => 15,),), ),
+        );
+    } // getBehaviors()
+
+    /**
      * Retrieves a string version of the primary key from the DB resultset row that can be used to uniquely identify a row in this table.
      *
      * For tables with a single-column primary key, that simple pkey value will be returned.  For tables with

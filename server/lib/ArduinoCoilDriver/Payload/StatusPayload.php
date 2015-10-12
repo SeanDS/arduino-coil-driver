@@ -35,6 +35,10 @@ class StatusPayload extends Payload {
         $this->digital_input_2 = ($this->message['digital_input_2']);
     }
     
+    public function getSdCard() {
+        return $this->sdCard;
+    }
+    
     public function getMac() {
         return $this->mac;
     }

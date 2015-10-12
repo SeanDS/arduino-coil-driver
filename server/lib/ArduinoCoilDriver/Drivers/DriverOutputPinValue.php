@@ -2,6 +2,7 @@
 
 namespace ArduinoCoilDriver\Drivers;
 
+use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverOutputPinValue as BaseDriverOutputPinValue;
 
 /**
@@ -16,5 +17,21 @@ use ArduinoCoilDriver\Drivers\Base\DriverOutputPinValue as BaseDriverOutputPinVa
  */
 class DriverOutputPinValue extends BaseDriverOutputPinValue
 {
-
+    public function postInsert(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver output pin value with id %d', $this->getId()));
+    }
+    
+    public function postUpdate(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver output pin value id %d updated', $this->getId()));
+    }
+    
+    public function postDelete(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Driver output pin value id %d deleted', $this->getId()));
+    }
 }

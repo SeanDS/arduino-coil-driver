@@ -13,7 +13,18 @@ define('SESSION_TIME', 60 * 60);
 define('LDAP_HOSTNAME', 'ldap.example.com');
 define('LDAP_DN', 'dc=example,dc=com');
 
-error_reporting(E_ALL & ~E_NOTICE);
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+
+// function (TODO: move elsewhere)
+function sortValidationErrorsByProperty($driver) {
+    $errors = array();
+    
+    foreach ($driver->getValidationFailures() as $failure) {
+        $errors[$failure->getPropertyPath()][] = $failure->getMessage();
+    }
+    
+    return $errors;
+}
 
 /*
  * Setup autoloader
