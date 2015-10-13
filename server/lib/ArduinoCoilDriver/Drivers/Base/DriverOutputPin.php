@@ -87,8 +87,8 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     /**
      * The value for the type field.
      *
-     * Note: this column has a database default value of: 'coarse'
-     * @var        string
+     * Note: this column has a database default value of: 0
+     * @var        int
      */
     protected $type;
 
@@ -118,7 +118,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
      */
     public function applyDefaultValues()
     {
-        $this->type = 'coarse';
+        $this->type = 0;
     }
 
     /**
@@ -379,10 +379,19 @@ abstract class DriverOutputPin implements ActiveRecordInterface
      * Get the [type] column value.
      *
      * @return string
+     * @throws \Propel\Runtime\Exception\PropelException
      */
     public function getType()
     {
-        return $this->type;
+        if (null === $this->type) {
+            return null;
+        }
+        $valueSet = DriverOutputPinTableMap::getValueSet(DriverOutputPinTableMap::COL_TYPE);
+        if (!isset($valueSet[$this->type])) {
+            throw new PropelException('Unknown stored enum key: ' . $this->type);
+        }
+
+        return $valueSet[$this->type];
     }
 
     /**
@@ -456,13 +465,18 @@ abstract class DriverOutputPin implements ActiveRecordInterface
     /**
      * Set the value of [type] column.
      *
-     * @param string $v new value
+     * @param  string $v new value
      * @return $this|\ArduinoCoilDriver\Drivers\DriverOutputPin The current object (for fluent API support)
+     * @throws \Propel\Runtime\Exception\PropelException
      */
     public function setType($v)
     {
         if ($v !== null) {
-            $v = (string) $v;
+            $valueSet = DriverOutputPinTableMap::getValueSet(DriverOutputPinTableMap::COL_TYPE);
+            if (!in_array($v, $valueSet)) {
+                throw new PropelException(sprintf('Value "%s" is not accepted in this enumerated column', $v));
+            }
+            $v = array_search($v, $valueSet);
         }
 
         if ($this->type !== $v) {
@@ -483,7 +497,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
      */
     public function hasOnlyDefaultValues()
     {
-            if ($this->type !== 'coarse') {
+            if ($this->type !== 0) {
                 return false;
             }
 
@@ -523,7 +537,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
             $this->driver_pin_id = (null !== $col) ? (int) $col : null;
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : DriverOutputPinTableMap::translateFieldName('Type', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->type = (null !== $col) ? (string) $col : null;
+            $this->type = (null !== $col) ? (int) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -789,7 +803,7 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                         $stmt->bindValue($identifier, $this->driver_pin_id, PDO::PARAM_INT);
                         break;
                     case 'type':
-                        $stmt->bindValue($identifier, $this->type, PDO::PARAM_STR);
+                        $stmt->bindValue($identifier, $this->type, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -980,6 +994,10 @@ abstract class DriverOutputPin implements ActiveRecordInterface
                 $this->setDriverPinId($value);
                 break;
             case 3:
+                $valueSet = DriverOutputPinTableMap::getValueSet(DriverOutputPinTableMap::COL_TYPE);
+                if (isset($valueSet[$value])) {
+                    $value = $valueSet[$value];
+                }
                 $this->setType($value);
                 break;
         } // switch()

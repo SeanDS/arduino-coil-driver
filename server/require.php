@@ -16,10 +16,10 @@ define('LDAP_DN', 'dc=example,dc=com');
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
 // function (TODO: move elsewhere)
-function sortValidationErrorsByProperty($driver) {
+function sortValidationErrorsByProperty($obj) {
     $errors = array();
     
-    foreach ($driver->getValidationFailures() as $failure) {
+    foreach ($obj->getValidationFailures() as $failure) {
         $errors[$failure->getPropertyPath()][] = $failure->getMessage();
     }
     

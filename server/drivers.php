@@ -3,15 +3,26 @@
 require('require.php');
 
 use Propel\Runtime\Propel;
+use Propel\Runtime\ActiveQuery\Criteria;
 use ArduinoCoilDriver\Drivers\Driver;
+use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Drivers\DriverPinQuery;
+use ArduinoCoilDriver\Drivers\DriverOutputPinQuery;
 use ArduinoCoilDriver\Drivers\UnregisteredDriver;
 use ArduinoCoilDriver\Drivers\UnregisteredDriverQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
+use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
+use ArduinoCoilDriver\Exceptions\ValidationException;
 
 function getDriverFromGet($returnUrl = 'drivers.php') {
+    global $logger;
+    global $templates;
+
     // load driver by HTTP_GET id
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
     
@@ -30,6 +41,9 @@ function getDriverFromGet($returnUrl = 'drivers.php') {
 }
 
 function getUnregisteredDriverFromGet($returnUrl = 'drivers.php') {
+    global $logger;
+    global $templates;
+
     // load driver by HTTP_GET id
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
     
@@ -198,6 +212,67 @@ if (empty($do)) {
     
     // print status
     echo $templates->render('drivers-status', ['driver' => $driver, 'status' => $statusPayload]);
+} elseif ($do === 'listoutputs') {
+    // list driver outputs
+    
+    $get = filter_input_array(
+        INPUT_GET,
+        array(
+            'mid'    =>  FILTER_VALIDATE_INT
+        )
+    );
+    
+    // get driver
+    $driver = getDriverFromGet();
+    
+    echo $templates->render('driver-outputs', ['driver' => $driver, 'messageId' => $get['mid']]);
+} elseif ($do === 'newoutput') {
+    // add driver output
+    
+    // get driver
+    $driver = getDriverFromGet();
+    
+    // get driver pins that aren't already a driver output pin
+    $driverPins = DriverPinQuery::create()->addJoin(DriverPinTableMap::COL_ID, DriverOutputPinTableMap::COL_DRIVER_PIN_ID, Criteria::LEFT_JOIN)->add(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, null, Criteria::ISNULL);
+    
+    // check for POST data
+    $post = filter_input_array(
+        INPUT_POST,
+        array(
+            'name'        =>  FILTER_SANITIZE_STRING,
+            'coarsepinid' =>  FILTER_VALIDATE_INT,
+            'finepinid'   =>  FILTER_VALIDATE_INT
+        )
+    );
+    
+    if ($post['coarsepinid'] && $post['finepinid']) {
+        // new output submitted
+        
+        // get pins
+        $coarsePin = DriverPinQuery::create()->findPK($post['coarsepinid']);
+        $finePin = DriverPinQuery::create()->findPK($post['finepinid']);
+        
+        if (is_null($coarsePin) || is_null($finePin)) {
+            $errors['coarsepinid'][] = "A coarse pin must be specified";
+            $errors['finepinid'][] = "A fine pin must be specified";
+        } else {
+            // create output
+            try {
+                DriverOutput::create($post['name'], $coarsePin, $finePin, $driver);
+                
+                header('Location: drivers.php?do=listoutputs&id=' . $driver->getId() . '&mid=1');
+            } catch (IdenticalOutputPinsException $e) {
+                $errors['coarsepinid'][] = "The coarse pin cannot be the same as the fine pin";
+                $errors['finepinid'][] = "The fine pin cannot be the same as the coarse pin";
+            } catch (ValidationException $e) {
+                $errors = $e->getErrors();
+            }
+        }
+        
+        print_r($errors);
+    }
+    
+    echo $templates->render('driver-output-add', ['driver' => $driver, 'driverPins' => $driverPins, 'errors' => $errors]);
 }
 
 ?>

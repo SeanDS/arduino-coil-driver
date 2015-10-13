@@ -19,6 +19,29 @@ use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
  */
 class DriverOutputPin extends BaseDriverOutputPin
 {
+    public static function create($driverOutput, $driverPin, $type) {
+        $driverOutputPin = new self();
+        
+        // get a write connection
+        $connection = Propel::getWriteConnection(DriverOutputPinTableMap::DATABASE_NAME);
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // set parameters
+        $driverOutputPin->setDriverOutputId($driverOutput->getId());
+        $driverOutputPin->setDriverPinId($driverPin->getId());
+        $driverOutputPin->setType($type);
+        
+        // save
+        $driverOutputPin->save();
+        
+        // commit transaction
+        $connection->commit();
+        
+        return $driverOutputPin;
+    }
+
     public function preDelete(ConnectionInterface $connection = null) {
         if (is_null($connection)) {
             // get a write connection
@@ -42,7 +65,7 @@ class DriverOutputPin extends BaseDriverOutputPin
     public function postInsert(ConnectionInterface $connection = null) {
         global $logger;
         
-        $logger->addInfo(sprintf('Driver output pin with id %d', $this->getId()));
+        $logger->addInfo(sprintf('Driver output pin inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {

@@ -96,6 +96,10 @@ class DriverOutputPinTableMap extends TableMap
      */
     const DEFAULT_STRING_FORMAT = 'YAML';
 
+    /** The enumerated values for the type field */
+    const COL_TYPE_COARSE = 'coarse';
+    const COL_TYPE_FINE = 'fine';
+
     /**
      * holds an array of fieldnames
      *
@@ -124,6 +128,35 @@ class DriverOutputPinTableMap extends TableMap
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
+    /** The enumerated values for this table */
+    protected static $enumValueSets = array(
+                DriverOutputPinTableMap::COL_TYPE => array(
+                            self::COL_TYPE_COARSE,
+            self::COL_TYPE_FINE,
+        ),
+    );
+
+    /**
+     * Gets the list of values for all ENUM columns
+     * @return array
+     */
+    public static function getValueSets()
+    {
+      return static::$enumValueSets;
+    }
+
+    /**
+     * Gets the list of values for an ENUM column
+     * @param string $colname
+     * @return array list of possible values for the column
+     */
+    public static function getValueSet($colname)
+    {
+        $valueSets = self::getValueSets();
+
+        return $valueSets[$colname];
+    }
+
     /**
      * Initialize the table attributes and columns
      * Relations are not initialized by this method since they are lazy loaded
@@ -144,7 +177,11 @@ class DriverOutputPinTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addForeignKey('driver_output_id', 'DriverOutputId', 'INTEGER', 'driver_outputs', 'id', true, 10, null);
         $this->addForeignKey('driver_pin_id', 'DriverPinId', 'INTEGER', 'driver_pins', 'id', true, 10, null);
-        $this->addColumn('type', 'Type', 'CHAR', true, null, 'coarse');
+        $this->addColumn('type', 'Type', 'ENUM', true, null, 'coarse');
+        $this->getColumn('type')->setValueSet(array (
+  0 => 'coarse',
+  1 => 'fine',
+));
     } // initialize()
 
     /**

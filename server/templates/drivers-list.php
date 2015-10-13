@@ -31,7 +31,7 @@
             <td><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
             <td><?php if ($driver->getCoilContact()): ?><div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Coils are touching!</div><?php else: ?><div class="alert alert-success" role="alert"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> OK</div><?php endif; ?></td>
             <td><?=$this->e($driver->getDriverPinCount())?></td>
-            <td><?=$this->e($driver->getDriverOutputCount())?></td>
+            <td><a href="drivers.php?do=listoutputs&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverOutputCount())?></a></td>
             <td class="text-center">
                 <div class="btn-group">
                     <a href="drivers.php?do=edit&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Edit</a>

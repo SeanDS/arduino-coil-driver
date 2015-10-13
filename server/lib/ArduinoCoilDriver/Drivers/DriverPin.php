@@ -19,6 +19,10 @@ use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
  */
 class DriverPin extends BaseDriverPin
 {
+    public function getName() {
+        return sprintf("Pin %d", $this->getPin());
+    }
+
     public static function createFromPin($driverId, $stateId, $pin, $value) {
         // create driver pin
         $driverPin = new self();

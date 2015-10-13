@@ -66,7 +66,7 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutputPin findOneById(int $id) Return the first ChildDriverOutputPin filtered by the id column
  * @method     ChildDriverOutputPin findOneByDriverOutputId(int $driver_output_id) Return the first ChildDriverOutputPin filtered by the driver_output_id column
  * @method     ChildDriverOutputPin findOneByDriverPinId(int $driver_pin_id) Return the first ChildDriverOutputPin filtered by the driver_pin_id column
- * @method     ChildDriverOutputPin findOneByType(string $type) Return the first ChildDriverOutputPin filtered by the type column *
+ * @method     ChildDriverOutputPin findOneByType(int $type) Return the first ChildDriverOutputPin filtered by the type column *
 
  * @method     ChildDriverOutputPin requirePk($key, ConnectionInterface $con = null) Return the ChildDriverOutputPin by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutputPin requireOne(ConnectionInterface $con = null) Return the first ChildDriverOutputPin matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -74,13 +74,13 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutputPin requireOneById(int $id) Return the first ChildDriverOutputPin filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutputPin requireOneByDriverOutputId(int $driver_output_id) Return the first ChildDriverOutputPin filtered by the driver_output_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutputPin requireOneByDriverPinId(int $driver_pin_id) Return the first ChildDriverOutputPin filtered by the driver_pin_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildDriverOutputPin requireOneByType(string $type) Return the first ChildDriverOutputPin filtered by the type column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutputPin requireOneByType(int $type) Return the first ChildDriverOutputPin filtered by the type column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildDriverOutputPin[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildDriverOutputPin objects based on current ModelCriteria
  * @method     ChildDriverOutputPin[]|ObjectCollection findById(int $id) Return ChildDriverOutputPin objects filtered by the id column
  * @method     ChildDriverOutputPin[]|ObjectCollection findByDriverOutputId(int $driver_output_id) Return ChildDriverOutputPin objects filtered by the driver_output_id column
  * @method     ChildDriverOutputPin[]|ObjectCollection findByDriverPinId(int $driver_pin_id) Return ChildDriverOutputPin objects filtered by the driver_pin_id column
- * @method     ChildDriverOutputPin[]|ObjectCollection findByType(string $type) Return ChildDriverOutputPin objects filtered by the type column
+ * @method     ChildDriverOutputPin[]|ObjectCollection findByType(int $type) Return ChildDriverOutputPin objects filtered by the type column
  * @method     ChildDriverOutputPin[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -393,26 +393,30 @@ abstract class DriverOutputPinQuery extends ModelCriteria
     /**
      * Filter the query on the type column
      *
-     * Example usage:
-     * <code>
-     * $query->filterByType('fooValue');   // WHERE type = 'fooValue'
-     * $query->filterByType('%fooValue%'); // WHERE type LIKE '%fooValue%'
-     * </code>
-     *
-     * @param     string $type The value to use as filter.
-     *              Accepts wildcards (* and % trigger a LIKE)
+     * @param     mixed $type The value to use as filter
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
      * @return $this|ChildDriverOutputPinQuery The current query, for fluid interface
      */
     public function filterByType($type = null, $comparison = null)
     {
-        if (null === $comparison) {
-            if (is_array($type)) {
+        $valueSet = DriverOutputPinTableMap::getValueSet(DriverOutputPinTableMap::COL_TYPE);
+        if (is_scalar($type)) {
+            if (!in_array($type, $valueSet)) {
+                throw new PropelException(sprintf('Value "%s" is not accepted in this enumerated column', $type));
+            }
+            $type = array_search($type, $valueSet);
+        } elseif (is_array($type)) {
+            $convertedValues = array();
+            foreach ($type as $value) {
+                if (!in_array($value, $valueSet)) {
+                    throw new PropelException(sprintf('Value "%s" is not accepted in this enumerated column', $value));
+                }
+                $convertedValues []= array_search($value, $valueSet);
+            }
+            $type = $convertedValues;
+            if (null === $comparison) {
                 $comparison = Criteria::IN;
-            } elseif (preg_match('/[\%\*]/', $type)) {
-                $type = str_replace('*', '%', $type);
-                $comparison = Criteria::LIKE;
             }
         }
 
