@@ -34,6 +34,11 @@
             </div>
         </nav>
 <?=$this->section('content')?>
+        <footer id="footer">
+            <div class="container">
+                <p class="text-muted">Arduino Coil Driver designed by <a href="http://www.astro.gla.ac.uk/~sleavey/">Sean Leavey</a>.</p>
+            </div>
+        </footer>
         <script src="js/jquery.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
     </body>
