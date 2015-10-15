@@ -7,6 +7,7 @@ use Propel\Runtime\ActiveQuery\Criteria;
 use ArduinoCoilDriver\Drivers\Driver;
 use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Drivers\DriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputPinQuery;
 use ArduinoCoilDriver\Drivers\UnregisteredDriver;
@@ -38,6 +39,27 @@ function getDriverFromGet($returnUrl = 'drivers.php') {
     }
     
     return $driver;
+}
+
+function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
+    global $logger;
+    global $templates;
+
+    // load driver by HTTP_GET id
+    $id = filter_input(INPUT_GET, 'oid', FILTER_VALIDATE_INT);
+    
+    // get driver output
+    $driverOutput = DriverOutputQuery::create()->findPK($id);
+    
+    if ($driverOutput === null) {
+        $logger->addWarning(sprintf('Specified driver output id %d doesn\'t exist', $id));
+    
+        echo $templates->render('error', ['message' => 'Specified driver output not found.', 'returnUrl' => $returnUrl]);
+        
+        exit();
+    }
+    
+    return $driverOutput;
 }
 
 function getUnregisteredDriverFromGet($returnUrl = 'drivers.php') {
@@ -74,7 +96,7 @@ if (empty($do)) {
     $drivers = DriverQuery::create()->orderByName()->find();
     
     echo $templates->render('drivers', ['drivers' => $drivers, 'messageId' => $get['mid']]);
-} elseif ($do === 'unregistered') {
+} elseif ($do === 'listunregistered') {
     // list unregistered drivers
     
     $drivers = UnregisteredDriverQuery::create()->orderByLastCheckIn()->find();
@@ -104,19 +126,19 @@ if (empty($do)) {
     } catch (NoContactException $e) {
         $connection->rollback();
     
-        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=unregistered']);
+        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=listunregistered']);
         
         exit();
     } catch (InvalidJsonException $e) {
         $connection->rollback();
     
-        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=unregistered']);
+        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=listunregistered']);
             
         exit();
     } catch (ConflictingStatusException $e) {
         $connection->rollback();
         
-        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=unregistered']);
+        echo $templates->render('error', ['message' => $e->getMessage(), 'returnUrl' => 'drivers.php?do=listunregistered']);
             
         exit();
     }
@@ -268,11 +290,38 @@ if (empty($do)) {
                 $errors = $e->getErrors();
             }
         }
-        
-        print_r($errors);
     }
     
     echo $templates->render('driver-output-add', ['driver' => $driver, 'driverPins' => $driverPins, 'errors' => $errors]);
+} elseif ($do === 'editoutput') {
+    // edit driver output
+    
+    // get driver output
+    $driverOutput = getDriverOutputFromGet();
+    
+    // check for POST data
+    $post = filter_input_array(
+        INPUT_POST,
+        array(
+            'name'  =>  FILTER_SANITIZE_STRING
+        )
+    );
+    
+    // process HTTP_POST data if submitted
+    if ($post['name']) {
+        $driverOutput->setName($post['name']);
+        
+        if ($driverOutput->validate()) {
+            $driverOutput->save();
+        
+            header('Location: drivers.php?do=listoutputs&id=' . $driverOutput->getDriver()->getId() . '&mid=2');
+        } else {
+            // compile list of errors
+            $errors = sortValidationErrorsByProperty($driverOutput);
+        }
+    }
+    
+    echo $templates->render('driver-output-edit', ['driverOutput' => $driverOutput, 'errors' => $errors]);
 }
 
 ?>
