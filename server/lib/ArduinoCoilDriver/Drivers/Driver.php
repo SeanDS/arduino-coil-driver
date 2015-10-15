@@ -66,7 +66,7 @@ class Driver extends BaseDriver
         $connection->beginTransaction();
         
         // set parameters
-        $driver->setName("Driver " . $unregisteredDriver->getMac());
+        $driver->setName($unregisteredDriver->getMac());
         $driver->setMac($unregisteredDriver->getMac());
         $driver->setIp($unregisteredDriver->getIp());
         $driver->setAdded('now');
