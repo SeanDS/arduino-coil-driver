@@ -1,12 +1,25 @@
 body {
     padding-top: 80px;
-} 
+}
+html,body {
+    height: 100%
+}
+#wrap {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    /* Negative indent footer by its height */
+    margin: 0 auto -60px;
+}
+#push, #footer {
+    height: 60px;
+}
+#push {
+    margin-bottom: 20px;
+}
 #footer {
-    bottom: 0;
-    width: 100%;
-    margin-top: 20px;
     background-color: #f5f5f5;
 }
 #footer p {
-    margin: 10px 0 10px 0;
+    margin: 20px 0 20px 0;
 }

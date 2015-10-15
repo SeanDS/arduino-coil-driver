@@ -33,7 +33,10 @@
                 </div>
             </div>
         </nav>
+        <div id="wrap">
 <?=$this->section('content')?>
+            <div id="push"></div>
+        </div>
         <footer id="footer">
             <div class="container">
                 <p class="text-muted">Arduino Coil Driver designed by <a href="http://www.astro.gla.ac.uk/~sleavey/">Sean Leavey</a>.</p>
