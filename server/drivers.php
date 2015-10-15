@@ -14,6 +14,7 @@ use ArduinoCoilDriver\Drivers\UnregisteredDriver;
 use ArduinoCoilDriver\Drivers\UnregisteredDriverQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
@@ -322,6 +323,33 @@ if (empty($do)) {
     }
     
     echo $templates->render('driver-output-edit', ['driverOutput' => $driverOutput, 'errors' => $errors]);
+} elseif ($do === 'deleteoutput') {
+    // delete driver output
+    
+    // get driver output
+    $driverOutput = getDriverOutputFromGet();
+    
+    // check for POST data
+    $confirm = filter_input(INPUT_POST, 'confirm', FILTER_VALIDATE_BOOLEAN);
+    
+    // process HTTP_POST data if submitted
+    if ($confirm) {
+        // get a write connection
+        $connection = Propel::getWriteConnection(DriverOutputTableMap::DATABASE_NAME);
+        
+        // start a transaction
+        $connection->beginTransaction();
+        
+        // delete
+        $driverOutput->delete();
+        
+        // commit
+        $connection->commit();
+        
+        header('Location: drivers.php?do=listoutputs&id=' . $driverOutput->getDriver()->getId() . '&mid=3');
+    }
+    
+    echo $templates->render('driver-output-delete', ['driverOutput' => $driverOutput]);
 }
 
 ?>

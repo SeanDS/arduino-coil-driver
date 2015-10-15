@@ -41,26 +41,6 @@ class DriverOutputPin extends BaseDriverOutputPin
         
         return $driverOutputPin;
     }
-
-    public function preDelete(ConnectionInterface $connection = null) {
-        if (is_null($connection)) {
-            // get a write connection
-            $connection = Propel::getWriteConnection(DriverOutputPinTableMap::DATABASE_NAME);
-        }
-        
-        // start transaction
-        $connection->beginTransaction();
-        
-        // delete driver output pin values
-        foreach ($this->getDriverOutputPinValues() as $driverOutputPinValue) {
-            $driverOutputPinValue->delete();
-        }
-        
-        // commit transaction
-        $connection->commit();
-        
-        return true;
-    }
     
     public function postInsert(ConnectionInterface $connection = null) {
         global $logger;
