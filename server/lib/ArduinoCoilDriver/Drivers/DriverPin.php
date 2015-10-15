@@ -3,9 +3,13 @@
 namespace ArduinoCoilDriver\Drivers;
 
 use Propel\Runtime\Propel;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverOutputPinValueTableMap;
+use ArduinoCoilDriver\States\Map\StateTableMap;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_pins' table.
@@ -47,6 +51,10 @@ class DriverPin extends BaseDriverPin
         $connection->commit();
         
         return $driverPin;
+    }
+    
+    public function getLatestDriverPinValue() {
+        return DriverPinValueQuery::create()->addJoin(DriverPinValueTableMap::COL_STATE_ID, StateTableMap::COL_ID, Criteria::INNER_JOIN)->add(DriverPinValueTableMap::COL_ID, $this->getId(), Criteria::EQUAL)->addDescendingOrderByColumn(StateTableMap::COL_TIME)->findOne();
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
