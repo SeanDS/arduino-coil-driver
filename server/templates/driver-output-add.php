@@ -2,7 +2,7 @@
 <h2>New Output for <?=$this->e($driver->getName())?></h2>
 <div class="row">
   <div class="col-md-4">
-    <?php if (count($driverPins) > 1): ?>
+    <?php if ($driverPins->count() > 1): ?>
     <form action="drivers.php?do=newoutput&amp;id=<?=$this->e($driver->getId())?>" method="post" class="form-horizontal">
       <div class="form-group<?php if (array_key_exists('name', $errors)): ?> has-error<?php endif; ?>">
         <label for="name" class="control-label col-md-4">Name</label>

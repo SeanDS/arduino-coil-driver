@@ -138,14 +138,6 @@ class Driver extends BaseDriver
         $logger->addInfo(sprintf('Driver id %d deleted', $this->getId()));
     }
     
-    public function getDriverPinCount() {
-        return DriverPinQuery::create()->filterByDriverId($this->getId())->count();
-    }
-    
-    public function getDriverOutputCount() {
-        return DriverOutputQuery::create()->filterByDriverId($this->getId())->count();
-    }
-    
     private function contact($path) {
         global $logger;
     

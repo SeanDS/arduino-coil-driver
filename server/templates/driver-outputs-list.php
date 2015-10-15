@@ -24,7 +24,7 @@
             <th class="col-md-3">Actions</th>
         </thead>
         <tbody>
-        <?php if ($driver->getDriverOutputCount()): ?>
+        <?php if ($driver->getDriverOutputs()->count()): ?>
             <?php foreach($driver->getDriverOutputs() as $driverOutput): ?>
             <tr>
                 <td><?=$this->e($driverOutput->getName())?></td>
