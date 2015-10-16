@@ -6,6 +6,7 @@ use Propel\Runtime\Propel;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\Driver as BaseDriver;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
+use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
@@ -27,7 +28,6 @@ class Driver extends BaseDriver
 {
     public static function createFromUnregistered(UnregisteredDriver $unregisteredDriver) {
         global $logger;
-        global $user;
     
         // get the unregistered driver's status and output payloads
         try {
@@ -36,13 +36,9 @@ class Driver extends BaseDriver
         } catch (NoContactException $e) {
             $logger->addWarning(sprintf('Unregistered driver id %d cannot be contacted', $unregisteredDriver->getId()));
             
-            $connection->rollback();
-            
             throw $e;
         } catch (InvalidJsonException $e) {
             $logger->addWarning(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
-            
-            $connection->rollback();
             
             throw $e;
         }
@@ -50,8 +46,6 @@ class Driver extends BaseDriver
         // do some validation
         if ($statusPayload->getMac() !== $unregisteredDriver->getMac() || $statusPayload->getIp() !== $unregisteredDriver->getIp()) {
             $logger->addWarning(sprintf('Status reported by unregistered driver id %d differs from the record', $unregisteredDriver->getId()));
-            
-            $connection->rollback();
             
             throw new ConflictingStatusException($unregisteredDriver);
         }
@@ -77,16 +71,14 @@ class Driver extends BaseDriver
         $driver->save();
         
         // create a state
-        $state = new State();
-        $state->setUserId($user->getId());
-        $state->setTime('now');
+        $state = State::init();
         
         // save state
         $state->save();
         
         // add driver pins
         foreach ($outputPayload->getPinValues() as $pin => $value) {
-            DriverPin::createFromPin($driver->getId(), $state->getId(), $pin, $value);
+            DriverPin::createFromPin($driver->getId(), $state, $pin, $value);
         }
         
         // commit transaction
@@ -138,7 +130,7 @@ class Driver extends BaseDriver
         $logger->addInfo(sprintf('Driver id %d deleted', $this->getId()));
     }
     
-    private function contact($path) {
+    private function contact($get) {
         global $logger;
     
         // start clock
@@ -155,7 +147,7 @@ class Driver extends BaseDriver
         }
         
         // ask for status
-        fwrite($socket, "GET " . $path . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
+        fwrite($socket, "GET " . $get . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
 
         $message = "";
         
@@ -182,6 +174,44 @@ class Driver extends BaseDriver
         $endTime = microtime(true);
         
         return $message;
+    }
+    
+    public function dispatch(SendPayload $payload) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('Dispatching payload to driver id %d', $this->getId()));
+        
+        // send payload to driver and get message
+        $startTime = microtime(true);
+        $message = $this->contact($payload->getRequest());
+        $endTime = microtime(true);
+        
+        $outputPayload = new OutputPayload($message, $endTime - $startTime);
+        
+        $this->updatePinsFromPayload($outputPayload);
+    }
+    
+    protected function updatePinsFromPayload(OutputPayload $payload) {
+        $pinValues = $payload->getPinValues();
+        
+        // get a write connection
+        $connection = Propel::getWriteConnection(DriverTableMap::DATABASE_NAME);
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // create new state
+        $state = State::init();
+        
+        // update pins
+        foreach ($this->getDriverPins() as $driverPin) {
+            if (in_array($driverPin->getPin(), array_keys($pinValues))) {
+                $driverPin->updateValue($pinValues[$driverPin->getPin()], $state);
+            }
+        }
+        
+        // commit transaction
+        $connection->commit();
     }
     
     public function getStatus() {

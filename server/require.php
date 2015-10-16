@@ -83,7 +83,7 @@ if (array_key_exists('userId', $_SESSION)) {
     
     $templates->addData(['user' => $user]);
 } else {
-    $exempt = ['login.php', 'registry.php', 'test.php'];
+    $exempt = ['login.php', 'registry.php', 'comms.php', 'test.php'];
 
     if (!in_array(basename($_SERVER['SCRIPT_NAME']), $exempt)) {
         header('Location: login.php');

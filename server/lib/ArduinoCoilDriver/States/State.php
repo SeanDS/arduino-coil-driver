@@ -16,5 +16,15 @@ use ArduinoCoilDriver\States\Base\State as BaseState;
  */
 class State extends BaseState
 {
-
+    public static function init() {
+        global $user;
+    
+        $state = new self();
+        
+        $state->setUserId($user->getId());
+        $state->setTime('now');
+        $state->save();
+        
+        return $state;
+    }
 }

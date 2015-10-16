@@ -7,7 +7,9 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverOutput as BaseDriverOutput;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
+use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
+use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 
 /**
@@ -22,6 +24,11 @@ use ArduinoCoilDriver\Exceptions\ValidationException;
  */
 class DriverOutput extends BaseDriverOutput
 {
+    const PIN_MODE_SINGLE   = 0;
+    const PIN_MODE_DUAL     = 1;
+    const TOGGLE_MODE_SNAP  = 0;
+    const TOGGLE_MODE_RAMP  = 1;
+
     public static function create($driver, $name, $coarsePin, $finePin, $mapping, $overlapValue, $defaultDelay) {
         if ($coarsePin == $finePin) {
             throw new IdenticalOutputPinsException();
@@ -60,6 +67,75 @@ class DriverOutput extends BaseDriverOutput
         $connection->commit();
         
         return $driverPin;
+    }
+    
+    public function getValue() {
+        // get output value
+    
+        // get output pins
+        $outputPins = $this->getOutputPins();
+        
+        return $this->getMapping() * $outputPins['coarse']->getDriverPin()->getLatestDriverPinValue()->getValue() + $outputPins['fine']->getDriverPin()->getLatestDriverPinValue()->getValue();
+    }
+    
+    public function setValue($value) {
+        // set output value
+    
+        // get output pins
+        $outputPins = $this->getOutputPins();
+        
+        // calculate coarse value
+        $newCoarseValue = floor($value / $this->getMapping());
+        
+        // calculate fine value
+        $newFineValue = $value % $this->getMapping();
+        
+        // create message
+        $payload = $this->createRampPayload($outputPins['coarse'], $outputPins['fine'], $newCoarseValue, $newFineValue, $this->getMapping(), $this->getOverlapValue(), $this->getDefaultDelay());
+        
+        return $this->getDriver()->dispatch($payload);
+    }
+    
+    protected function getOutputPins() {
+        // get output pins
+        $outputPins = DriverOutputPinQuery::create()->filterByDriverOutputId($this->getId())->find();
+        
+        if ($outputPins->count() != 2) {
+            // FIXME: only one coarse and one fine pin are supported currently
+            throw new Exception('There can currently only be two output pins associated with each driver output.');
+        }
+        
+        $pins = array('coarse' => null, 'fine' => null);
+        
+        foreach ($outputPins as $outputPin) {
+            if ($outputPin->getType() === DriverOutputPinTableMap::COL_TYPE_COARSE) {
+                $pins['coarse'] = $outputPin;
+            } elseif ($outputPin->getType() === DriverOutputPinTableMap::COL_TYPE_FINE) {
+                $pins['fine'] = $outputPin;
+            }
+        }
+        
+        if (in_array(null, $pins, true)) {
+            throw new Exception('One or both of the two pins associated with this driver output is/are not of type \'coarse\' or \'fine\'.');
+        }
+        
+        return $pins;
+    }
+    
+    protected function createRampPayload($pin1, $pin2, $value1, $value2, $mapping, $overlap, $delay) {
+        return new SendPayload("/toggle",
+            array(
+                'pinmode'     =>  self::PIN_MODE_DUAL,
+                'togglemode'  =>  self::TOGGLE_MODE_RAMP,
+                'pin1'        =>  $pin1->getDriverPin()->getPin(),
+                'pin2'        =>  $pin2->getDriverPin()->getPin(),
+                'value1'      =>  $value1,
+                'value2'      =>  $value2,
+                'map'         =>  $mapping,
+                'overlap'     =>  $overlap,
+                'delay'       =>  $delay
+            )
+        );
     }
 
     public function preDelete(ConnectionInterface $connection = null) {

@@ -9,6 +9,7 @@ use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinValueTableMap;
+use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\Map\StateTableMap;
 
 /**
@@ -27,7 +28,7 @@ class DriverPin extends BaseDriverPin
         return sprintf("Pin %d", $this->getPin());
     }
 
-    public static function createFromPin($driverId, $stateId, $pin, $value) {
+    public static function createFromPin($driverId, State $state, $pin, $value) {
         // create driver pin
         $driverPin = new self();
     
@@ -45,7 +46,7 @@ class DriverPin extends BaseDriverPin
         $driverPin->save();
         
         // create and set driver pin value
-        DriverPinValue::createFromValue($driverPin->getId(), $stateId, $value);
+        DriverPinValue::createFromValue($driverPin->getId(), $state, $value);
         
         // commit transaction
         $connection->commit();
@@ -53,8 +54,30 @@ class DriverPin extends BaseDriverPin
         return $driverPin;
     }
     
+    public function updateValue($newValue, State $state) {
+        // create driver pin value
+        $driverPinValue = new DriverPinValue();
+    
+        // get a write connection
+        $connection = Propel::getWriteConnection(DriverPinValueTableMap::DATABASE_NAME);
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // set parameters
+        $driverPinValue->setDriverPinId($this->getId());
+        $driverPinValue->setStateId($state->getId());
+        $driverPinValue->setValue($newValue);
+        
+        // save
+        $driverPinValue->save();
+        
+        // commit transaction
+        $connection->commit();
+    }
+    
     public function getLatestDriverPinValue() {
-        return DriverPinValueQuery::create()->addJoin(DriverPinValueTableMap::COL_STATE_ID, StateTableMap::COL_ID, Criteria::INNER_JOIN)->add(DriverPinValueTableMap::COL_ID, $this->getId(), Criteria::EQUAL)->addDescendingOrderByColumn(StateTableMap::COL_TIME)->findOne();
+        return DriverPinValueQuery::create()->addJoin(DriverPinValueTableMap::COL_STATE_ID, StateTableMap::COL_ID, Criteria::INNER_JOIN)->add(DriverPinValueTableMap::COL_DRIVER_PIN_ID, $this->getId(), Criteria::EQUAL)->addDescendingOrderByColumn(StateTableMap::COL_TIME)->findOne();
     }
     
     public function postInsert(ConnectionInterface $connection = null) {

@@ -19,15 +19,15 @@
     <?php endif; ?>
     <table class="table table-bordered table-hover table-striped">
         <thead>
-            <th class="col-md-3">Output</th>
-            <th class="col-md-6">Pins</th>
-            <th class="col-md-3">Actions</th>
+            <th class="col-md-2 text-center">Output</th>
+            <th class="col-md-8 text-center">Pins</th>
+            <th class="col-md-2 text-center">Actions</th>
         </thead>
         <tbody>
         <?php if ($driver->getDriverOutputs()->count()): ?>
             <?php foreach($driver->getDriverOutputs() as $driverOutput): ?>
             <tr>
-                <td><?=$this->e($driverOutput->getName())?></td>
+                <td class="text-center"><?=$this->e($driverOutput->getName())?></td>
                 <td><?php $this->insert('driver-output-list-pins', ['driverOutput' => $driverOutput]) ?></td>
                 <td class="text-center">
                     <div class="btn-group">

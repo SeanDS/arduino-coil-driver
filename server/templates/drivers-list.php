@@ -16,22 +16,22 @@
 <?php endif; ?>
 <table class="table table-bordered table-hover table-striped">
     <thead>
-        <th class="col-md-3">Name</th>
-        <th class="col-md-2">Last check-in</th>
-        <th class="col-md-3">Coil contact</th>
-        <th class="col-md-1">Pins</th>
-        <th class="col-md-1">Outputs</th>
-        <th class="col-md-2">Actions</th>
+        <th class="col-md-3 text-center">Name</th>
+        <th class="col-md-2 text-center">Last check-in</th>
+        <th class="col-md-3 text-center">Coil contact</th>
+        <th class="col-md-1 text-center">Pins</th>
+        <th class="col-md-1 text-center">Outputs</th>
+        <th class="col-md-2 text-center">Actions</th>
     </thead>
     <tbody>
     <?php if ($drivers->count()): ?>
         <?php foreach($drivers as $driver): ?>
         <tr>
-            <td><?=$this->e($driver->getName())?></td>
-            <td><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
-            <td><?php if ($driver->getCoilContact()): ?><div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Coils are touching!</div><?php else: ?><div class="alert alert-success" role="alert"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> OK</div><?php endif; ?></td>
-            <td><?=$this->e($driver->getDriverPins()->count())?></td>
-            <td><a href="drivers.php?do=listoutputs&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverOutputs()->count())?></a></td>
+            <td class="text-center"><?=$this->e($driver->getName())?></td>
+            <td class="text-center"><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
+            <td class="text-center"><?php if ($driver->getCoilContact()): ?><div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Coils are touching!</div><?php else: ?><div class="alert alert-success" role="alert"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> OK</div><?php endif; ?></td>
+            <td class="text-center"><a href="drivers.php?do=listpins&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverPins()->count())?></a></td>
+            <td class="text-center"><a href="drivers.php?do=listoutputs&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverOutputs()->count())?></a></td>
             <td class="text-center">
                 <div class="btn-group">
                     <a href="drivers.php?do=edit&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Edit</a>

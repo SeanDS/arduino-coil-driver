@@ -5,11 +5,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
         <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/bootstrap-switch.min.css">
         <link rel="stylesheet" href="css/arduinocoildriver.css">
         
         <title><?=$this->e($mainTitle . " - " . $title)?></title>
     </head>
     <body>
+        <script src="js/jquery.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/bootstrap-switch.min.js"></script>
         <nav class="navbar navbar-inverse navbar-fixed-top">
             <div class="container">
                 <div class="navbar-header">
@@ -45,7 +49,5 @@
                 <p class="text-muted">Arduino Coil Driver designed by <a href="http://www.astro.gla.ac.uk/~sleavey/">Sean Leavey</a>.</p>
             </div>
         </footer>
-        <script src="js/jquery.min.js"></script>
-        <script src="js/bootstrap.min.js"></script>
     </body>
 </html>

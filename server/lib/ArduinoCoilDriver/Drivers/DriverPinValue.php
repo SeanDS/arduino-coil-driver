@@ -6,6 +6,7 @@ use Propel\Runtime\Propel;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverPinValue as BaseDriverPinValue;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
+use ArduinoCoilDriver\States\State;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_pin_values' table.
@@ -19,7 +20,7 @@ use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
  */
 class DriverPinValue extends BaseDriverPinValue
 {
-    public static function createFromValue($driverPinId, $stateId, $value) {
+    public static function createFromValue($driverPinId, State $state, $value) {
         // create driver pin value
         $driverPinValue = new self();
     
@@ -31,7 +32,7 @@ class DriverPinValue extends BaseDriverPinValue
         
         // set parameters
         $driverPinValue->setDriverPinId($driverPinId);
-        $driverPinValue->setStateId($stateId);
+        $driverPinValue->setStateId($state->getId());
         $driverPinValue->setValue($value);
         
         // save

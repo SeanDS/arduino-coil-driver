@@ -9,13 +9,16 @@ use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Drivers\DriverPinQuery;
+use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputPinQuery;
 use ArduinoCoilDriver\Drivers\UnregisteredDriver;
 use ArduinoCoilDriver\Drivers\UnregisteredDriverQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
+use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
+use ArduinoCoilDriver\States\Map\StateTableMap;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
@@ -87,6 +90,8 @@ function getUnregisteredDriverFromGet($returnUrl = 'drivers.php') {
 $do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
 
 if (empty($do)) {
+    // list drivers
+
     $get = filter_input_array(
         INPUT_GET,
         array(
@@ -235,6 +240,13 @@ if (empty($do)) {
     
     // print status
     echo $templates->render('drivers-status', ['driver' => $driver, 'status' => $statusPayload]);
+} elseif ($do === 'listpins') {
+    // list driver pins
+    
+    // get driver
+    $driver = getDriverFromGet();
+    
+    echo $templates->render('driver-pins', ['driver' => $driver]);
 } elseif ($do === 'listoutputs') {
     // list driver outputs
     
