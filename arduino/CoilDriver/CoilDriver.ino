@@ -1,11 +1,10 @@
 /*
-* JIF Lab Coil Driver Arduino Server
+* Coil Driver Arduino Server
 *
-* Version 0.95, June 2015
+* Version 0.96, October 2015
 *
 * Sean Leavey
 * s.leavey.1@research.gla.ac.uk
-* June 2015
 *
 * https://github.com/SeanDS/arduino-coil-driver/
 */
@@ -33,14 +32,14 @@ byte mac[] = {0x90, 0xA2, 0xDA, 0x0F, 0xD2, 0x67};
 IPAddress ipAddressController(192, 168, 1, 84);
 
 // fully qualified path to software on server
-String path = "/";
+String path = "/arduino-coil-driver/server/";
 
 //
 // STOP EDITING
 //
 
 // software version
-const char* SOFTWARE_VERSION = "0.95";
+const char* SOFTWARE_VERSION = "0.96";
 
 // slave select pins
 const int SD_SS_PIN = 4;          // SD card slave select
@@ -67,8 +66,11 @@ String reply;
 // flag for presence of SD card (default false)
 boolean sdcardPresent = false;
 
-int SINGLE_PIN_MODE = 0;
-int DUAL_PIN_MODE = 1;
+int PIN_MODE_SINGLE = 0;
+int PIN_MODE_DUAL   = 1;
+
+int TOGGLE_MODE_SNAP = 0;
+int TOGGLE_MODE_RAMP = 1;
 
 int MID_OUTPUT_LEVEL = 128;
 
@@ -453,7 +455,7 @@ boolean handleToggleRequest(String request) {
   //
 
   // check for "single pin" mode
-  if (root.containsKey("mode") && root["mode"].as<int>() == SINGLE_PIN_MODE) {
+  if (root.containsKey("pinmode") && root["pinmode"].as<int>() == PIN_MODE_SINGLE) {
     // single pin mode
     Serial.println("[Single pin mode]");
 
@@ -461,12 +463,12 @@ boolean handleToggleRequest(String request) {
      * For single pin mode, we require the following information to be specified as keys of the JSON object:
      *   pin: the output pin to set
      *   value: the output value to set
-     *   delay: wait time in ms between output levels
+     *   togglemode: the toggle mode, snap or ramp
+     *   delay: wait time in ms between output levels (only required if togglemode == ramp)
      */
 
     int outputPin;
     int outputValue;
-    int rampDelay;
     
     if (root.containsKey("pin")) {
       outputPin = int(root["pin"]);
@@ -489,26 +491,40 @@ boolean handleToggleRequest(String request) {
       return false;
     }
 
-    if (root.containsKey("delay")) {
-      rampDelay = int(root["delay"]);
-
-      if (rampDelay < 0) {
-        // invalid ramp delay
+    if (root.containsKey("togglemode")) {
+      if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
+        Serial.println("[Snap toggle mode]");
+        
+        snapToValue(outputPin, outputValue);
+      } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
+        Serial.println("[Ramp toggle mode]");
+        
+        int rampDelay;
+        
+        if (root.containsKey("delay")) {
+          rampDelay = int(root["delay"]);
+  
+          if (rampDelay < 0) {
+            // invalid ramp delay
+            return false;
+          }
+        } else {
+          // ramp delay not specified
+          return false;
+        }
+  
+        rampToValue(outputPin, outputValue, rampDelay);
+      } else {
+        // invalid toggle mode
         return false;
       }
     } else {
-      // ramp delay not specified
+      // no toggle mode specified
       return false;
     }
 
-    /*
-     * now that we have all the required values sanitised, everything is simple
-     */
-     
-     rampToValue(outputPin, outputValue, rampDelay);
-
      return true;
-  } else if (root.containsKey("mode") && root["mode"].as<int>() == DUAL_PIN_MODE) {
+  } else if (root.containsKey("pinmode") && root["pinmode"].as<int>() == PIN_MODE_DUAL) {
     // dual pin mode
     Serial.println("[Dual pin mode]");
 
@@ -520,11 +536,12 @@ boolean handleToggleRequest(String request) {
      *   value2: the output value to set for 'fine' pin
      *   overlap: the pin setting where 'coarse' pin overlaps with 'fine' pin
      *   map: a mapping between levels of the 'fine' pin and levels of the 'coarse' pin
-     *   delay: wait time in ms between output levels of 'fine' pin
+     *   togglemode: the toggle mode, snap or ramp
+     *   delay: wait time in ms between 'fine' output levels (only required if togglemode == ramp)
      *  
      * Dual pin mode uses the 'fine' pin to bridge the gap between the 'coarse' output levels. It is assumed
-     * that the 'coarse' and 'fine' pins are connected to the same device, but with different signal magnitudes.
-     * The mapping between signal magnitudes is specified by the 'map' key.
+     * that the 'coarse' and 'fine' pins are connected to the same device, but with different gains. The mapping
+     * between signal magnitudes is specified by the 'map' key.
      */
 
     int coarsePin;
@@ -533,7 +550,6 @@ boolean handleToggleRequest(String request) {
     int fineValue;
     int overlapValue;
     int mapping;
-    int rampDelay;
 
     if (root.containsKey("pin1")) {
       coarsePin = int(root["pin1"]);
@@ -593,68 +609,87 @@ boolean handleToggleRequest(String request) {
       return false;
     }
 
-    if (root.containsKey("delay")) {
-      rampDelay = int(root["delay"]);
+    if (root.containsKey("togglemode")) {
+      if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
+        Serial.println("[Snap toggle mode]");
+        
+        snapToValue(coarsePin, coarseValue);
+        snapToValue(finePin, fineValue);
+      } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
+        Serial.println("[Ramp toggle mode]");
 
-      if (rampDelay < 0) {
-        // invalid ramp delay
+        int rampDelay;
+    
+        if (root.containsKey("delay")) {
+          rampDelay = int(root["delay"]);
+    
+          if (rampDelay < 0) {
+            // invalid ramp delay
+            return false;
+          }
+        } else {
+          // ramp delay not specified
+          return false;
+        }
+    
+        /*
+         * Now that we've collected valid parameters, we ramp to the correct output.
+         */
+    
+        int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+        int currentFineValue = pinValues[getPinPosition(finePin)];
+    
+        // number of coarse steps to make
+        int coarseSteps = coarseValue - currentCoarseValue;
+    
+        Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
+    
+        // true means pin output is to increase, false means decrease
+        int coarseDirection;
+    
+        if (coarseSteps > 0) {
+          coarseDirection = 1;
+        } else {
+          coarseDirection = -1;
+        }
+    
+        Serial.println("Direction: " + coarseDirection);
+    
+        if (coarseSteps != 0) {
+          // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
+    
+          // move fine output to middle of range
+          //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
+    
+          // loop over coarse steps
+          for (int i = 0; i < abs(coarseSteps); i++) {
+            // move fine pin to next 'coarse' level
+            rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
+    
+            // snap coarse pin to next value and fine pins back to mid level
+            snapToValue(coarsePin, currentCoarseValue + coarseDirection);
+            snapToValue(finePin, MID_OUTPUT_LEVEL);
+    
+            // update current pin values
+            currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+            currentFineValue = pinValues[getPinPosition(finePin)];
+          }
+        }
+        
+        // adjust fine output
+        rampToValue(finePin, fineValue, rampDelay);
+    
+        return true;
+      } else {
+        // invalid toggle mode
         return false;
       }
     } else {
-      // ramp delay not specified
+      // no toggle mode specified
       return false;
     }
-
-    /*
-     * Now that we've collected valid parameters, we ramp to the correct output.
-     */
-
-    int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
-    int currentFineValue = pinValues[getPinPosition(finePin)];
-
-    // number of coarse steps to make
-    int coarseSteps = coarseValue - currentCoarseValue;
-
-    Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
-
-    // true means pin output is to increase, false means decrease
-    int coarseDirection;
-
-    if (coarseSteps > 0) {
-      coarseDirection = 1;
-    } else {
-      coarseDirection = -1;
-    }
-
-    Serial.println("Direction: " + coarseDirection);
-
-    if (coarseSteps != 0) {
-      // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
-
-      // move fine output to middle of range
-      //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
-
-      // loop over coarse steps
-      for (int i = 0; i < abs(coarseSteps); i++) {
-        // move fine pin to next 'coarse' level
-        rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
-
-        // snap coarse pin to next value and fine pins back to mid level
-        snapToValue(coarsePin, currentCoarseValue + coarseDirection);
-        snapToValue(finePin, MID_OUTPUT_LEVEL);
-
-        // update current pin values
-        currentCoarseValue = pinValues[getPinPosition(coarsePin)];
-        currentFineValue = pinValues[getPinPosition(finePin)];
-      }
-    }
-    
-    // adjust fine output
-    rampToValue(finePin, fineValue, rampDelay);
-
-    return true;
   } else {
-    // invalid mode
+    // invalid pin mode specified
     return false;
   }
 }
