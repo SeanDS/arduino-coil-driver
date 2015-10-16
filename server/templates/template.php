@@ -25,11 +25,14 @@
                     <ul class="nav navbar-nav navbar-left">
                       <li<?php if ($page == 'dashboard'): ?> class="active"<?php endif; ?>><a href="index.php">Dashboard</a></li>
                       <li<?php if ($page == 'drivers'): ?> class="active"<?php endif; ?>><a href="drivers.php">Drivers</a></li>
+                      <li<?php if ($page == 'groups'): ?> class="active"<?php endif; ?>><a href="groups.php">Groups</a></li>
                       <li<?php if ($page == 'states'): ?> class="active"<?php endif; ?>><a href="states.php">States</a></li>
                     </ul>
+                    <?php if (! is_null($user)): ?>
                     <ul class="nav navbar-nav navbar-right">
-                      <li<?php if ($page == 'user'): ?> class="active"<?php endif; ?>><a href="user.php">User</a></li>
+                      <li<?php if ($page == 'user'): ?> class="active"<?php endif; ?>><a href="user.php"><?=$this->e($user->getName())?></a></li>
                     </ul>
+                    <?php endif; ?>
                 </div>
             </div>
         </nav>
