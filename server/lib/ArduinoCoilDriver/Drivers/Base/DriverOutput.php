@@ -31,6 +31,7 @@ use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\DefaultTranslator;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Range;
 use Symfony\Component\Validator\Context\ExecutionContextFactory;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
@@ -99,6 +100,34 @@ abstract class DriverOutput implements ActiveRecordInterface
      * @var        string
      */
     protected $name;
+
+    /**
+     * The value for the mapping field.
+     *
+     * @var        int
+     */
+    protected $mapping;
+
+    /**
+     * The value for the overlap_value field.
+     *
+     * @var        int
+     */
+    protected $overlap_value;
+
+    /**
+     * The value for the central_value field.
+     *
+     * @var        int
+     */
+    protected $central_value;
+
+    /**
+     * The value for the default_delay field.
+     *
+     * @var        int
+     */
+    protected $default_delay;
 
     /**
      * @var        ChildDriver
@@ -407,6 +436,46 @@ abstract class DriverOutput implements ActiveRecordInterface
     }
 
     /**
+     * Get the [mapping] column value.
+     *
+     * @return int
+     */
+    public function getMapping()
+    {
+        return $this->mapping;
+    }
+
+    /**
+     * Get the [overlap_value] column value.
+     *
+     * @return int
+     */
+    public function getOverlapValue()
+    {
+        return $this->overlap_value;
+    }
+
+    /**
+     * Get the [central_value] column value.
+     *
+     * @return int
+     */
+    public function getCentralValue()
+    {
+        return $this->central_value;
+    }
+
+    /**
+     * Get the [default_delay] column value.
+     *
+     * @return int
+     */
+    public function getDefaultDelay()
+    {
+        return $this->default_delay;
+    }
+
+    /**
      * Set the value of [id] column.
      *
      * @param int $v new value
@@ -471,6 +540,86 @@ abstract class DriverOutput implements ActiveRecordInterface
     } // setName()
 
     /**
+     * Set the value of [mapping] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Drivers\DriverOutput The current object (for fluent API support)
+     */
+    public function setMapping($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->mapping !== $v) {
+            $this->mapping = $v;
+            $this->modifiedColumns[DriverOutputTableMap::COL_MAPPING] = true;
+        }
+
+        return $this;
+    } // setMapping()
+
+    /**
+     * Set the value of [overlap_value] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Drivers\DriverOutput The current object (for fluent API support)
+     */
+    public function setOverlapValue($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->overlap_value !== $v) {
+            $this->overlap_value = $v;
+            $this->modifiedColumns[DriverOutputTableMap::COL_OVERLAP_VALUE] = true;
+        }
+
+        return $this;
+    } // setOverlapValue()
+
+    /**
+     * Set the value of [central_value] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Drivers\DriverOutput The current object (for fluent API support)
+     */
+    public function setCentralValue($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->central_value !== $v) {
+            $this->central_value = $v;
+            $this->modifiedColumns[DriverOutputTableMap::COL_CENTRAL_VALUE] = true;
+        }
+
+        return $this;
+    } // setCentralValue()
+
+    /**
+     * Set the value of [default_delay] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Drivers\DriverOutput The current object (for fluent API support)
+     */
+    public function setDefaultDelay($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->default_delay !== $v) {
+            $this->default_delay = $v;
+            $this->modifiedColumns[DriverOutputTableMap::COL_DEFAULT_DELAY] = true;
+        }
+
+        return $this;
+    } // setDefaultDelay()
+
+    /**
      * Indicates whether the columns in this object are only set to default values.
      *
      * This method can be used in conjunction with isModified() to indicate whether an object is both
@@ -514,6 +663,18 @@ abstract class DriverOutput implements ActiveRecordInterface
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : DriverOutputTableMap::translateFieldName('Name', TableMap::TYPE_PHPNAME, $indexType)];
             $this->name = (null !== $col) ? (string) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : DriverOutputTableMap::translateFieldName('Mapping', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->mapping = (null !== $col) ? (int) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 4 + $startcol : DriverOutputTableMap::translateFieldName('OverlapValue', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->overlap_value = (null !== $col) ? (int) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 5 + $startcol : DriverOutputTableMap::translateFieldName('CentralValue', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->central_value = (null !== $col) ? (int) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 6 + $startcol : DriverOutputTableMap::translateFieldName('DefaultDelay', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->default_delay = (null !== $col) ? (int) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -522,7 +683,7 @@ abstract class DriverOutput implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 3; // 3 = DriverOutputTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 7; // 7 = DriverOutputTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\ArduinoCoilDriver\\Drivers\\DriverOutput'), 0, $e);
@@ -782,6 +943,18 @@ abstract class DriverOutput implements ActiveRecordInterface
         if ($this->isColumnModified(DriverOutputTableMap::COL_NAME)) {
             $modifiedColumns[':p' . $index++]  = 'name';
         }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_MAPPING)) {
+            $modifiedColumns[':p' . $index++]  = 'mapping';
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_OVERLAP_VALUE)) {
+            $modifiedColumns[':p' . $index++]  = 'overlap_value';
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_CENTRAL_VALUE)) {
+            $modifiedColumns[':p' . $index++]  = 'central_value';
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_DEFAULT_DELAY)) {
+            $modifiedColumns[':p' . $index++]  = 'default_delay';
+        }
 
         $sql = sprintf(
             'INSERT INTO driver_outputs (%s) VALUES (%s)',
@@ -801,6 +974,18 @@ abstract class DriverOutput implements ActiveRecordInterface
                         break;
                     case 'name':
                         $stmt->bindValue($identifier, $this->name, PDO::PARAM_STR);
+                        break;
+                    case 'mapping':
+                        $stmt->bindValue($identifier, $this->mapping, PDO::PARAM_INT);
+                        break;
+                    case 'overlap_value':
+                        $stmt->bindValue($identifier, $this->overlap_value, PDO::PARAM_INT);
+                        break;
+                    case 'central_value':
+                        $stmt->bindValue($identifier, $this->central_value, PDO::PARAM_INT);
+                        break;
+                    case 'default_delay':
+                        $stmt->bindValue($identifier, $this->default_delay, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -873,6 +1058,18 @@ abstract class DriverOutput implements ActiveRecordInterface
             case 2:
                 return $this->getName();
                 break;
+            case 3:
+                return $this->getMapping();
+                break;
+            case 4:
+                return $this->getOverlapValue();
+                break;
+            case 5:
+                return $this->getCentralValue();
+                break;
+            case 6:
+                return $this->getDefaultDelay();
+                break;
             default:
                 return null;
                 break;
@@ -906,6 +1103,10 @@ abstract class DriverOutput implements ActiveRecordInterface
             $keys[0] => $this->getId(),
             $keys[1] => $this->getDriverId(),
             $keys[2] => $this->getName(),
+            $keys[3] => $this->getMapping(),
+            $keys[4] => $this->getOverlapValue(),
+            $keys[5] => $this->getCentralValue(),
+            $keys[6] => $this->getDefaultDelay(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -1001,6 +1202,18 @@ abstract class DriverOutput implements ActiveRecordInterface
             case 2:
                 $this->setName($value);
                 break;
+            case 3:
+                $this->setMapping($value);
+                break;
+            case 4:
+                $this->setOverlapValue($value);
+                break;
+            case 5:
+                $this->setCentralValue($value);
+                break;
+            case 6:
+                $this->setDefaultDelay($value);
+                break;
         } // switch()
 
         return $this;
@@ -1035,6 +1248,18 @@ abstract class DriverOutput implements ActiveRecordInterface
         }
         if (array_key_exists($keys[2], $arr)) {
             $this->setName($arr[$keys[2]]);
+        }
+        if (array_key_exists($keys[3], $arr)) {
+            $this->setMapping($arr[$keys[3]]);
+        }
+        if (array_key_exists($keys[4], $arr)) {
+            $this->setOverlapValue($arr[$keys[4]]);
+        }
+        if (array_key_exists($keys[5], $arr)) {
+            $this->setCentralValue($arr[$keys[5]]);
+        }
+        if (array_key_exists($keys[6], $arr)) {
+            $this->setDefaultDelay($arr[$keys[6]]);
         }
     }
 
@@ -1085,6 +1310,18 @@ abstract class DriverOutput implements ActiveRecordInterface
         }
         if ($this->isColumnModified(DriverOutputTableMap::COL_NAME)) {
             $criteria->add(DriverOutputTableMap::COL_NAME, $this->name);
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_MAPPING)) {
+            $criteria->add(DriverOutputTableMap::COL_MAPPING, $this->mapping);
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_OVERLAP_VALUE)) {
+            $criteria->add(DriverOutputTableMap::COL_OVERLAP_VALUE, $this->overlap_value);
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_CENTRAL_VALUE)) {
+            $criteria->add(DriverOutputTableMap::COL_CENTRAL_VALUE, $this->central_value);
+        }
+        if ($this->isColumnModified(DriverOutputTableMap::COL_DEFAULT_DELAY)) {
+            $criteria->add(DriverOutputTableMap::COL_DEFAULT_DELAY, $this->default_delay);
         }
 
         return $criteria;
@@ -1174,6 +1411,10 @@ abstract class DriverOutput implements ActiveRecordInterface
     {
         $copyObj->setDriverId($this->getDriverId());
         $copyObj->setName($this->getName());
+        $copyObj->setMapping($this->getMapping());
+        $copyObj->setOverlapValue($this->getOverlapValue());
+        $copyObj->setCentralValue($this->getCentralValue());
+        $copyObj->setDefaultDelay($this->getDefaultDelay());
 
         if ($deepCopy) {
             // important: temporarily setNew(false) because this affects the behavior of
@@ -1791,6 +2032,10 @@ abstract class DriverOutput implements ActiveRecordInterface
         $this->id = null;
         $this->driver_id = null;
         $this->name = null;
+        $this->mapping = null;
+        $this->overlap_value = null;
+        $this->central_value = null;
+        $this->default_delay = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->resetModified();
@@ -1848,6 +2093,10 @@ abstract class DriverOutput implements ActiveRecordInterface
     {
         $metadata->addPropertyConstraint('name', new NotBlank());
         $metadata->addPropertyConstraint('name', new Length(array ('min' => 3,'max' => 32,)));
+        $metadata->addPropertyConstraint('mapping', new Range(array ('min' => 1,'max' => 255,)));
+        $metadata->addPropertyConstraint('overlap_value', new Range(array ('min' => 0,'max' => 255,)));
+        $metadata->addPropertyConstraint('central_value', new Range(array ('min' => 0,'max' => 65536,)));
+        $metadata->addPropertyConstraint('default_delay', new Range(array ('min' => 0,'max' => 250,)));
     }
 
     /**

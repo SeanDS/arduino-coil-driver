@@ -262,13 +262,16 @@ if (empty($do)) {
     $post = filter_input_array(
         INPUT_POST,
         array(
-            'name'        =>  FILTER_SANITIZE_STRING,
-            'coarsepinid' =>  FILTER_VALIDATE_INT,
-            'finepinid'   =>  FILTER_VALIDATE_INT
+            'name'          =>  FILTER_SANITIZE_STRING,
+            'coarsepinid'   =>  FILTER_VALIDATE_INT,
+            'finepinid'     =>  FILTER_VALIDATE_INT,
+            'mapping'       =>  FILTER_VALIDATE_INT,
+            'overlapvalue'  =>  FILTER_VALIDATE_INT,
+            'defaultdelay'  =>  FILTER_VALIDATE_INT
         )
     );
     
-    if ($post['coarsepinid'] && $post['finepinid']) {
+    if (! in_array(null, array($post['name'], $post['coarsepinid'], $post['finepinid'], $post['mapping'], $post['overlapvalue'], $post['defaultdelay']), true)) {
         // new output submitted
         
         // get pins
@@ -276,17 +279,17 @@ if (empty($do)) {
         $finePin = DriverPinQuery::create()->findPK($post['finepinid']);
         
         if (is_null($coarsePin) || is_null($finePin)) {
-            $errors['coarsepinid'][] = "A coarse pin must be specified";
-            $errors['finepinid'][] = "A fine pin must be specified";
+            $errors['coarse_pin_id'][] = "A coarse pin must be specified";
+            $errors['fine_pin_id'][] = "A fine pin must be specified";
         } else {
             // create output
             try {
-                DriverOutput::create($post['name'], $coarsePin, $finePin, $driver);
+                DriverOutput::create($driver, $post['name'], $coarsePin, $finePin, $post['mapping'], $post['overlapvalue'], $post['defaultdelay']);
                 
                 header('Location: drivers.php?do=listoutputs&id=' . $driver->getId() . '&mid=1');
             } catch (IdenticalOutputPinsException $e) {
-                $errors['coarsepinid'][] = "The coarse pin cannot be the same as the fine pin";
-                $errors['finepinid'][] = "The fine pin cannot be the same as the coarse pin";
+                $errors['coarse_pin_id'][] = "The coarse pin cannot be the same as the fine pin";
+                $errors['fine_pin_id'][] = "The fine pin cannot be the same as the coarse pin";
             } catch (ValidationException $e) {
                 $errors = $e->getErrors();
             }
@@ -304,13 +307,19 @@ if (empty($do)) {
     $post = filter_input_array(
         INPUT_POST,
         array(
-            'name'  =>  FILTER_SANITIZE_STRING
+            'name'          =>  FILTER_SANITIZE_STRING,
+            'mapping'       =>  FILTER_VALIDATE_INT,
+            'overlapvalue'  =>  FILTER_VALIDATE_INT,
+            'defaultdelay'  =>  FILTER_VALIDATE_INT
         )
     );
     
     // process HTTP_POST data if submitted
-    if ($post['name']) {
+    if (! in_array(null, array($post['name'], $post['mapping'], $post['overlapvalue'], $post['defaultdelay']), true)) {
         $driverOutput->setName($post['name']);
+        $driverOutput->setMapping($post['mapping']);
+        $driverOutput->setOverlapValue($post['overlapvalue']);
+        $driverOutput->setDefaultDelay($post['defaultdelay']);
         
         if ($driverOutput->validate()) {
             $driverOutput->save();

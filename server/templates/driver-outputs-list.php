@@ -28,7 +28,7 @@
             <?php foreach($driver->getDriverOutputs() as $driverOutput): ?>
             <tr>
                 <td><?=$this->e($driverOutput->getName())?></td>
-                <td><?php $this->insert('driver-output-list-pins', ['driverOutput' => $driverOutput]) ?><p>Central pin value: 127</p><p>Fine-to-coarse level mapping: 63</p></td>
+                <td><?php $this->insert('driver-output-list-pins', ['driverOutput' => $driverOutput]) ?></td>
                 <td class="text-center">
                     <div class="btn-group">
                         <a href="drivers.php?do=editoutput&amp;oid=<?=$this->e($driverOutput->getId())?>" class="btn btn-xs btn-default">Edit</a>

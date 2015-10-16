@@ -61,12 +61,20 @@
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="driver_id" phpName="DriverId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
     <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="mapping" phpName="Mapping" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="overlap_value" phpName="OverlapValue" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="central_value" phpName="CentralValue" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="default_delay" phpName="DefaultDelay" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
     <foreign-key foreignTable="drivers" name="driver_outputs_fk_1">
       <reference local="driver_id" foreign="id"/>
     </foreign-key>
     <behavior name="validate">
       <parameter name="rule1" value="{column: name, validator: NotBlank}" />
       <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: mapping, validator: Range, options: {min: 1, max: 255}}" />
+      <parameter name="rule4" value="{column: overlap_value, validator: Range, options: {min: 0, max: 255}}" />
+      <parameter name="rule5" value="{column: central_value, validator: Range, options: {min: 0, max: 65536}}" />
+      <parameter name="rule6" value="{column: default_delay, validator: Range, options: {min: 0, max: 250}}" />
     </behavior>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>

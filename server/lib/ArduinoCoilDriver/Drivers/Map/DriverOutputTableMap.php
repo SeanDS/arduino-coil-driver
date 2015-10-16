@@ -59,7 +59,7 @@ class DriverOutputTableMap extends TableMap
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 3;
+    const NUM_COLUMNS = 7;
 
     /**
      * The number of lazy-loaded columns
@@ -69,7 +69,7 @@ class DriverOutputTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 3;
+    const NUM_HYDRATE_COLUMNS = 7;
 
     /**
      * the column name for the id field
@@ -87,6 +87,26 @@ class DriverOutputTableMap extends TableMap
     const COL_NAME = 'driver_outputs.name';
 
     /**
+     * the column name for the mapping field
+     */
+    const COL_MAPPING = 'driver_outputs.mapping';
+
+    /**
+     * the column name for the overlap_value field
+     */
+    const COL_OVERLAP_VALUE = 'driver_outputs.overlap_value';
+
+    /**
+     * the column name for the central_value field
+     */
+    const COL_CENTRAL_VALUE = 'driver_outputs.central_value';
+
+    /**
+     * the column name for the default_delay field
+     */
+    const COL_DEFAULT_DELAY = 'driver_outputs.default_delay';
+
+    /**
      * The default string format for model objects of the related table
      */
     const DEFAULT_STRING_FORMAT = 'YAML';
@@ -98,11 +118,11 @@ class DriverOutputTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'DriverId', 'Name', ),
-        self::TYPE_CAMELNAME     => array('id', 'driverId', 'name', ),
-        self::TYPE_COLNAME       => array(DriverOutputTableMap::COL_ID, DriverOutputTableMap::COL_DRIVER_ID, DriverOutputTableMap::COL_NAME, ),
-        self::TYPE_FIELDNAME     => array('id', 'driver_id', 'name', ),
-        self::TYPE_NUM           => array(0, 1, 2, )
+        self::TYPE_PHPNAME       => array('Id', 'DriverId', 'Name', 'Mapping', 'OverlapValue', 'CentralValue', 'DefaultDelay', ),
+        self::TYPE_CAMELNAME     => array('id', 'driverId', 'name', 'mapping', 'overlapValue', 'centralValue', 'defaultDelay', ),
+        self::TYPE_COLNAME       => array(DriverOutputTableMap::COL_ID, DriverOutputTableMap::COL_DRIVER_ID, DriverOutputTableMap::COL_NAME, DriverOutputTableMap::COL_MAPPING, DriverOutputTableMap::COL_OVERLAP_VALUE, DriverOutputTableMap::COL_CENTRAL_VALUE, DriverOutputTableMap::COL_DEFAULT_DELAY, ),
+        self::TYPE_FIELDNAME     => array('id', 'driver_id', 'name', 'mapping', 'overlap_value', 'central_value', 'default_delay', ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, )
     );
 
     /**
@@ -112,11 +132,11 @@ class DriverOutputTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverId' => 1, 'Name' => 2, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'driverId' => 1, 'name' => 2, ),
-        self::TYPE_COLNAME       => array(DriverOutputTableMap::COL_ID => 0, DriverOutputTableMap::COL_DRIVER_ID => 1, DriverOutputTableMap::COL_NAME => 2, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_id' => 1, 'name' => 2, ),
-        self::TYPE_NUM           => array(0, 1, 2, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'DriverId' => 1, 'Name' => 2, 'Mapping' => 3, 'OverlapValue' => 4, 'CentralValue' => 5, 'DefaultDelay' => 6, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'driverId' => 1, 'name' => 2, 'mapping' => 3, 'overlapValue' => 4, 'centralValue' => 5, 'defaultDelay' => 6, ),
+        self::TYPE_COLNAME       => array(DriverOutputTableMap::COL_ID => 0, DriverOutputTableMap::COL_DRIVER_ID => 1, DriverOutputTableMap::COL_NAME => 2, DriverOutputTableMap::COL_MAPPING => 3, DriverOutputTableMap::COL_OVERLAP_VALUE => 4, DriverOutputTableMap::COL_CENTRAL_VALUE => 5, DriverOutputTableMap::COL_DEFAULT_DELAY => 6, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'driver_id' => 1, 'name' => 2, 'mapping' => 3, 'overlap_value' => 4, 'central_value' => 5, 'default_delay' => 6, ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, )
     );
 
     /**
@@ -139,6 +159,10 @@ class DriverOutputTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addForeignKey('driver_id', 'DriverId', 'INTEGER', 'drivers', 'id', true, 10, null);
         $this->addColumn('name', 'Name', 'VARCHAR', true, 32, null);
+        $this->addColumn('mapping', 'Mapping', 'INTEGER', true, 10, null);
+        $this->addColumn('overlap_value', 'OverlapValue', 'INTEGER', true, 10, null);
+        $this->addColumn('central_value', 'CentralValue', 'INTEGER', true, 10, null);
+        $this->addColumn('default_delay', 'DefaultDelay', 'INTEGER', true, 10, null);
     } // initialize()
 
     /**
@@ -178,7 +202,7 @@ class DriverOutputTableMap extends TableMap
     public function getBehaviors()
     {
         return array(
-            'validate' => array('rule1' => array ('column' => 'name','validator' => 'NotBlank',), 'rule2' => array ('column' => 'name','validator' => 'Length','options' => array ('min' => 3,'max' => 32,),), ),
+            'validate' => array('rule1' => array ('column' => 'name','validator' => 'NotBlank',), 'rule2' => array ('column' => 'name','validator' => 'Length','options' => array ('min' => 3,'max' => 32,),), 'rule3' => array ('column' => 'mapping','validator' => 'Range','options' => array ('min' => 1,'max' => 255,),), 'rule4' => array ('column' => 'overlap_value','validator' => 'Range','options' => array ('min' => 0,'max' => 255,),), 'rule5' => array ('column' => 'central_value','validator' => 'Range','options' => array ('min' => 0,'max' => 65536,),), 'rule6' => array ('column' => 'default_delay','validator' => 'Range','options' => array ('min' => 0,'max' => 250,),), ),
         );
     } // getBehaviors()
 
@@ -326,10 +350,18 @@ class DriverOutputTableMap extends TableMap
             $criteria->addSelectColumn(DriverOutputTableMap::COL_ID);
             $criteria->addSelectColumn(DriverOutputTableMap::COL_DRIVER_ID);
             $criteria->addSelectColumn(DriverOutputTableMap::COL_NAME);
+            $criteria->addSelectColumn(DriverOutputTableMap::COL_MAPPING);
+            $criteria->addSelectColumn(DriverOutputTableMap::COL_OVERLAP_VALUE);
+            $criteria->addSelectColumn(DriverOutputTableMap::COL_CENTRAL_VALUE);
+            $criteria->addSelectColumn(DriverOutputTableMap::COL_DEFAULT_DELAY);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.driver_id');
             $criteria->addSelectColumn($alias . '.name');
+            $criteria->addSelectColumn($alias . '.mapping');
+            $criteria->addSelectColumn($alias . '.overlap_value');
+            $criteria->addSelectColumn($alias . '.central_value');
+            $criteria->addSelectColumn($alias . '.default_delay');
         }
     }
 

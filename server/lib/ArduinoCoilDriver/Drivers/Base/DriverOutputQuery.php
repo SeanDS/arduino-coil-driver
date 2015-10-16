@@ -24,10 +24,18 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutputQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildDriverOutputQuery orderByDriverId($order = Criteria::ASC) Order by the driver_id column
  * @method     ChildDriverOutputQuery orderByName($order = Criteria::ASC) Order by the name column
+ * @method     ChildDriverOutputQuery orderByMapping($order = Criteria::ASC) Order by the mapping column
+ * @method     ChildDriverOutputQuery orderByOverlapValue($order = Criteria::ASC) Order by the overlap_value column
+ * @method     ChildDriverOutputQuery orderByCentralValue($order = Criteria::ASC) Order by the central_value column
+ * @method     ChildDriverOutputQuery orderByDefaultDelay($order = Criteria::ASC) Order by the default_delay column
  *
  * @method     ChildDriverOutputQuery groupById() Group by the id column
  * @method     ChildDriverOutputQuery groupByDriverId() Group by the driver_id column
  * @method     ChildDriverOutputQuery groupByName() Group by the name column
+ * @method     ChildDriverOutputQuery groupByMapping() Group by the mapping column
+ * @method     ChildDriverOutputQuery groupByOverlapValue() Group by the overlap_value column
+ * @method     ChildDriverOutputQuery groupByCentralValue() Group by the central_value column
+ * @method     ChildDriverOutputQuery groupByDefaultDelay() Group by the default_delay column
  *
  * @method     ChildDriverOutputQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildDriverOutputQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -74,7 +82,11 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildDriverOutput findOneById(int $id) Return the first ChildDriverOutput filtered by the id column
  * @method     ChildDriverOutput findOneByDriverId(int $driver_id) Return the first ChildDriverOutput filtered by the driver_id column
- * @method     ChildDriverOutput findOneByName(string $name) Return the first ChildDriverOutput filtered by the name column *
+ * @method     ChildDriverOutput findOneByName(string $name) Return the first ChildDriverOutput filtered by the name column
+ * @method     ChildDriverOutput findOneByMapping(int $mapping) Return the first ChildDriverOutput filtered by the mapping column
+ * @method     ChildDriverOutput findOneByOverlapValue(int $overlap_value) Return the first ChildDriverOutput filtered by the overlap_value column
+ * @method     ChildDriverOutput findOneByCentralValue(int $central_value) Return the first ChildDriverOutput filtered by the central_value column
+ * @method     ChildDriverOutput findOneByDefaultDelay(int $default_delay) Return the first ChildDriverOutput filtered by the default_delay column *
 
  * @method     ChildDriverOutput requirePk($key, ConnectionInterface $con = null) Return the ChildDriverOutput by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutput requireOne(ConnectionInterface $con = null) Return the first ChildDriverOutput matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -82,11 +94,19 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildDriverOutput requireOneById(int $id) Return the first ChildDriverOutput filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutput requireOneByDriverId(int $driver_id) Return the first ChildDriverOutput filtered by the driver_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildDriverOutput requireOneByName(string $name) Return the first ChildDriverOutput filtered by the name column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutput requireOneByMapping(int $mapping) Return the first ChildDriverOutput filtered by the mapping column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutput requireOneByOverlapValue(int $overlap_value) Return the first ChildDriverOutput filtered by the overlap_value column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutput requireOneByCentralValue(int $central_value) Return the first ChildDriverOutput filtered by the central_value column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildDriverOutput requireOneByDefaultDelay(int $default_delay) Return the first ChildDriverOutput filtered by the default_delay column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildDriverOutput[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildDriverOutput objects based on current ModelCriteria
  * @method     ChildDriverOutput[]|ObjectCollection findById(int $id) Return ChildDriverOutput objects filtered by the id column
  * @method     ChildDriverOutput[]|ObjectCollection findByDriverId(int $driver_id) Return ChildDriverOutput objects filtered by the driver_id column
  * @method     ChildDriverOutput[]|ObjectCollection findByName(string $name) Return ChildDriverOutput objects filtered by the name column
+ * @method     ChildDriverOutput[]|ObjectCollection findByMapping(int $mapping) Return ChildDriverOutput objects filtered by the mapping column
+ * @method     ChildDriverOutput[]|ObjectCollection findByOverlapValue(int $overlap_value) Return ChildDriverOutput objects filtered by the overlap_value column
+ * @method     ChildDriverOutput[]|ObjectCollection findByCentralValue(int $central_value) Return ChildDriverOutput objects filtered by the central_value column
+ * @method     ChildDriverOutput[]|ObjectCollection findByDefaultDelay(int $default_delay) Return ChildDriverOutput objects filtered by the default_delay column
  * @method     ChildDriverOutput[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -179,7 +199,7 @@ abstract class DriverOutputQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, driver_id, name FROM driver_outputs WHERE id = :p0';
+        $sql = 'SELECT id, driver_id, name, mapping, overlap_value, central_value, default_delay FROM driver_outputs WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -380,6 +400,170 @@ abstract class DriverOutputQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(DriverOutputTableMap::COL_NAME, $name, $comparison);
+    }
+
+    /**
+     * Filter the query on the mapping column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByMapping(1234); // WHERE mapping = 1234
+     * $query->filterByMapping(array(12, 34)); // WHERE mapping IN (12, 34)
+     * $query->filterByMapping(array('min' => 12)); // WHERE mapping > 12
+     * </code>
+     *
+     * @param     mixed $mapping The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function filterByMapping($mapping = null, $comparison = null)
+    {
+        if (is_array($mapping)) {
+            $useMinMax = false;
+            if (isset($mapping['min'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_MAPPING, $mapping['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($mapping['max'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_MAPPING, $mapping['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(DriverOutputTableMap::COL_MAPPING, $mapping, $comparison);
+    }
+
+    /**
+     * Filter the query on the overlap_value column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByOverlapValue(1234); // WHERE overlap_value = 1234
+     * $query->filterByOverlapValue(array(12, 34)); // WHERE overlap_value IN (12, 34)
+     * $query->filterByOverlapValue(array('min' => 12)); // WHERE overlap_value > 12
+     * </code>
+     *
+     * @param     mixed $overlapValue The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function filterByOverlapValue($overlapValue = null, $comparison = null)
+    {
+        if (is_array($overlapValue)) {
+            $useMinMax = false;
+            if (isset($overlapValue['min'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_OVERLAP_VALUE, $overlapValue['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($overlapValue['max'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_OVERLAP_VALUE, $overlapValue['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(DriverOutputTableMap::COL_OVERLAP_VALUE, $overlapValue, $comparison);
+    }
+
+    /**
+     * Filter the query on the central_value column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByCentralValue(1234); // WHERE central_value = 1234
+     * $query->filterByCentralValue(array(12, 34)); // WHERE central_value IN (12, 34)
+     * $query->filterByCentralValue(array('min' => 12)); // WHERE central_value > 12
+     * </code>
+     *
+     * @param     mixed $centralValue The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function filterByCentralValue($centralValue = null, $comparison = null)
+    {
+        if (is_array($centralValue)) {
+            $useMinMax = false;
+            if (isset($centralValue['min'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_CENTRAL_VALUE, $centralValue['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($centralValue['max'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_CENTRAL_VALUE, $centralValue['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(DriverOutputTableMap::COL_CENTRAL_VALUE, $centralValue, $comparison);
+    }
+
+    /**
+     * Filter the query on the default_delay column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByDefaultDelay(1234); // WHERE default_delay = 1234
+     * $query->filterByDefaultDelay(array(12, 34)); // WHERE default_delay IN (12, 34)
+     * $query->filterByDefaultDelay(array('min' => 12)); // WHERE default_delay > 12
+     * </code>
+     *
+     * @param     mixed $defaultDelay The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildDriverOutputQuery The current query, for fluid interface
+     */
+    public function filterByDefaultDelay($defaultDelay = null, $comparison = null)
+    {
+        if (is_array($defaultDelay)) {
+            $useMinMax = false;
+            if (isset($defaultDelay['min'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_DEFAULT_DELAY, $defaultDelay['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($defaultDelay['max'])) {
+                $this->addUsingAlias(DriverOutputTableMap::COL_DEFAULT_DELAY, $defaultDelay['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(DriverOutputTableMap::COL_DEFAULT_DELAY, $defaultDelay, $comparison);
     }
 
     /**

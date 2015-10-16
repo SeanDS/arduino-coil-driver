@@ -22,7 +22,7 @@ use ArduinoCoilDriver\Exceptions\ValidationException;
  */
 class DriverOutput extends BaseDriverOutput
 {
-    public static function create($name, $coarsePin, $finePin, $driver) {
+    public static function create($driver, $name, $coarsePin, $finePin, $mapping, $overlapValue, $defaultDelay) {
         if ($coarsePin == $finePin) {
             throw new IdenticalOutputPinsException();
         }
@@ -38,6 +38,9 @@ class DriverOutput extends BaseDriverOutput
         // set parameters
         $driverOutput->setDriverId($driver->getId());
         $driverOutput->setName($name);
+        $driverOutput->setMapping($mapping);
+        $driverOutput->setOverlapValue($overlapValue);
+        $driverOutput->setDefaultDelay($defaultDelay);
         
         // validate
         if (! $driverOutput->validate()) {

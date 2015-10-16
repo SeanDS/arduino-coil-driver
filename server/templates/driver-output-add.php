@@ -15,7 +15,7 @@
           <?php endif; ?>
         </div>
       </div>
-      <div class="form-group<?php if (array_key_exists('coarsepinid', $errors)): ?> has-error<?php endif; ?>">
+      <div class="form-group<?php if (array_key_exists('coarse_pin_id', $errors)): ?> has-error<?php endif; ?>">
         <label for="coarsepinid" class="control-label col-md-4">Coarse Pin</label>
         <div class="col-md-8">
           <select id="coarsepinid" name="coarsepinid">
@@ -23,14 +23,14 @@
             <option value="<?=$this->e($driverPin->getId())?>"><?=$this->e($driverPin->getName())?></option>
             <?php endforeach; ?>
           </select>
-          <?php if (array_key_exists('coarsepinid', $errors)): ?>
-          <?php foreach ($errors['coarsepinid'] as $error): ?>
+          <?php if (array_key_exists('coarse_pin_id', $errors)): ?>
+          <?php foreach ($errors['coarse_pin_id'] as $error): ?>
           <span class="help-block"><?=$this->e($error)?></span>
           <?php endforeach; ?>
           <?php endif; ?>
         </div>
       </div>
-      <div class="form-group<?php if (array_key_exists('finepinid', $errors)): ?> has-error<?php endif; ?>">
+      <div class="form-group<?php if (array_key_exists('fine_pin_id', $errors)): ?> has-error<?php endif; ?>">
         <label for="finepinid" class="control-label col-md-4">Fine Pin</label>
         <div class="col-md-8">
           <select id="finepinid" name="finepinid">
@@ -38,8 +38,44 @@
             <option value="<?=$this->e($driverPin->getId())?>"><?=$this->e($driverPin->getName())?></option>
             <?php endforeach; ?>
           </select>
-          <?php if (array_key_exists('finepinid', $errors)): ?>
-          <?php foreach ($errors['finepinid'] as $error): ?>
+          <?php if (array_key_exists('fine_pin_id', $errors)): ?>
+          <?php foreach ($errors['fine_pin_id'] as $error): ?>
+          <span class="help-block"><?=$this->e($error)?></span>
+          <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="form-group<?php if (array_key_exists('mapping', $errors)): ?> has-error<?php endif; ?>">
+        <label for="mapping" class="control-label col-md-4">Pin Mapping</label>
+        <div class="col-md-3">
+          <input class="form-control" type="text" name="mapping" id="mapping" placeholder="64" maxlength="3"/>
+          <?php if (array_key_exists('mapping', $errors)): ?>
+          <?php foreach ($errors['mapping'] as $error): ?>
+          <span class="help-block"><?=$this->e($error)?></span>
+          <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="form-group<?php if (array_key_exists('overlap_value', $errors)): ?> has-error<?php endif; ?>">
+        <label for="overlapvalue" class="control-label col-md-4">Overlap Value</label>
+        <div class="col-md-3">
+          <input class="form-control" type="text" name="overlapvalue" id="overlapvalue" placeholder="127" maxlength="3"/>
+          <?php if (array_key_exists('overlap_value', $errors)): ?>
+          <?php foreach ($errors['overlap_value'] as $error): ?>
+          <span class="help-block"><?=$this->e($error)?></span>
+          <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="form-group<?php if (array_key_exists('default_delay', $errors)): ?> has-error<?php endif; ?>">
+        <label for="defaultdelay" class="control-label col-md-4">Default Delay</label>
+        <div class="col-md-4">
+          <div class="input-group">
+            <input class="form-control" type="text" name="defaultdelay" id="defaultdelay" placeholder="5" maxlength="5"/>
+            <div class="input-group-addon">ms</div>
+          </div>
+          <?php if (array_key_exists('default_delay', $errors)): ?>
+          <?php foreach ($errors['default_delay'] as $error): ?>
           <span class="help-block"><?=$this->e($error)?></span>
           <?php endforeach; ?>
           <?php endif; ?>
