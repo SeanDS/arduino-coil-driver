@@ -1,7 +1,7 @@
 /*
 * Coil Driver Arduino Server
 *
-* Version 0.96, October 2015
+* Version 0.97, October 2015
 *
 * Sean Leavey
 * s.leavey.1@research.gla.ac.uk
@@ -39,7 +39,7 @@ String path = "/arduino-coil-driver/server/";
 //
 
 // software version
-const char* SOFTWARE_VERSION = "0.96";
+const char* SOFTWARE_VERSION = "0.97";
 
 // slave select pins
 const int SD_SS_PIN = 4;          // SD card slave select
@@ -602,8 +602,8 @@ boolean handleToggleRequest(String request) {
       return false;
     }
 
-    if (root.containsKey("map")) {
-      mapping = int(root["map"]);
+    if (root.containsKey("mapping")) {
+      mapping = int(root["mapping"]);
     } else {
       // mapping not specified
       return false;
