@@ -6,8 +6,8 @@ use ArduinoCoilDriver\Exceptions\Base\Exception as BaseException;
 
 class InvalidJsonException extends BaseException
 {
-    public function __construct($error) {
-        return parent::__construct(sprintf("Invalid JSON: %s", $error));
+    public function __construct($error, $json) {
+        return parent::__construct(sprintf("Invalid JSON: %s. Original JSON string: %s", $error, $json));
     }
 }
  

@@ -10,13 +10,13 @@ class Payload
     protected $timeTaken;
 
     public function __construct($message, $timeTaken) {
-        $message = json_decode($message, true);
+        $decodedMessage = json_decode($message, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidJsonException(json_last_error_msg());
+            throw new InvalidJsonException(json_last_error_msg(), $message);
         }
     
-        $this->message = $message;
+        $this->message = $decodedMessage;
         $this->timeTaken = $timeTaken;
     }
     

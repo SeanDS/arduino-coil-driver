@@ -12,7 +12,7 @@ use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\ConflictingStatusException;
 use ArduinoCoilDriver\Payload\StatusPayload;
-use ArduinoCoilDriver\Payload\OutputPayload;
+use ArduinoCoilDriver\Payload\ReceivePayload;
 
 /**
  * Skeleton subclass for representing a row from the 'drivers' table.
@@ -186,12 +186,12 @@ class Driver extends BaseDriver
         $message = $this->contact($payload->getRequest());
         $endTime = microtime(true);
         
-        $outputPayload = new OutputPayload($message, $endTime - $startTime);
+        $outputPayload = new ReceivePayload($message, $endTime - $startTime);
         
         $this->updatePinsFromPayload($outputPayload);
     }
     
-    protected function updatePinsFromPayload(OutputPayload $payload) {
+    protected function updatePinsFromPayload(ReceivePayload $payload) {
         $pinValues = $payload->getPinValues();
         
         // get a write connection

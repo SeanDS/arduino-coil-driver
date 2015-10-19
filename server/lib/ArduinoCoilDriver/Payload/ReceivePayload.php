@@ -2,7 +2,7 @@
 
 namespace ArduinoCoilDriver\Payload;
 
-class OutputPayload extends Payload {
+class ReceivePayload extends Payload {
     private $pinValues;
 
     public function __construct($message, $timeTaken) {

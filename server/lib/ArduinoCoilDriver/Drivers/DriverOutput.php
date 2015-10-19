@@ -11,6 +11,7 @@ use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
+use Exception;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_outputs' table.
@@ -78,20 +79,20 @@ class DriverOutput extends BaseDriverOutput
         return $this->getMapping() * $outputPins['coarse']->getDriverPin()->getLatestDriverPinValue()->getValue() + $outputPins['fine']->getDriverPin()->getLatestDriverPinValue()->getValue();
     }
     
-    public function setValue($value) {
+    public function setValue($value, $toggleMode) {
         // set output value
     
         // get output pins
         $outputPins = $this->getOutputPins();
         
         // calculate coarse value
-        $newCoarseValue = floor($value / $this->getMapping());
+        $newCoarseValue = intval(floor($value / $this->getMapping()));
         
         // calculate fine value
         $newFineValue = $value % $this->getMapping();
         
         // create message
-        $payload = $this->createRampPayload($outputPins['coarse'], $outputPins['fine'], $newCoarseValue, $newFineValue, $this->getMapping(), $this->getOverlapValue(), $this->getDefaultDelay());
+        $payload = $this->createTogglePayload($toggleMode, $outputPins['coarse'], $newCoarseValue, $outputPins['fine'], $newFineValue);
         
         return $this->getDriver()->dispatch($payload);
     }
@@ -122,20 +123,41 @@ class DriverOutput extends BaseDriverOutput
         return $pins;
     }
     
-    protected function createRampPayload($pin1, $pin2, $value1, $value2, $mapping, $overlap, $delay) {
-        return new SendPayload("/toggle",
-            array(
-                'pinmode'     =>  self::PIN_MODE_DUAL,
-                'togglemode'  =>  self::TOGGLE_MODE_RAMP,
-                'pin1'        =>  $pin1->getDriverPin()->getPin(),
-                'pin2'        =>  $pin2->getDriverPin()->getPin(),
-                'value1'      =>  $value1,
-                'value2'      =>  $value2,
-                'map'         =>  $mapping,
-                'overlap'     =>  $overlap,
-                'delay'       =>  $delay
-            )
-        );
+    protected function createTogglePayload($toggleMode, DriverOutputPin $pin1, $value1, DriverOutputPin $pin2, $value2) {
+        $toggleMode = intval($toggleMode);
+    
+        if ($toggleMode !== self::TOGGLE_MODE_SNAP && $toggleMode !== self::TOGGLE_MODE_RAMP) {
+            throw new Exception('Specified toggle mode is invalid.');
+        }
+        
+        if (! is_int($value1)) {
+            throw new Exception('Specified value1 is invalid.');
+        } elseif ($value1 < 0) {
+            throw new Exception('Specified value1 cannot be negative.');
+        } elseif (! is_int($value2)) {
+            throw new Exception('Specified value2 is invalid.');
+        } elseif ($value2 < 0) {
+            throw new Exception('Specified value2 cannot be negative.');
+        }
+        
+        $settings = array();
+        $settings['pinmode'] = self::PIN_MODE_DUAL;
+        $settings['togglemode'] = $toggleMode;   
+        $settings['pin1'] = $pin1->getDriverPin()->getPin();
+        $settings['value1'] = $value1;
+        $settings['pin2'] = $pin2->getDriverPin()->getPin();
+        $settings['value2'] = $value2;
+        $settings['mapping'] = $this->getMapping();
+        $settings['overlap'] = $this->getOverlapValue();
+        
+        if ($toggleMode === self::TOGGLE_MODE_SNAP) {
+            // don't need any extra settings
+        } else {
+            // need delay            
+            $settings['delay'] = $this->getDefaultDelay();
+        }
+    
+        return new SendPayload("/toggle", $settings);
     }
 
     public function preDelete(ConnectionInterface $connection = null) {

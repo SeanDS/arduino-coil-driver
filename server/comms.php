@@ -3,6 +3,7 @@
 require('require.php');
 
 use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 
@@ -35,8 +36,8 @@ if (! array_key_exists('userId', $_SESSION)) {
 
 $do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
 
-if ($do === 'ramp') {
-    // ramp driver output
+if ($do === 'dual') {
+    // set a driver output (a collection of two pins)
     
     // get driver output
     $driverOutput = getDriverOutputFromGet();
@@ -45,25 +46,33 @@ if ($do === 'ramp') {
     $get = filter_input_array(
         INPUT_GET,
         array(
-            'value'  =>  FILTER_VALIDATE_INT
+            'value'       =>  FILTER_VALIDATE_INT,
+            'togglemode'  =>  FILTER_SANITIZE_STRING
         )
     );
     
     if (is_null($get['value'])) {
         exit();
+    } elseif (is_null($get['togglemode'])) {
+        exit();
+    }
+    
+    if ($get['togglemode'] === "ramp") {
+        $toggleMode = DriverOutput::TOGGLE_MODE_RAMP;
+    } elseif ($get['togglemode'] === "snap") {
+        $toggleMode = DriverOutput::TOGGLE_MODE_SNAP;
+    } else {
+        exit();
     }
     
     // set value
     try {
-        $message = $driverOutput->setValue($get['value']);
+        $message = $driverOutput->setValue($get['value'], $toggleMode);
     } catch (InvalidJsonException $e) {
         throw $e;
     } catch (NoContactException $e) {
         throw $e;
     }
-    
-    // output JSON array with new value
-    print_r($message);
 }
 
 ?>
