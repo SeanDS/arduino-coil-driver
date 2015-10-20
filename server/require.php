@@ -1,7 +1,8 @@
 <?php
 
 // config settings - TODO: move somewhere else
-define('LOG_FILE', '/var/log/arduinocoildriver.log');
+define('LOG_FILE', '/var/log/arduinocoildriver/web.log');
+define('MAX_LOG_FILES', 10);
 define('TEMPLATE_DIR', 'templates');
 define('DATETIME_FORMAT', 'Y-m-d H:i:s');
 define('SERVER_NAME', 'Arduino Coil Driver');
@@ -37,11 +38,15 @@ require_once('vendor/autoload.php');
  */
 
 use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Processor\WebProcessor;
+use ArduinoCoilDriver\Logger\UserProcessor;
 
 // create logging instance
 $logger = new Logger('logger');
-$logger->pushHandler(new StreamHandler(LOG_FILE, Logger::INFO));
+$logger->pushHandler(new RotatingFileHandler(LOG_FILE, MAX_LOG_FILES, Logger::INFO));
+$logger->pushProcessor(new WebProcessor());
+$logger->pushProcessor(new UserProcessor());
 
 /*
  * Setup object relationship manager
