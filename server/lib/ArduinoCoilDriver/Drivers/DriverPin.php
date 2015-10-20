@@ -9,6 +9,7 @@ use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinValueTableMap;
+use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\Map\StateTableMap;
 
@@ -52,6 +53,31 @@ class DriverPin extends BaseDriverPin
         $connection->commit();
         
         return $driverPin;
+    }
+    
+    public function setValue($value) {
+        // set output value
+        
+        // create message
+        $payload = $this->createTogglePayload($value);
+        
+        return $this->getDriver()->dispatch($payload);
+    }
+    
+    protected function createTogglePayload($value) {        
+        if (! is_int($value)) {
+            throw new Exception('Specified value is invalid.');
+        } elseif ($value < 0) {
+            throw new Exception('Specified value cannot be negative.');
+        }
+        
+        $settings = array();
+        $settings['pinmode'] = 0;
+        $settings['togglemode'] = 0;
+        $settings['pin'] = $this->getPin();
+        $settings['value'] = $value;
+    
+        return new SendPayload("/toggle", $settings);
     }
     
     public function updateValue($newValue, State $state) {

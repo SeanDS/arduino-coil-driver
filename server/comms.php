@@ -3,11 +3,34 @@
 require('require.php');
 
 use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Drivers\DriverPin;
+use ArduinoCoilDriver\Drivers\DriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 
-function getDriverOutputFromGet($returnUrl = 'index.php') {
+function getDriverPinFromGet($returnUrl = 'comms.php') {
+    global $logger;
+    global $templates;
+
+    // load driver by HTTP_GET id
+    $id = filter_input(INPUT_GET, 'pid', FILTER_VALIDATE_INT);
+    
+    // get driver pin
+    $driverPin = DriverPinQuery::create()->findPK($id);
+    
+    if ($driverPin === null) {
+        $logger->addWarning(sprintf('Specified driver pin id %d doesn\'t exist', $id));
+    
+        echo $templates->render('error', ['message' => 'Specified driver pin not found.', 'returnUrl' => $returnUrl]);
+        
+        exit();
+    }
+    
+    return $driverPin;
+}
+
+function getDriverOutputFromGet($returnUrl = 'comms.php') {
     global $logger;
     global $templates;
 
@@ -36,7 +59,33 @@ if (! array_key_exists('userId', $_SESSION)) {
 
 $do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
 
-if ($do === 'dual') {
+if ($do == 'single') {
+    // set a driver pin output
+    
+    // get driver pin
+    $driverPin = getDriverPinFromGet();
+    
+    // get inputs
+    $get = filter_input_array(
+        INPUT_GET,
+        array(
+            'value'       =>  FILTER_VALIDATE_INT
+        )
+    );
+    
+    if (is_null($get['value'])) {
+        exit();
+    }
+    
+    // set value
+    try {
+        $message = $driverPin->setValue($get['value']);
+    } catch (InvalidJsonException $e) {
+        throw $e;
+    } catch (NoContactException $e) {
+        throw $e;
+    }
+} elseif ($do === 'dual') {
     // set a driver output (a collection of two pins)
     
     // get driver output
@@ -57,9 +106,9 @@ if ($do === 'dual') {
         exit();
     }
     
-    if ($get['togglemode'] === "ramp") {
+    if ($get['togglemode'] === 'ramp') {
         $toggleMode = DriverOutput::TOGGLE_MODE_RAMP;
-    } elseif ($get['togglemode'] === "snap") {
+    } elseif ($get['togglemode'] === 'snap') {
         $toggleMode = DriverOutput::TOGGLE_MODE_SNAP;
     } else {
         exit();
