@@ -1,7 +1,7 @@
 <?php
 
 // config settings - TODO: move somewhere else
-define('LOG_FILE', '/var/log/arduinocoildriver/web.log');
+define('LOG_FILE', '/var/log/arduinocoildriver/web.log'); // directory must be writable by web user
 define('MAX_LOG_FILES', 10);
 define('TEMPLATE_DIR', 'templates');
 define('DATETIME_FORMAT', 'Y-m-d H:i:s');
