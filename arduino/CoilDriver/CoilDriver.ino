@@ -1,7 +1,7 @@
 /*
 * Coil Driver Arduino Server
 *
-* Version 0.97, October 2015
+* Version 0.98, October 2015
 *
 * Sean Leavey
 * s.leavey.1@research.gla.ac.uk
@@ -39,7 +39,7 @@ String path = "/arduino-coil-driver/server/";
 //
 
 // software version
-const char* SOFTWARE_VERSION = "0.97";
+const char* SOFTWARE_VERSION = "0.98";
 
 // slave select pins
 const int SD_SS_PIN = 4;          // SD card slave select
@@ -212,56 +212,6 @@ String getClientRequest(EthernetClient client) {
   delay(1);
 
   return request;
-}
-
-void restoreSavedOutputLevels() {
-  for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
-    String filename = "PIN"; // capital letters in filename required by FAT16
-    filename += String(outputPins[i]);
-    filename += ".TXT"; // the three character extension is required by FAT16
-
-    // convert String object to char array, because the SD library doesn't support Strings
-    char filenameChar[filename.length() + 1];
-    filename.toCharArray(filenameChar, sizeof(filenameChar));
-
-    if (SD.exists(filenameChar)) {
-      // saved value file found, so read it
-      File filePointer = SD.open(filenameChar, FILE_READ);
-
-      if (filePointer) {
-        Serial.println("Found value file for pin " + String(outputPins[i]));
-
-        char message[3];
-
-        int j = 0;
-
-        // read first 3 characters
-        while (filePointer.available() && j < 3) {
-          message[j] = filePointer.read();
-
-          j++;
-        }
-
-        // convert char array to int
-        int value = atoi(message);
-
-        // sanity check the value - make sure it's within range
-        sanitiseValue(value);
-
-        // set the appropriate pin's value
-        snapToValue(outputPins[i], value);
-
-        filePointer.close();
-      } else {
-        Serial.println("Couldn't open file even though it exists. Using default value.");
-        snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
-      }
-    } else {
-      Serial.println("Couldn't find value file for pin " + String(outputPins[i]) + ". Using default value.");
-
-      snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
-    }
-  }
 }
 
 void sanitiseValue(int &value) {
@@ -523,7 +473,10 @@ boolean handleToggleRequest(String request) {
       return false;
     }
 
-     return true;
+    // save pin value to SD
+    savePinValue(outputPin);
+
+    return true;
   } else if (root.containsKey("pinmode") && root["pinmode"].as<int>() == PIN_MODE_DUAL) {
     // dual pin mode
     Serial.println("[Dual pin mode]");
@@ -688,10 +641,16 @@ boolean handleToggleRequest(String request) {
       // no toggle mode specified
       return false;
     }
+
+    // save pin values to SD
+    savePinValue(coarsePin);
+    savePinValue(finePin);
   } else {
     // invalid pin mode specified
     return false;
   }
+
+  return true;
 }
 
 //char* stringToChar(String message, int len) {
@@ -855,3 +814,87 @@ boolean pinExists(int pin)
 
   return false;
 }
+
+void restoreSavedOutputLevels() {
+  for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
+    String filename = "PIN"; // capital letters in filename required by FAT16
+    filename += String(outputPins[i]);
+    filename += ".TXT"; // the three character extension is required by FAT16
+
+    // convert String object to char array, because the SD library doesn't support Strings
+    char filenameChar[filename.length() + 1];
+    filename.toCharArray(filenameChar, sizeof(filenameChar));
+
+    if (SD.exists(filenameChar)) {
+      // saved value file found, so read it
+      File filePointer = SD.open(filenameChar, FILE_READ);
+
+      if (filePointer) {
+        Serial.println("Found value file for pin " + String(outputPins[i]));
+
+        char message[3];
+
+        int j = 0;
+
+        // read first 3 characters
+        while (filePointer.available() && j < 3) {
+          message[j] = filePointer.read();
+
+          j++;
+        }
+
+        // convert char array to int
+        int value = atoi(message);
+
+        // sanity check the value - make sure it's within range
+        sanitiseValue(value);
+
+        // set the appropriate pin's value
+        snapToValue(outputPins[i], value);
+
+        filePointer.close();
+      } else {
+        Serial.println("Couldn't open file even though it exists. Using default value.");
+        snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
+      }
+    } else {
+      Serial.println("Couldn't find value file for pin " + String(outputPins[i]) + ". Using default value.");
+
+      snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
+    }
+  }
+}
+
+boolean savePinValue(int pin)
+{
+  String filename = "PIN";
+  filename += String(pin);
+  filename += ".TXT";
+  
+  char filenameChar[filename.length() + 1];
+  filename.toCharArray(filenameChar, sizeof(filenameChar));
+  
+  // erase existing file (because we can't overwrite its contents)
+  SD.remove(filenameChar);
+  // make new file with value
+  File filePointer = SD.open(filenameChar, FILE_WRITE);
+  
+  if (filePointer) {
+      Serial.println("Writing pin value to file...");
+
+      // get value
+      int value = pinValues[getPinPosition(pin)];
+    
+      filePointer.println(String(value));
+      filePointer.close();
+      
+      Serial.println("Done.");
+  } else {
+      Serial.println("Failed to write to file.");
+
+      return false;
+  }
+
+  return true;
+}
+
