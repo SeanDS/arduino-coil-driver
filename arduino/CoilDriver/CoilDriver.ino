@@ -77,8 +77,53 @@ int MID_OUTPUT_LEVEL = 128;
 // for counting main program loops, for periodic status reports
 int loopCounter = 0;
 
+// min/max output levels
+int MIN_OUTPUT_LEVEL = 0;
+int MAX_OUTPUT_LEVEL = 255;
+
+// request error constants
+const int REQUEST_ERROR_NONE                  = 0;
+const int REQUEST_ERROR_INVALID_REQUEST       = 1;
+const int REQUEST_ERROR_INVALID_JSON          = 2;
+const int REQUEST_ERROR_NO_PIN_MODE           = 3;
+const int REQUEST_ERROR_INVALID_PIN_MODE      = 4;
+const int REQUEST_ERROR_NO_TOGGLE_MODE        = 5;
+const int REQUEST_ERROR_INVALID_TOGGLE_MODE   = 6;
+const int REQUEST_ERROR_NO_DELAY              = 7;
+const int REQUEST_ERROR_INVALID_DELAY         = 8;
+const int REQUEST_ERROR_NO_MAPPING            = 9;
+const int REQUEST_ERROR_INVALID_MAPPING       = 10;
+const int REQUEST_ERROR_NO_OVERLAP            = 11;
+const int REQUEST_ERROR_INVALID_OVERLAP       = 12;
+const int REQUEST_ERROR_NO_PIN                = 13;
+const int REQUEST_ERROR_INVALID_PIN           = 14;
+const int REQUEST_ERROR_NO_PIN_VALUE          = 15;
+const int REQUEST_ERROR_INVALID_PIN_VALUE     = 16;
+
+// error messages
+String requestErrorMessages[17];
+
 void setup()
 {
+  // create error messages
+  requestErrorMessages[REQUEST_ERROR_NONE]                = "";
+  requestErrorMessages[REQUEST_ERROR_INVALID_REQUEST]     = "Invalid request";
+  requestErrorMessages[REQUEST_ERROR_INVALID_JSON]        = "Invalid JSON message";
+  requestErrorMessages[REQUEST_ERROR_NO_PIN_MODE]         = "No pin mode specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_PIN_MODE]    = "Invalid pin mode";
+  requestErrorMessages[REQUEST_ERROR_NO_TOGGLE_MODE]      = "No toggle mode specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_TOGGLE_MODE] = "Invalid toggle mode";
+  requestErrorMessages[REQUEST_ERROR_NO_DELAY]            = "No delay specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_DELAY]       = "Invalid delay";
+  requestErrorMessages[REQUEST_ERROR_NO_MAPPING]          = "No mapping specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_MAPPING]     = "Invalid mapping";
+  requestErrorMessages[REQUEST_ERROR_NO_OVERLAP]          = "No overlap specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_OVERLAP]     = "Invalid overlap";
+  requestErrorMessages[REQUEST_ERROR_NO_PIN]              = "No pin specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_PIN]         = "Invalid pin";
+  requestErrorMessages[REQUEST_ERROR_NO_PIN_VALUE]        = "No pin value specified";
+  requestErrorMessages[REQUEST_ERROR_INVALID_PIN_VALUE]   = "Invalid pin value";
+  
   // open serial communications and wait for port to open:
   Serial.begin(9600);
 
@@ -214,14 +259,6 @@ String getClientRequest(EthernetClient client) {
   return request;
 }
 
-void sanitiseValue(int &value) {
-  if (value < 0) {
-    value = 0;
-  } else if (value > 255) {
-    value = 255;
-  }
-}
-
 void startServer() {
   Serial.println("Starting Ethernet server...");
 
@@ -285,31 +322,36 @@ void handleRequest(String request, EthernetClient client) {
    */
 
   // parse the requested information
-  if (request.indexOf("GET /status") > -1)
-  {
+  if (request.indexOf("GET /status") > -1) {
     sendStatus(client);
   } else if (request.indexOf("GET /outputs") > -1) {
     sendOutputs(client);
   } else if (request.indexOf("GET /toggle") > -1) {
-    if (handleToggleRequest(request)) {
-      // send list of outputs
+    int requestResult = handleToggleRequest(request);
+    
+    if (requestResult == REQUEST_ERROR_NONE) {
+      // everything is ok
+      // send list of outputs and corresponding values
       sendOutputs(client);
     } else {
-      // malformed request
-      sendErrorReplyHeaders(client);
+      // request error
+      // send an error message
+      sendErrorMessage(client, requestResult);
     }
   } else {
-    // 404
-    sendNotFoundReplyHeaders(client);
+    sendNotFoundMessage(client);
   }
 }
 
 void sendStatus(EthernetClient client) {
-  sendJsonReplyHeaders(client);
+  sendOkHeaders(client);
 
   StaticJsonBuffer<1024> jsonBuffer;
 
   JsonObject& root = jsonBuffer.createObject();
+
+  // set type
+  root.set("type", "status");
 
   if (sdcardPresent) {
     root["sdcard"] = "present";
@@ -327,11 +369,14 @@ void sendStatus(EthernetClient client) {
 }
 
 void sendOutputs(EthernetClient client) {
-  sendJsonReplyHeaders(client);
+  sendOkHeaders(client);
 
   StaticJsonBuffer<1024> jsonBuffer;
 
   JsonObject& root = jsonBuffer.createObject();
+
+  // set type
+  root.set("type", "outputs");
 
   // create list of key names
   String keyNames[NUMBER_OF_OUTPUTS];
@@ -349,36 +394,63 @@ void sendOutputs(EthernetClient client) {
   root.printTo(client);
 }
 
-void sendJsonReplyHeaders(EthernetClient client) {
+void sendNotFoundMessage(EthernetClient client) {
+  sendNotFoundHeaders(client);
+
+  Serial.println("404 Not found");
+
+  StaticJsonBuffer<1024> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root.set("type", "error");
+  root.set("message", "Not found");
+
+  root.printTo(client);
+}
+
+void sendErrorMessage(EthernetClient client, int errorLevel) {
+  sendBadRequestHeaders(client);
+
+  // get error message
+  String message = getErrorMessage(errorLevel);
+
+  Serial.println("Error: " + message);
+
+  StaticJsonBuffer<1024> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root.set("type", "error");
+  root.set("message", message);
+
+  root.printTo(client);
+}
+
+void sendOkHeaders(EthernetClient client) {
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: application/json");
   client.println("Connection: close");
   client.println();
 }
 
-void sendNotFoundReplyHeaders(EthernetClient client) {
+void sendNotFoundHeaders(EthernetClient client) {
   client.println("HTTP/1.1 404 Not Found");
   client.println("Content-Type: text/html");
   client.println("Connection: close");
   client.println();
-  client.println("404");
 }
 
-void sendErrorReplyHeaders(EthernetClient client) {
+void sendBadRequestHeaders(EthernetClient client) {
   client.println("HTTP/1.1 400 Bad Request");
-  client.println("Content-Type: text/html");
+  client.println("Content-Type: application/json");
   client.println("Connection: close");
   client.println();
-  client.println("Malformed request");
 }
 
-boolean handleToggleRequest(String request) {
+int handleToggleRequest(String request) {
   int setIndex = request.indexOf("set=");
   int httpIndex = request.indexOf("HTTP/1.1");
 
   if (setIndex < 0 || httpIndex < 0) {
     // didn't find required information in request
-    return false;
+    return REQUEST_ERROR_INVALID_REQUEST;
   }
   
   // get characters from "input=" to end of request
@@ -395,7 +467,7 @@ boolean handleToggleRequest(String request) {
   if (! root.success()) {
     Serial.println("Failed to parse JSON object");
 
-    return false;
+    return REQUEST_ERROR_INVALID_JSON;
   }
   
   Serial.println("Successfully parsed JSON object");
@@ -404,8 +476,12 @@ boolean handleToggleRequest(String request) {
   // check that there is at least one pin toggle defined
   //
 
+  if (! root.containsKey("pinmode")) {
+    return REQUEST_ERROR_NO_PIN_MODE;
+  }
+  
   // check for "single pin" mode
-  if (root.containsKey("pinmode") && root["pinmode"].as<int>() == PIN_MODE_SINGLE) {
+  if (root["pinmode"].as<int>() == PIN_MODE_SINGLE) {
     // single pin mode
     Serial.println("[Single pin mode]");
 
@@ -420,64 +496,63 @@ boolean handleToggleRequest(String request) {
     int outputPin;
     int outputValue;
     
-    if (root.containsKey("pin")) {
-      outputPin = int(root["pin"]);
-
-      if (outputPin == -1) {
-        // invalid pin
-        return false;
-      }
-    } else {
+    if (! root.containsKey("pin")) {
       // required key not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN;
+    }
+    
+    outputPin = int(root["pin"]);
+
+    if (! outputPinExists(outputPin)) {
+      return REQUEST_ERROR_INVALID_PIN;
     }
 
-    if (root.containsKey("value")) {
-      outputValue = int(root["value"]);
-
-      sanitiseValue(outputValue);
-    } else {
+    if (! root.containsKey("value")) {
       // output value not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN_VALUE;
+    }
+    
+    outputValue = int(root["value"]);
+
+    if (! outputValueIsValid(outputValue)) {
+      return REQUEST_ERROR_INVALID_PIN_VALUE;
     }
 
-    if (root.containsKey("togglemode")) {
-      if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
-        Serial.println("[Snap toggle mode]");
-        
-        snapToValue(outputPin, outputValue);
-      } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
-        Serial.println("[Ramp toggle mode]");
-        
-        int rampDelay;
-        
-        if (root.containsKey("delay")) {
-          rampDelay = int(root["delay"]);
-  
-          if (rampDelay < 0) {
-            // invalid ramp delay
-            return false;
-          }
-        } else {
-          // ramp delay not specified
-          return false;
-        }
-  
-        rampToValue(outputPin, outputValue, rampDelay);
-      } else {
-        // invalid toggle mode
-        return false;
-      }
-    } else {
+    if (! root.containsKey("togglemode")) {
       // no toggle mode specified
-      return false;
+      return REQUEST_ERROR_NO_TOGGLE_MODE;
+    }
+    
+    if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
+      Serial.println("[Snap toggle mode]");
+      
+      snapToValue(outputPin, outputValue);
+    } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
+      Serial.println("[Ramp toggle mode]");
+      
+      int rampDelay;
+      
+      if (! root.containsKey("delay")) {
+        // ramp delay not specified
+        return REQUEST_ERROR_NO_DELAY;
+      }
+      
+      rampDelay = int(root["delay"]);
+
+      if (rampDelay < 0) {
+        // invalid ramp delay
+        return REQUEST_ERROR_INVALID_DELAY;
+      }
+
+      rampToValue(outputPin, outputValue, rampDelay);
+    } else {
+      // invalid toggle mode
+      return REQUEST_ERROR_INVALID_TOGGLE_MODE;
     }
 
     // save pin value to SD
     savePinValue(outputPin);
-
-    return true;
-  } else if (root.containsKey("pinmode") && root["pinmode"].as<int>() == PIN_MODE_DUAL) {
+  } else if (root["pinmode"].as<int>() == PIN_MODE_DUAL) {
     // dual pin mode
     Serial.println("[Dual pin mode]");
 
@@ -504,142 +579,149 @@ boolean handleToggleRequest(String request) {
     int overlapValue;
     int mapping;
 
-    if (root.containsKey("pin1")) {
-      coarsePin = int(root["pin1"]);
-
-      if (coarsePin == -1) {
-        // invalid pin
-        return false;
-      }
-    } else {
+    if (! root.containsKey("pin1")) {
       // required key not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN;
+    }
+    
+    coarsePin = int(root["pin1"]);
+
+    if (! outputPinExists(coarsePin)) {
+      return REQUEST_ERROR_INVALID_PIN;
     }
 
-    if (root.containsKey("pin2")) {
-      finePin = int(root["pin2"]);
-
-      if (finePin == -1) {
-        // invalid pin
-        return false;
-      }
-    } else {
+    if (! root.containsKey("pin2")) {
       // required key not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN;
+    }
+    
+    finePin = int(root["pin2"]);
+
+    if (! outputPinExists(finePin)) {
+      return REQUEST_ERROR_INVALID_PIN;
     }
 
-    if (root.containsKey("value1")) {
-      coarseValue = int(root["value1"]);
-
-      sanitiseValue(coarseValue);
-    } else {
+    if (! root.containsKey("value1")) {
       // output value not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN_VALUE;
+    }
+    
+    coarseValue = int(root["value1"]);
+
+    if (! outputValueIsValid(coarseValue)) {
+      return REQUEST_ERROR_INVALID_PIN_VALUE;
     }
 
-    if (root.containsKey("value2")) {
-      fineValue = int(root["value2"]);
-
-      sanitiseValue(fineValue);
-    } else {
+    if (! root.containsKey("value2")) {
       // output value not specified
-      return false;
+      return REQUEST_ERROR_NO_PIN_VALUE;
+    }
+    
+    fineValue = int(root["value2"]);
+
+    if (! outputValueIsValid(fineValue)) {
+      return REQUEST_ERROR_INVALID_PIN_VALUE;
     }
 
-    if (root.containsKey("overlap")) {
-      overlapValue = int(root["overlap"]);
-
-      sanitiseValue(overlapValue);
-    } else {
+    if (! root.containsKey("overlap")) {
       // overlap value not specified
-      return false;
+      return REQUEST_ERROR_NO_OVERLAP;
+    }
+    
+    overlapValue = int(root["overlap"]);
+
+    if (! outputValueIsValid(overlapValue)) {
+      return REQUEST_ERROR_INVALID_OVERLAP;
     }
 
-    if (root.containsKey("mapping")) {
-      mapping = int(root["mapping"]);
-    } else {
+    if (! root.containsKey("mapping")) {
       // mapping not specified
-      return false;
+      return REQUEST_ERROR_NO_MAPPING;
+    }
+      
+    mapping = int(root["mapping"]);
+
+    if (mapping < 0) {
+      // invalid mapping
+      return REQUEST_ERROR_INVALID_MAPPING;
     }
 
-    if (root.containsKey("togglemode")) {
-      if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
-        Serial.println("[Snap toggle mode]");
-        
-        snapToValue(coarsePin, coarseValue);
-        snapToValue(finePin, fineValue);
-      } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
-        Serial.println("[Ramp toggle mode]");
-
-        int rampDelay;
-    
-        if (root.containsKey("delay")) {
-          rampDelay = int(root["delay"]);
-    
-          if (rampDelay < 0) {
-            // invalid ramp delay
-            return false;
-          }
-        } else {
-          // ramp delay not specified
-          return false;
-        }
-    
-        /*
-         * Now that we've collected valid parameters, we ramp to the correct output.
-         */
-    
-        int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
-        int currentFineValue = pinValues[getPinPosition(finePin)];
-    
-        // number of coarse steps to make
-        int coarseSteps = coarseValue - currentCoarseValue;
-    
-        Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
-    
-        // true means pin output is to increase, false means decrease
-        int coarseDirection;
-    
-        if (coarseSteps > 0) {
-          coarseDirection = 1;
-        } else {
-          coarseDirection = -1;
-        }
-    
-        Serial.println("Direction: " + coarseDirection);
-    
-        if (coarseSteps != 0) {
-          // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
-    
-          // move fine output to middle of range
-          //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
-    
-          // loop over coarse steps
-          for (int i = 0; i < abs(coarseSteps); i++) {
-            // move fine pin to next 'coarse' level
-            rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
-    
-            // snap coarse pin to next value and fine pins back to mid level
-            snapToValue(coarsePin, currentCoarseValue + coarseDirection);
-            snapToValue(finePin, MID_OUTPUT_LEVEL);
-    
-            // update current pin values
-            currentCoarseValue = pinValues[getPinPosition(coarsePin)];
-            currentFineValue = pinValues[getPinPosition(finePin)];
-          }
-        }
-        
-        // adjust fine output
-        rampToValue(finePin, fineValue, rampDelay);
-    
-        return true;
-      } else {
-        // invalid toggle mode
-        return false;
-      }
-    } else {
+    if (! root.containsKey("togglemode")) {
       // no toggle mode specified
-      return false;
+      return REQUEST_ERROR_NO_TOGGLE_MODE;
+    }
+      
+    if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
+      Serial.println("[Snap toggle mode]");
+      
+      snapToValue(coarsePin, coarseValue);
+      snapToValue(finePin, fineValue);
+    } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
+      Serial.println("[Ramp toggle mode]");
+
+      int rampDelay;
+  
+      if (! root.containsKey("delay")) {
+        // ramp delay not specified
+        return REQUEST_ERROR_NO_DELAY;
+      }
+      
+      rampDelay = int(root["delay"]);
+
+      if (rampDelay < 0) {
+        // invalid ramp delay
+        return REQUEST_ERROR_INVALID_DELAY;
+      }
+  
+      /*
+       * Now that we've collected valid parameters, we ramp to the correct output.
+       */
+  
+      int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+      int currentFineValue = pinValues[getPinPosition(finePin)];
+  
+      // number of coarse steps to make
+      int coarseSteps = coarseValue - currentCoarseValue;
+  
+      Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
+  
+      // true means pin output is to increase, false means decrease
+      int coarseDirection;
+  
+      if (coarseSteps > 0) {
+        coarseDirection = 1;
+      } else {
+        coarseDirection = -1;
+      }
+  
+      Serial.println("Direction: " + coarseDirection);
+  
+      if (coarseSteps != 0) {
+        // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
+  
+        // move fine output to middle of range
+        //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
+  
+        // loop over coarse steps
+        for (int i = 0; i < abs(coarseSteps); i++) {
+          // move fine pin to next 'coarse' level
+          rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
+  
+          // snap coarse pin to next value and fine pins back to mid level
+          snapToValue(coarsePin, currentCoarseValue + coarseDirection);
+          snapToValue(finePin, MID_OUTPUT_LEVEL);
+  
+          // update current pin values
+          currentCoarseValue = pinValues[getPinPosition(coarsePin)];
+          currentFineValue = pinValues[getPinPosition(finePin)];
+        }
+      }
+      
+      // adjust fine output
+      rampToValue(finePin, fineValue, rampDelay);
+    } else {
+      // invalid toggle mode
+      return REQUEST_ERROR_INVALID_TOGGLE_MODE;
     }
 
     // save pin values to SD
@@ -647,10 +729,10 @@ boolean handleToggleRequest(String request) {
     savePinValue(finePin);
   } else {
     // invalid pin mode specified
-    return false;
+    return REQUEST_ERROR_INVALID_PIN_MODE;
   }
 
-  return true;
+  return REQUEST_ERROR_NONE;
 }
 
 //char* stringToChar(String message, int len) {
@@ -748,8 +830,6 @@ char* getPinFilename(int pin)
 void rampToValue(int pin, int newValue, int stepPause)
 {
    if (pinExists(pin)) {
-      sanitiseValue(newValue);
-
       int currentValue = pinValues[getPinPosition(pin)];
       int difference = newValue - currentValue;
 
@@ -847,7 +927,11 @@ void restoreSavedOutputLevels() {
         int value = atoi(message);
 
         // sanity check the value - make sure it's within range
-        sanitiseValue(value);
+        if (value < MIN_OUTPUT_LEVEL) {
+          value = MIN_OUTPUT_LEVEL;
+        } else if (value > MAX_OUTPUT_LEVEL) {
+          value = MAX_OUTPUT_LEVEL;
+        }
 
         // set the appropriate pin's value
         snapToValue(outputPins[i], value);
@@ -898,3 +982,24 @@ boolean savePinValue(int pin)
   return true;
 }
 
+boolean outputPinExists(int pin) {
+  for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
+    if (outputPins[i] == pin) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+boolean outputValueIsValid(int value) {
+  if (value < MIN_OUTPUT_LEVEL || value > MAX_OUTPUT_LEVEL) {
+    return false;
+  }
+
+  return true;
+}
+
+String getErrorMessage(int errorLevel) {
+  return requestErrorMessages[errorLevel];
+}
