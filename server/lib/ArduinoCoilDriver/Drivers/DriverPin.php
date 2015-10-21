@@ -10,8 +10,10 @@ use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinValueTableMap;
 use ArduinoCoilDriver\Payload\SendPayload;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\Map\StateTableMap;
+use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_pins' table.
@@ -61,14 +63,20 @@ class DriverPin extends BaseDriverPin
         // create message
         $payload = $this->createTogglePayload($value);
         
-        return $this->getDriver()->dispatch($payload);
+        $receivePayload = $this->getDriver()->dispatch($payload);
+        
+        if ($receivePayload instanceof OutputReceivePayload) {
+            $this->getDriver()->updatePinsFromOutputReceivePayload($receivePayload);
+        }
+        
+        return $receivePayload;
     }
     
     protected function createTogglePayload($value) {        
         if (! is_int($value)) {
-            throw new Exception('Specified value is invalid.');
+            throw new InvalidToggleException('Specified value is invalid.');
         } elseif ($value < 0) {
-            throw new Exception('Specified value cannot be negative.');
+            throw new InvalidToggleException('Specified value cannot be negative.');
         }
         
         $settings = array();

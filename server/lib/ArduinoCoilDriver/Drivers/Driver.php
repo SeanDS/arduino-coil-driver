@@ -2,17 +2,19 @@
 
 namespace ArduinoCoilDriver\Drivers;
 
+use Exception;
 use Propel\Runtime\Propel;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\Driver as BaseDriver;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\Payload\SendPayload;
+use ArduinoCoilDriver\Payload\ReceivePayload;
+use ArduinoCoilDriver\Payload\StatusReceivePayload;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\ConflictingStatusException;
-use ArduinoCoilDriver\Payload\StatusPayload;
-use ArduinoCoilDriver\Payload\ReceivePayload;
 
 /**
  * Skeleton subclass for representing a row from the 'drivers' table.
@@ -149,7 +151,8 @@ class Driver extends BaseDriver
         // ask for status
         fwrite($socket, "GET " . $get . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
 
-        $message = "";
+        $body = "";
+        $header = "";
         
         $contentFlag = false;
         
@@ -158,11 +161,13 @@ class Driver extends BaseDriver
             $line = fgets($socket, MAXIMUM_SOCKET_LINE_LENGTH);
             
             if ($contentFlag) {
-                $message .= $line;
+                $body .= $line;
             } else {
                 if ($line == "\r\n" && !$contentFlag) {
                     // this is the last line
                     $contentFlag = true;
+                } else {
+                    $header .= $line;
                 }
             }
         }
@@ -173,7 +178,10 @@ class Driver extends BaseDriver
         // stop clock
         $endTime = microtime(true);
         
-        return $message;
+        // create payload
+        $payload = ReceivePayload::createFromMessage($header, $body, $endTime - $startTime);
+        
+        return $payload;
     }
     
     public function dispatch(SendPayload $payload) {
@@ -182,16 +190,10 @@ class Driver extends BaseDriver
         $logger->addInfo(sprintf('Dispatching payload to driver id %d', $this->getId()));
         
         // send payload to driver and get message
-        $startTime = microtime(true);
-        $message = $this->contact($payload->getRequest());
-        $endTime = microtime(true);
-        
-        $outputPayload = new ReceivePayload($message, $endTime - $startTime);
-        
-        $this->updatePinsFromPayload($outputPayload);
+        return $this->contact($payload->getRequest());
     }
     
-    protected function updatePinsFromPayload(ReceivePayload $payload) {
+    public function updatePinsFromOutputReceivePayload(OutputReceivePayload $payload) {
         $pinValues = $payload->getPinValues();
         
         // get a write connection
@@ -216,29 +218,29 @@ class Driver extends BaseDriver
     
     public function getStatus() {
         global $logger;
-    
-        $startTime = microtime(true);
         
         $logger->addInfo(sprintf('Getting status of driver id %d', $this->getId()));
         
-        $message = $this->contact("/status");
+        $payload = $this->contact("/status");
         
-        $endTime = microtime(true);
+        if (! $payload instanceof StatusReceivePayload) {
+            throw new Exception("Received payload is not a StatusReceivePayload");
+        }
         
-        return new StatusPayload($message, $endTime - $startTime);
+        return $payload;
     }
     
     public function getOutputs() {
         global $logger;
-    
-        $startTime = microtime(true);
         
         $logger->addInfo(sprintf('Getting outputs of driver id %d', $this->getId()));
         
-        $message = $this->contact("/outputs");
+        $payload = $this->contact("/outputs");
         
-        $endTime = microtime(true);
+        if (! $payload instanceof OutputReceivePayload) {
+            throw new Exception("Received payload is not a OutputReceivePayload");
+        }
         
-        return new OutputPayload($message, $endTime - $startTime);
+        return $payload;
     }
 }

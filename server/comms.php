@@ -8,6 +8,8 @@ use ArduinoCoilDriver\Drivers\DriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
+use ArduinoCoilDriver\Exceptions\NoContactException;
+use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 
 function getDriverPinFromGet($returnUrl = 'comms.php') {
     global $logger;
@@ -51,10 +53,14 @@ function getDriverOutputFromGet($returnUrl = 'comms.php') {
     return $driverOutput;
 }
 
+// start output buffering
+ob_start();
+
 // perform check for user credentials (require.php doesn't redirect to login.php to avoid issue with AJAX)
 if (! array_key_exists('userId', $_SESSION)) {
     header('HTTP/1.1 403 Forbidden');
-    exit();
+    header('Content-Type: application/json');
+    exit(json_encode(["status" => "error", "message" => "Access forbidden. Please log in."]));
 }
 
 $do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
@@ -81,10 +87,18 @@ if ($do == 'single') {
     try {
         $message = $driverPin->setValue($get['value']);
     } catch (InvalidJsonException $e) {
+        // just rethrow for now
         throw $e;
     } catch (NoContactException $e) {
+        // just rethrow for now
+        throw $e;
+    } catch (InvalidToggleException $e) {
+        // just rethrow for now
         throw $e;
     }
+    
+    header('Content-Type: application/json');
+    echo json_encode(["status" => "ok", "message" => $message->getMessage()]);
 } elseif ($do === 'dual') {
     // set a driver output (a collection of two pins)
     
@@ -118,10 +132,20 @@ if ($do == 'single') {
     try {
         $message = $driverOutput->setValue($get['value'], $toggleMode);
     } catch (InvalidJsonException $e) {
+        // just rethrow for now
         throw $e;
     } catch (NoContactException $e) {
+        // just rethrow for now
+        throw $e;
+    } catch (InvalidToggleException $e) {
+        // just rethrow for now
         throw $e;
     }
+    
+    header('Content-Type: application/json');
+    echo json_encode(["status" => "ok", "message" => $message->getMessage()]);
 }
+
+ob_end_flush();
 
 ?>

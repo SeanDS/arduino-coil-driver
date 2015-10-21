@@ -8,10 +8,11 @@ use ArduinoCoilDriver\Drivers\Base\DriverOutput as BaseDriverOutput;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
 use ArduinoCoilDriver\Payload\SendPayload;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
-use Exception;
+use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_outputs' table.
@@ -94,7 +95,13 @@ class DriverOutput extends BaseDriverOutput
         // create message
         $payload = $this->createTogglePayload($toggleMode, $outputPins['coarse'], $newCoarseValue, $outputPins['fine'], $newFineValue);
         
-        return $this->getDriver()->dispatch($payload);
+        $receivePayload = $this->getDriver()->dispatch($payload);
+        
+        if ($receivePayload instanceof OutputReceivePayload) {
+            $this->getDriver()->updatePinsFromOutputReceivePayload($receivePayload);
+        }
+        
+        return $receivePayload;
     }
     
     protected function getOutputPins() {
@@ -127,17 +134,17 @@ class DriverOutput extends BaseDriverOutput
         $toggleMode = intval($toggleMode);
     
         if ($toggleMode !== self::TOGGLE_MODE_SNAP && $toggleMode !== self::TOGGLE_MODE_RAMP) {
-            throw new Exception('Specified toggle mode is invalid.');
+            throw new InvalidToggleException('Specified toggle mode is invalid.');
         }
         
         if (! is_int($value1)) {
-            throw new Exception('Specified value1 is invalid.');
+            throw new InvalidToggleException('Specified value1 is invalid.');
         } elseif ($value1 < 0) {
-            throw new Exception('Specified value1 cannot be negative.');
+            throw new InvalidToggleException('Specified value1 cannot be negative.');
         } elseif (! is_int($value2)) {
-            throw new Exception('Specified value2 is invalid.');
+            throw new InvalidToggleException('Specified value2 is invalid.');
         } elseif ($value2 < 0) {
-            throw new Exception('Specified value2 cannot be negative.');
+            throw new InvalidToggleException('Specified value2 cannot be negative.');
         }
         
         $settings = array();
