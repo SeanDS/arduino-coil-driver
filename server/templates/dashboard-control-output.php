@@ -58,6 +58,9 @@
                                 </p>
                             </div>
                         </form>
+                        <?php if ($driverOutput->getDriver()->getCoilContact()): ?>
+                        <?php $this->insert('driver-coil-contact', ['driver' => $driverOutput->getDriver()]) ?>
+                        <?php endif; ?>
                     </div>
                     <div class="col-md-3">
                         <div class="row">

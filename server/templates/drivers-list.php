@@ -29,7 +29,7 @@
         <tr>
             <td class="text-center"><?=$this->e($driver->getName())?></td>
             <td class="text-center"><?php $this->insert('date-time-span', ['time' => $driver->getLastCheckIn()]) ?></td>
-            <td class="text-center"><?php if ($driver->getCoilContact()): ?><div class="alert alert-danger" role="alert"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Coils are touching!</div><?php else: ?><div class="alert alert-success" role="alert"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> OK</div><?php endif; ?></td>
+            <td><?php $this->insert('driver-coil-contact', ['driver' => $driver]) ?></td>
             <td class="text-center"><a href="drivers.php?do=listpins&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverPins()->count())?></a></td>
             <td class="text-center"><a href="drivers.php?do=listoutputs&amp;id=<?=$this->e($driver->getId())?>"><?=$this->e($driver->getDriverOutputs()->count())?></a></td>
             <td class="text-center">
