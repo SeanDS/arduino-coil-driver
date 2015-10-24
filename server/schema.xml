@@ -46,7 +46,7 @@
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="driver_pin_id" phpName="DriverPinId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
     <column name="state_id" phpName="StateId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
-    <column name="value" phpName="Value" type="TINYINT" required="true"/>
+    <column name="value" phpName="Value" type="INTEGER" size="5" sqlType="int(5) unsigned" required="true"/>
     <foreign-key foreignTable="driver_pins" name="driver_pin_values_fk_1">
       <reference local="driver_pin_id" foreign="id"/>
     </foreign-key>

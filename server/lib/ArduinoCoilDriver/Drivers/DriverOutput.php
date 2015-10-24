@@ -82,6 +82,13 @@ class DriverOutput extends BaseDriverOutput
     
     public function setValue($value, $toggleMode) {
         // set output value
+        
+        if ($value > (256 * $this->getMapping())) {
+            // FIXME: don't use hard-coded value here
+            $value = 256 * $this->getMapping() - 1;
+        } elseif ($value < 0) {
+            $value = 0;
+        }
     
         // get output pins
         $outputPins = $this->getOutputPins();
@@ -99,12 +106,15 @@ class DriverOutput extends BaseDriverOutput
         
         if ($receivePayload instanceof OutputReceivePayload) {
             $this->getDriver()->updatePinsFromOutputReceivePayload($receivePayload);
+            
+            // set the updated value in the payload
+            $receivePayload->setOutputValue($this->getValue());
         }
         
         return $receivePayload;
     }
     
-    protected function getOutputPins() {
+    public function getOutputPins() {
         // get output pins
         $outputPins = DriverOutputPinQuery::create()->filterByDriverOutputId($this->getId())->find();
         

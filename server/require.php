@@ -10,7 +10,7 @@ define('DEFAULT_SOCKET_TIMEOUT', 5); // default timeout for communication with A
 define('MAXIMUM_SOCKET_LINE_LENGTH', 1024);
 define('SERVER_ROOT', '/arduino-coil-driver/server/');
 define('SESSION_LABEL', 'arduinocoildriver');
-define('SESSION_TIME', 60 * 60);
+define('SESSION_TIME', 60 * 60 * 6);
 define('LDAP_HOSTNAME', 'ldap.example.com');
 define('LDAP_DN', 'dc=example,dc=com');
 

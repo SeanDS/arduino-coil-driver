@@ -4,6 +4,9 @@ namespace ArduinoCoilDriver\Payload;
 
 class OutputReceivePayload extends ReceivePayload {
     private $pinValues;
+    
+    // to hold the combined output value for the coarse/fine pins toggled, if applicable
+    private $outputValue;
 
     public function __construct($content, $timeTaken) {
         parent::__construct($content, $timeTaken);
@@ -35,5 +38,13 @@ class OutputReceivePayload extends ReceivePayload {
     
     public function getPinValues() {
         return $this->pinValues;
+    }
+    
+    public function setOutputValue($value) {
+        $this->outputValue = $value;
+    }
+    
+    public function getOutputValue() {
+        return $this->outputValue;
     }
 }

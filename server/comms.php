@@ -7,6 +7,8 @@ use ArduinoCoilDriver\Drivers\DriverPin;
 use ArduinoCoilDriver\Drivers\DriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
+use ArduinoCoilDriver\Payload\ErrorReceivePayload;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
@@ -97,8 +99,21 @@ if ($do == 'single') {
         throw $e;
     }
     
+    if ($message instanceof OutputReceivePayload) {
+        $status = "ok";
+    
+        // create JSON array with new value
+        $value = json_encode([$driverPin->getId() => $message->getPinValue($driverPin->getPin())]);
+    } elseif ($message instanceof ErrorReceivePayload) {
+        $status = "error";
+        $value = $message->getMessage();
+    } else {
+        $status = "error";
+        $value = "Unknown receive payload";
+    }
+    
     header('Content-Type: application/json');
-    echo json_encode(["status" => "ok", "message" => $message->getMessage()]);
+    echo json_encode(["status" => $status, "message" => $value]);
 } elseif ($do === 'dual') {
     // set a driver output (a collection of two pins)
     
@@ -142,8 +157,21 @@ if ($do == 'single') {
         throw $e;
     }
     
+    if ($message instanceof OutputReceivePayload) {
+        $status = "ok";
+    
+        // create JSON array with new value        
+        $value = json_encode([$driverOutput->getId() => $message->getOutputValue()]);
+    } elseif ($message instanceof ErrorReceivePayload) {
+        $status = "error";
+        $value = $message->getMessage();
+    } else {
+        $status = "error";
+        $value = "Unknown receive payload";
+    }
+    
     header('Content-Type: application/json');
-    echo json_encode(["status" => "ok", "message" => $message->getMessage()]);
+    echo json_encode(["status" => $status, "message" => $value]);
 }
 
 ob_end_flush();
