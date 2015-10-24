@@ -9,6 +9,9 @@
 * https://github.com/SeanDS/arduino-coil-driver/
 */
 
+// comment out for production mode (for greatly enhanced speed)
+#define DEBUG
+
 #include <SPI.h>
 #include <Ethernet.h>
 #include <SD.h>
@@ -123,9 +126,11 @@ void setup()
   requestErrorMessages[REQUEST_ERROR_INVALID_PIN]         = "Invalid pin";
   requestErrorMessages[REQUEST_ERROR_NO_PIN_VALUE]        = "No pin value specified";
   requestErrorMessages[REQUEST_ERROR_INVALID_PIN_VALUE]   = "Invalid pin value";
-  
+
+  #ifdef DEBUG
   // open serial communications and wait for port to open:
   Serial.begin(9600);
+  #endif
 
   // set analogue write resolution to 8-bits, which is the fundamental limit of the Due's PWM outputs
   analogWriteResolution(8);
@@ -138,14 +143,14 @@ void setup()
   switchSlaveSelect(true);
 
   if (!SD.begin(SD_SS_PIN)) {
-    Serial.println("SD card initialisation failed.");
+    debugPrint("SD card initialisation failed.");
 
     // set outputs to default values (better than undefined values, which just output a floating voltage)
     for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
       snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
     }
   } else {
-    Serial.println("SD card initialised!");
+    debugPrint("SD card initialised!");
 
     // set card present
     sdcardPresent = true;
@@ -176,7 +181,7 @@ void loop()
   if (loopCounter >= 666000) { // approximately 30s
       // send a status report to controller
 
-      Serial.println("Reporting in with server");
+      debugPrint("Reporting in with server");
 
       // initialise a client
       EthernetClient statusClient;
@@ -184,12 +189,12 @@ void loop()
       // connect and send message
       if (statusClient.connect(ipAddressController, 80)) {
           String message = messageEncode("{" + getStatusJSON() + "}");
-          Serial.println(message);
+          debugPrint(message);
           statusClient.println("GET " + path + "registry.php?do=report&message=" + message + " HTTP/1.0");
           statusClient.println();
           statusClient.stop();
       } else {
-          Serial.println("Status report failed");
+          debugPrint("Status report failed");
       }
 
       // reset loop counter
@@ -201,7 +206,7 @@ void loop()
 
   if (client)
   {
-    Serial.println("New client connection");
+    debugPrint("New client connection");
 
     // get request
     String request = getClientRequest(client);
@@ -212,8 +217,14 @@ void loop()
     // close the connection
     client.stop();
 
-    Serial.println("Client disconnected");
+    debugPrint("Client disconnected");
   }
+}
+
+void debugPrint(String message) {
+  #ifdef DEBUG
+  Serial.println(message);
+  #endif
 }
 
 String getClientRequest(EthernetClient client) {
@@ -260,17 +271,16 @@ String getClientRequest(EthernetClient client) {
 }
 
 void startServer() {
-  Serial.println("Starting Ethernet server...");
+  debugPrint("Starting Ethernet server...");
 
   // start the ethernet connection and the server
   Ethernet.begin(mac);
   server.begin();
 
-  Serial.println("Server started");
+  debugPrint("Server started");
 
   // print server IP address
-  Serial.print("IP address: ");
-  Serial.println(Ethernet.localIP());
+  debugPrint("IP address: "+ Ethernet.localIP());
 }
 
 String ipToString(IPAddress ipAddress) {
@@ -310,7 +320,7 @@ void switchSlaveSelect(boolean sdcard) {
 }
 
 void handleRequest(String request, EthernetClient client) {
-  Serial.println("Request: " + request);
+  debugPrint("Request: " + request);
 
   /*
    * Types of request:
@@ -397,7 +407,7 @@ void sendOutputs(EthernetClient client) {
 void sendNotFoundMessage(EthernetClient client) {
   sendNotFoundHeaders(client);
 
-  Serial.println("404 Not found");
+  debugPrint("404 Not found");
 
   StaticJsonBuffer<1024> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
@@ -413,7 +423,7 @@ void sendErrorMessage(EthernetClient client, int errorLevel) {
   // get error message
   String message = getErrorMessage(errorLevel);
 
-  Serial.println("Error: " + message);
+  debugPrint("Error: " + message);
 
   StaticJsonBuffer<1024> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
@@ -456,7 +466,7 @@ int handleToggleRequest(String request) {
   // get characters from "input=" to end of request
   String jsonString = request.substring(setIndex + 4, httpIndex);
 
-  Serial.println("Parsing string: " + jsonString);
+  debugPrint("Parsing string: " + jsonString);
 
   // JSON buffer for receiving JSON messages
   StaticJsonBuffer<1024> jsonBuffer;
@@ -465,12 +475,12 @@ int handleToggleRequest(String request) {
   JsonObject& root = jsonBuffer.parseObject(jsonString);
 
   if (! root.success()) {
-    Serial.println("Failed to parse JSON object");
+    debugPrint("Failed to parse JSON object");
 
     return REQUEST_ERROR_INVALID_JSON;
   }
   
-  Serial.println("Successfully parsed JSON object");
+  debugPrint("Successfully parsed JSON object");
 
   //
   // check that there is at least one pin toggle defined
@@ -483,7 +493,7 @@ int handleToggleRequest(String request) {
   // check for "single pin" mode
   if (root["pinmode"].as<int>() == PIN_MODE_SINGLE) {
     // single pin mode
-    Serial.println("[Single pin mode]");
+    debugPrint("[Single pin mode]");
 
     /* 
      * For single pin mode, we require the following information to be specified as keys of the JSON object:
@@ -524,11 +534,11 @@ int handleToggleRequest(String request) {
     }
     
     if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
-      Serial.println("[Snap toggle mode]");
+      debugPrint("[Snap toggle mode]");
       
       snapToValue(outputPin, outputValue);
     } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
-      Serial.println("[Ramp toggle mode]");
+      debugPrint("[Ramp toggle mode]");
       
       int rampDelay;
       
@@ -554,7 +564,7 @@ int handleToggleRequest(String request) {
     savePinValue(outputPin);
   } else if (root["pinmode"].as<int>() == PIN_MODE_DUAL) {
     // dual pin mode
-    Serial.println("[Dual pin mode]");
+    debugPrint("[Dual pin mode]");
 
     /* 
      * For dual pin mode, we require the following information to be specified as keys of the JSON object:
@@ -652,12 +662,12 @@ int handleToggleRequest(String request) {
     }
       
     if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
-      Serial.println("[Snap toggle mode]");
+      debugPrint("[Snap toggle mode]");
       
       snapToValue(coarsePin, coarseValue);
       snapToValue(finePin, fineValue);
     } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
-      Serial.println("[Ramp toggle mode]");
+      debugPrint("[Ramp toggle mode]");
 
       int rampDelay;
   
@@ -683,7 +693,7 @@ int handleToggleRequest(String request) {
       // number of coarse steps to make
       int coarseSteps = coarseValue - currentCoarseValue;
   
-      Serial.println("There are " + String(coarseSteps) + " coarse steps to make");
+      debugPrint("There are " + String(coarseSteps) + " coarse steps to make");
   
       // true means pin output is to increase, false means decrease
       int coarseDirection;
@@ -694,7 +704,7 @@ int handleToggleRequest(String request) {
         coarseDirection = -1;
       }
   
-      Serial.println("Direction: " + coarseDirection);
+      debugPrint("Direction: " + coarseDirection);
   
       if (coarseSteps != 0) {
         // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
@@ -855,12 +865,12 @@ void rampToValue(int pin, int newValue, int stepPause)
  * Instantly snaps specified pin to value without delay.
  */
 void snapToValue(int pin, int value) {
-  Serial.print("Setting " + String(pin) + String(" from ") + String(pinValues[getPinPosition(pin)]) + String(" to ") + String(value) + String("..."));
+  debugPrint("Setting " + String(pin) + String(" from ") + String(pinValues[getPinPosition(pin)]) + String(" to ") + String(value) + String("..."));
   
   // change the output level
   analogWrite(pin, value);
 
-  Serial.println(" done");
+  debugPrint(" done");
   
   // update pin value array with new value
   pinValues[getPinPosition(pin)] = value;
@@ -910,7 +920,7 @@ void restoreSavedOutputLevels() {
       File filePointer = SD.open(filenameChar, FILE_READ);
 
       if (filePointer) {
-        Serial.println("Found value file for pin " + String(outputPins[i]));
+        debugPrint("Found value file for pin " + String(outputPins[i]));
 
         char message[3];
 
@@ -938,11 +948,11 @@ void restoreSavedOutputLevels() {
 
         filePointer.close();
       } else {
-        Serial.println("Couldn't open file even though it exists. Using default value.");
+        debugPrint("Couldn't open file even though it exists. Using default value.");
         snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
       }
     } else {
-      Serial.println("Couldn't find value file for pin " + String(outputPins[i]) + ". Using default value.");
+      debugPrint("Couldn't find value file for pin " + String(outputPins[i]) + ". Using default value.");
 
       snapToValue(outputPins[i], DEFAULT_OUTPUT_VALUE);
     }
@@ -964,7 +974,7 @@ boolean savePinValue(int pin)
   File filePointer = SD.open(filenameChar, FILE_WRITE);
   
   if (filePointer) {
-      Serial.println("Writing pin value to file...");
+      debugPrint("Writing pin value to file...");
 
       // get value
       int value = pinValues[getPinPosition(pin)];
@@ -972,9 +982,9 @@ boolean savePinValue(int pin)
       filePointer.println(String(value));
       filePointer.close();
       
-      Serial.println("Done.");
+      debugPrint("Done.");
   } else {
-      Serial.println("Failed to write to file.");
+      debugPrint("Failed to write to file.");
 
       return false;
   }
