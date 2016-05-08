@@ -21,6 +21,18 @@ use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Parser\AbstractParser;
+use Symfony\Component\Validator\ConstraintValidatorFactory;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\DefaultTranslator;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Context\ExecutionContextFactory;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
+use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
+use Symfony\Component\Validator\Validator\LegacyValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Base class that represents a row from the 'output_views' table.
@@ -78,6 +90,13 @@ abstract class OutputView implements ActiveRecordInterface
     protected $name;
 
     /**
+     * The value for the display_order field.
+     *
+     * @var        int
+     */
+    protected $display_order;
+
+    /**
      * @var        ObjectCollection|ChildOutputViewOutput[] Collection to store aggregation of ChildOutputViewOutput objects.
      */
     protected $collOutputViewOutputs;
@@ -90,6 +109,23 @@ abstract class OutputView implements ActiveRecordInterface
      * @var boolean
      */
     protected $alreadyInSave = false;
+
+    // validate behavior
+
+    /**
+     * Flag to prevent endless validation loop, if this object is referenced
+     * by another object which falls in this transaction.
+     * @var        boolean
+     */
+    protected $alreadyInValidation = false;
+
+    /**
+     * ConstraintViolationList object
+     *
+     * @see     http://api.symfony.com/2.0/Symfony/Component/Validator/ConstraintViolationList.html
+     * @var     ConstraintViolationList
+     */
+    protected $validationFailures;
 
     /**
      * An array of objects scheduled for deletion.
@@ -340,6 +376,16 @@ abstract class OutputView implements ActiveRecordInterface
     }
 
     /**
+     * Get the [display_order] column value.
+     *
+     * @return int
+     */
+    public function getDisplayOrder()
+    {
+        return $this->display_order;
+    }
+
+    /**
      * Set the value of [id] column.
      *
      * @param int $v new value
@@ -378,6 +424,26 @@ abstract class OutputView implements ActiveRecordInterface
 
         return $this;
     } // setName()
+
+    /**
+     * Set the value of [display_order] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Outputs\OutputView The current object (for fluent API support)
+     */
+    public function setDisplayOrder($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->display_order !== $v) {
+            $this->display_order = $v;
+            $this->modifiedColumns[OutputViewTableMap::COL_DISPLAY_ORDER] = true;
+        }
+
+        return $this;
+    } // setDisplayOrder()
 
     /**
      * Indicates whether the columns in this object are only set to default values.
@@ -420,6 +486,9 @@ abstract class OutputView implements ActiveRecordInterface
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : OutputViewTableMap::translateFieldName('Name', TableMap::TYPE_PHPNAME, $indexType)];
             $this->name = (null !== $col) ? (string) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : OutputViewTableMap::translateFieldName('DisplayOrder', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->display_order = (null !== $col) ? (int) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -428,7 +497,7 @@ abstract class OutputView implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 2; // 2 = OutputViewTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 3; // 3 = OutputViewTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\ArduinoCoilDriver\\Outputs\\OutputView'), 0, $e);
@@ -650,6 +719,9 @@ abstract class OutputView implements ActiveRecordInterface
         if ($this->isColumnModified(OutputViewTableMap::COL_NAME)) {
             $modifiedColumns[':p' . $index++]  = 'name';
         }
+        if ($this->isColumnModified(OutputViewTableMap::COL_DISPLAY_ORDER)) {
+            $modifiedColumns[':p' . $index++]  = 'display_order';
+        }
 
         $sql = sprintf(
             'INSERT INTO output_views (%s) VALUES (%s)',
@@ -666,6 +738,9 @@ abstract class OutputView implements ActiveRecordInterface
                         break;
                     case 'name':
                         $stmt->bindValue($identifier, $this->name, PDO::PARAM_STR);
+                        break;
+                    case 'display_order':
+                        $stmt->bindValue($identifier, $this->display_order, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -735,6 +810,9 @@ abstract class OutputView implements ActiveRecordInterface
             case 1:
                 return $this->getName();
                 break;
+            case 2:
+                return $this->getDisplayOrder();
+                break;
             default:
                 return null;
                 break;
@@ -767,6 +845,7 @@ abstract class OutputView implements ActiveRecordInterface
         $result = array(
             $keys[0] => $this->getId(),
             $keys[1] => $this->getName(),
+            $keys[2] => $this->getDisplayOrder(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -829,6 +908,9 @@ abstract class OutputView implements ActiveRecordInterface
             case 1:
                 $this->setName($value);
                 break;
+            case 2:
+                $this->setDisplayOrder($value);
+                break;
         } // switch()
 
         return $this;
@@ -860,6 +942,9 @@ abstract class OutputView implements ActiveRecordInterface
         }
         if (array_key_exists($keys[1], $arr)) {
             $this->setName($arr[$keys[1]]);
+        }
+        if (array_key_exists($keys[2], $arr)) {
+            $this->setDisplayOrder($arr[$keys[2]]);
         }
     }
 
@@ -907,6 +992,9 @@ abstract class OutputView implements ActiveRecordInterface
         }
         if ($this->isColumnModified(OutputViewTableMap::COL_NAME)) {
             $criteria->add(OutputViewTableMap::COL_NAME, $this->name);
+        }
+        if ($this->isColumnModified(OutputViewTableMap::COL_DISPLAY_ORDER)) {
+            $criteria->add(OutputViewTableMap::COL_DISPLAY_ORDER, $this->display_order);
         }
 
         return $criteria;
@@ -995,6 +1083,7 @@ abstract class OutputView implements ActiveRecordInterface
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
         $copyObj->setName($this->getName());
+        $copyObj->setDisplayOrder($this->getDisplayOrder());
 
         if ($deepCopy) {
             // important: temporarily setNew(false) because this affects the behavior of
@@ -1305,6 +1394,7 @@ abstract class OutputView implements ActiveRecordInterface
     {
         $this->id = null;
         $this->name = null;
+        $this->display_order = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->resetModified();
@@ -1341,6 +1431,89 @@ abstract class OutputView implements ActiveRecordInterface
     public function __toString()
     {
         return (string) $this->exportTo(OutputViewTableMap::DEFAULT_STRING_FORMAT);
+    }
+
+    // validate behavior
+
+    /**
+     * Configure validators constraints. The Validator object uses this method
+     * to perform object validation.
+     *
+     * @param ClassMetadata $metadata
+     */
+    static public function loadValidatorMetadata(ClassMetadata $metadata)
+    {
+        $metadata->addPropertyConstraint('name', new NotBlank());
+        $metadata->addPropertyConstraint('name', new Length(array ('min' => 3,'max' => 32,)));
+        $metadata->addPropertyConstraint('display_order', new Range(array ('min' => 1,'max' => 255,)));
+    }
+
+    /**
+     * Validates the object and all objects related to this table.
+     *
+     * @see        getValidationFailures()
+     * @param      object $validator A Validator class instance
+     * @return     boolean Whether all objects pass validation.
+     */
+    public function validate(ValidatorInterface $validator = null)
+    {
+        if (null === $validator) {
+            if(class_exists('Symfony\\Component\\Validator\\Validator\\LegacyValidator')){
+                $validator = new LegacyValidator(
+                            new ExecutionContextFactory(new DefaultTranslator()),
+                            new ClassMetaDataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory()
+                );
+            }else{
+                $validator = new Validator(
+                            new ClassMetadataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory(),
+                            new DefaultTranslator()
+                );
+            }
+        }
+
+        $failureMap = new ConstraintViolationList();
+
+        if (!$this->alreadyInValidation) {
+            $this->alreadyInValidation = true;
+            $retval = null;
+
+
+            $retval = $validator->validate($this);
+            if (count($retval) > 0) {
+                $failureMap->addAll($retval);
+            }
+
+            if (null !== $this->collOutputViewOutputs) {
+                foreach ($this->collOutputViewOutputs as $referrerFK) {
+                    if (method_exists($referrerFK, 'validate')) {
+                        if (!$referrerFK->validate($validator)) {
+                            $failureMap->addAll($referrerFK->getValidationFailures());
+                        }
+                    }
+                }
+            }
+
+            $this->alreadyInValidation = false;
+        }
+
+        $this->validationFailures = $failureMap;
+
+        return (Boolean) (!(count($this->validationFailures) > 0));
+
+    }
+
+    /**
+     * Gets any ConstraintViolation objects that resulted from last call to validate().
+     *
+     *
+     * @return     object ConstraintViolationList
+     * @see        validate()
+     */
+    public function getValidationFailures()
+    {
+        return $this->validationFailures;
     }
 
     /**

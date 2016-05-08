@@ -140,6 +140,10 @@ class DriverOutput extends BaseDriverOutput
         return $pins;
     }
     
+    public function getFullName() {
+        return sprintf("%s %s", $this->getDriver()->getName(), $this->getName());
+    }
+    
     protected function createTogglePayload($toggleMode, DriverOutputPin $pin1, $value1, DriverOutputPin $pin2, $value2) {
         $toggleMode = intval($toggleMode);
     

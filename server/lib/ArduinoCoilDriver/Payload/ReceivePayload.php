@@ -5,6 +5,7 @@ namespace ArduinoCoilDriver\Payload;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\InvalidHttpHeaderException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonMessageException;
+use ArduinoCoilDriver\Exceptions\NoContactException;
 
 abstract class ReceivePayload
 {
@@ -14,6 +15,56 @@ abstract class ReceivePayload
     public function __construct($content, $timeTaken) {
         $this->content = $content;
         $this->timeTaken = $timeTaken;
+    }
+    
+    public static function payloadFromGet($host, $port, $get) {
+        global $logger;
+
+        // start clock
+        $startTime = microtime(true);
+
+        $logger->addInfo(sprintf('Contacting %s:%d: %s', $host, $port, $get));
+
+        // open socket
+        $socket = @fsockopen($host, $port, $errorCode, $errorString, DEFAULT_SOCKET_TIMEOUT);
+
+        // if socket isn't open
+        if (! $socket) {
+            throw new NoContactException($errorCode, $errorString);
+        }
+
+        // ask for status
+        fwrite($socket, "GET " . $get . " HTTP/1.1\r\nHOST: " . $host . "\r\n\r\n");
+
+        $body = "";
+        $header = "";
+
+        $contentFlag = false;
+
+        // compile returned message
+        while (! feof($socket)) {
+            $line = fgets($socket, MAXIMUM_SOCKET_LINE_LENGTH);
+
+            if ($contentFlag) {
+                $body .= $line;
+            } else {
+                if ($line == "\r\n" && !$contentFlag) {
+                    // this is the last line
+                    $contentFlag = true;
+                } else {
+                    $header .= $line;
+                }
+            }
+        }
+
+        // close socket
+        fclose($socket);
+
+        // stop clock
+        $endTime = microtime(true);
+
+        // create payload
+        return self::createFromMessage($header, $body, $endTime - $startTime);
     }
     
     public static function createFromMessage($header, $body, $timeTaken) {

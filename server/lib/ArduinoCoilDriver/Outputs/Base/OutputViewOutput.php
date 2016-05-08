@@ -21,6 +21,16 @@ use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Parser\AbstractParser;
+use Symfony\Component\Validator\ConstraintValidatorFactory;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\DefaultTranslator;
+use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Context\ExecutionContextFactory;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
+use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
+use Symfony\Component\Validator\Validator\LegacyValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Base class that represents a row from the 'output_view_output' table.
@@ -85,6 +95,13 @@ abstract class OutputViewOutput implements ActiveRecordInterface
     protected $driver_output_id;
 
     /**
+     * The value for the display_order field.
+     *
+     * @var        int
+     */
+    protected $display_order;
+
+    /**
      * @var        ChildOutputView
      */
     protected $aOutputView;
@@ -101,6 +118,23 @@ abstract class OutputViewOutput implements ActiveRecordInterface
      * @var boolean
      */
     protected $alreadyInSave = false;
+
+    // validate behavior
+
+    /**
+     * Flag to prevent endless validation loop, if this object is referenced
+     * by another object which falls in this transaction.
+     * @var        boolean
+     */
+    protected $alreadyInValidation = false;
+
+    /**
+     * ConstraintViolationList object
+     *
+     * @see     http://api.symfony.com/2.0/Symfony/Component/Validator/ConstraintViolationList.html
+     * @var     ConstraintViolationList
+     */
+    protected $validationFailures;
 
     /**
      * Initializes internal state of ArduinoCoilDriver\Outputs\Base\OutputViewOutput object.
@@ -355,6 +389,16 @@ abstract class OutputViewOutput implements ActiveRecordInterface
     }
 
     /**
+     * Get the [display_order] column value.
+     *
+     * @return int
+     */
+    public function getDisplayOrder()
+    {
+        return $this->display_order;
+    }
+
+    /**
      * Set the value of [id] column.
      *
      * @param int $v new value
@@ -423,6 +467,26 @@ abstract class OutputViewOutput implements ActiveRecordInterface
     } // setDriverOutputId()
 
     /**
+     * Set the value of [display_order] column.
+     *
+     * @param int $v new value
+     * @return $this|\ArduinoCoilDriver\Outputs\OutputViewOutput The current object (for fluent API support)
+     */
+    public function setDisplayOrder($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->display_order !== $v) {
+            $this->display_order = $v;
+            $this->modifiedColumns[OutputViewOutputTableMap::COL_DISPLAY_ORDER] = true;
+        }
+
+        return $this;
+    } // setDisplayOrder()
+
+    /**
      * Indicates whether the columns in this object are only set to default values.
      *
      * This method can be used in conjunction with isModified() to indicate whether an object is both
@@ -466,6 +530,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : OutputViewOutputTableMap::translateFieldName('DriverOutputId', TableMap::TYPE_PHPNAME, $indexType)];
             $this->driver_output_id = (null !== $col) ? (int) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : OutputViewOutputTableMap::translateFieldName('DisplayOrder', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->display_order = (null !== $col) ? (int) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -474,7 +541,7 @@ abstract class OutputViewOutput implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 3; // 3 = OutputViewOutputTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 4; // 4 = OutputViewOutputTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\ArduinoCoilDriver\\Outputs\\OutputViewOutput'), 0, $e);
@@ -707,6 +774,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
         if ($this->isColumnModified(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID)) {
             $modifiedColumns[':p' . $index++]  = 'driver_output_id';
         }
+        if ($this->isColumnModified(OutputViewOutputTableMap::COL_DISPLAY_ORDER)) {
+            $modifiedColumns[':p' . $index++]  = 'display_order';
+        }
 
         $sql = sprintf(
             'INSERT INTO output_view_output (%s) VALUES (%s)',
@@ -726,6 +796,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
                         break;
                     case 'driver_output_id':
                         $stmt->bindValue($identifier, $this->driver_output_id, PDO::PARAM_INT);
+                        break;
+                    case 'display_order':
+                        $stmt->bindValue($identifier, $this->display_order, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -798,6 +871,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
             case 2:
                 return $this->getDriverOutputId();
                 break;
+            case 3:
+                return $this->getDisplayOrder();
+                break;
             default:
                 return null;
                 break;
@@ -831,6 +907,7 @@ abstract class OutputViewOutput implements ActiveRecordInterface
             $keys[0] => $this->getId(),
             $keys[1] => $this->getOutputId(),
             $keys[2] => $this->getDriverOutputId(),
+            $keys[3] => $this->getDisplayOrder(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -911,6 +988,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
             case 2:
                 $this->setDriverOutputId($value);
                 break;
+            case 3:
+                $this->setDisplayOrder($value);
+                break;
         } // switch()
 
         return $this;
@@ -945,6 +1025,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
         }
         if (array_key_exists($keys[2], $arr)) {
             $this->setDriverOutputId($arr[$keys[2]]);
+        }
+        if (array_key_exists($keys[3], $arr)) {
+            $this->setDisplayOrder($arr[$keys[3]]);
         }
     }
 
@@ -995,6 +1078,9 @@ abstract class OutputViewOutput implements ActiveRecordInterface
         }
         if ($this->isColumnModified(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID)) {
             $criteria->add(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID, $this->driver_output_id);
+        }
+        if ($this->isColumnModified(OutputViewOutputTableMap::COL_DISPLAY_ORDER)) {
+            $criteria->add(OutputViewOutputTableMap::COL_DISPLAY_ORDER, $this->display_order);
         }
 
         return $criteria;
@@ -1084,6 +1170,7 @@ abstract class OutputViewOutput implements ActiveRecordInterface
     {
         $copyObj->setOutputId($this->getOutputId());
         $copyObj->setDriverOutputId($this->getDriverOutputId());
+        $copyObj->setDisplayOrder($this->getDisplayOrder());
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1230,6 +1317,7 @@ abstract class OutputViewOutput implements ActiveRecordInterface
         $this->id = null;
         $this->output_id = null;
         $this->driver_output_id = null;
+        $this->display_order = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->resetModified();
@@ -1262,6 +1350,95 @@ abstract class OutputViewOutput implements ActiveRecordInterface
     public function __toString()
     {
         return (string) $this->exportTo(OutputViewOutputTableMap::DEFAULT_STRING_FORMAT);
+    }
+
+    // validate behavior
+
+    /**
+     * Configure validators constraints. The Validator object uses this method
+     * to perform object validation.
+     *
+     * @param ClassMetadata $metadata
+     */
+    static public function loadValidatorMetadata(ClassMetadata $metadata)
+    {
+        $metadata->addPropertyConstraint('display_order', new Range(array ('min' => 1,'max' => 255,)));
+    }
+
+    /**
+     * Validates the object and all objects related to this table.
+     *
+     * @see        getValidationFailures()
+     * @param      object $validator A Validator class instance
+     * @return     boolean Whether all objects pass validation.
+     */
+    public function validate(ValidatorInterface $validator = null)
+    {
+        if (null === $validator) {
+            if(class_exists('Symfony\\Component\\Validator\\Validator\\LegacyValidator')){
+                $validator = new LegacyValidator(
+                            new ExecutionContextFactory(new DefaultTranslator()),
+                            new ClassMetaDataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory()
+                );
+            }else{
+                $validator = new Validator(
+                            new ClassMetadataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory(),
+                            new DefaultTranslator()
+                );
+            }
+        }
+
+        $failureMap = new ConstraintViolationList();
+
+        if (!$this->alreadyInValidation) {
+            $this->alreadyInValidation = true;
+            $retval = null;
+
+            // We call the validate method on the following object(s) if they
+            // were passed to this object by their corresponding set
+            // method.  This object relates to these object(s) by a
+            // foreign key reference.
+
+            // If validate() method exists, the validate-behavior is configured for related object
+            if (method_exists($this->aOutputView, 'validate')) {
+                if (!$this->aOutputView->validate($validator)) {
+                    $failureMap->addAll($this->aOutputView->getValidationFailures());
+                }
+            }
+            // If validate() method exists, the validate-behavior is configured for related object
+            if (method_exists($this->aDriverOutput, 'validate')) {
+                if (!$this->aDriverOutput->validate($validator)) {
+                    $failureMap->addAll($this->aDriverOutput->getValidationFailures());
+                }
+            }
+
+            $retval = $validator->validate($this);
+            if (count($retval) > 0) {
+                $failureMap->addAll($retval);
+            }
+
+
+            $this->alreadyInValidation = false;
+        }
+
+        $this->validationFailures = $failureMap;
+
+        return (Boolean) (!(count($this->validationFailures) > 0));
+
+    }
+
+    /**
+     * Gets any ConstraintViolation objects that resulted from last call to validate().
+     *
+     *
+     * @return     object ConstraintViolationList
+     * @see        validate()
+     */
+    public function getValidationFailures()
+    {
+        return $this->validationFailures;
     }
 
     /**

@@ -9,6 +9,7 @@
         <?php endforeach; ?>
         <?php else: ?>
         <p class="text-muted">There are no outputs associated with this driver.</p>
+        <a href="drivers.php?do=newoutput&id=<?=$driver->getId()?>" class="btn btn-sm btn-default">New Output</a>
         <?php endif; ?>
     </div>
     <div class="panel-footer text-center"><a href="drivers.php?do=edit&amp;id=<?=$this->e($driver->getId())?>">Edit</a></div>

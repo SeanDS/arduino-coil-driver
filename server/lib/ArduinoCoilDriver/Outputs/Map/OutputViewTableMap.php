@@ -59,7 +59,7 @@ class OutputViewTableMap extends TableMap
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 2;
+    const NUM_COLUMNS = 3;
 
     /**
      * The number of lazy-loaded columns
@@ -69,7 +69,7 @@ class OutputViewTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 2;
+    const NUM_HYDRATE_COLUMNS = 3;
 
     /**
      * the column name for the id field
@@ -80,6 +80,11 @@ class OutputViewTableMap extends TableMap
      * the column name for the name field
      */
     const COL_NAME = 'output_views.name';
+
+    /**
+     * the column name for the display_order field
+     */
+    const COL_DISPLAY_ORDER = 'output_views.display_order';
 
     /**
      * The default string format for model objects of the related table
@@ -93,11 +98,11 @@ class OutputViewTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'Name', ),
-        self::TYPE_CAMELNAME     => array('id', 'name', ),
-        self::TYPE_COLNAME       => array(OutputViewTableMap::COL_ID, OutputViewTableMap::COL_NAME, ),
-        self::TYPE_FIELDNAME     => array('id', 'name', ),
-        self::TYPE_NUM           => array(0, 1, )
+        self::TYPE_PHPNAME       => array('Id', 'Name', 'DisplayOrder', ),
+        self::TYPE_CAMELNAME     => array('id', 'name', 'displayOrder', ),
+        self::TYPE_COLNAME       => array(OutputViewTableMap::COL_ID, OutputViewTableMap::COL_NAME, OutputViewTableMap::COL_DISPLAY_ORDER, ),
+        self::TYPE_FIELDNAME     => array('id', 'name', 'display_order', ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -107,11 +112,11 @@ class OutputViewTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'Name' => 1, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'name' => 1, ),
-        self::TYPE_COLNAME       => array(OutputViewTableMap::COL_ID => 0, OutputViewTableMap::COL_NAME => 1, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'name' => 1, ),
-        self::TYPE_NUM           => array(0, 1, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'Name' => 1, 'DisplayOrder' => 2, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'name' => 1, 'displayOrder' => 2, ),
+        self::TYPE_COLNAME       => array(OutputViewTableMap::COL_ID => 0, OutputViewTableMap::COL_NAME => 1, OutputViewTableMap::COL_DISPLAY_ORDER => 2, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'name' => 1, 'display_order' => 2, ),
+        self::TYPE_NUM           => array(0, 1, 2, )
     );
 
     /**
@@ -133,6 +138,7 @@ class OutputViewTableMap extends TableMap
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addColumn('name', 'Name', 'VARCHAR', true, 32, null);
+        $this->addColumn('display_order', 'DisplayOrder', 'INTEGER', true, 3, null);
     } // initialize()
 
     /**
@@ -148,6 +154,19 @@ class OutputViewTableMap extends TableMap
   ),
 ), null, null, 'OutputViewOutputs', false);
     } // buildRelations()
+
+    /**
+     *
+     * Gets the list of behaviors registered for this table
+     *
+     * @return array Associative array (name => parameters) of behaviors
+     */
+    public function getBehaviors()
+    {
+        return array(
+            'validate' => array('rule1' => array ('column' => 'name','validator' => 'NotBlank',), 'rule2' => array ('column' => 'name','validator' => 'Length','options' => array ('min' => 3,'max' => 32,),), 'rule3' => array ('column' => 'display_order','validator' => 'Range','options' => array ('min' => 1,'max' => 255,),), ),
+        );
+    } // getBehaviors()
 
     /**
      * Retrieves a string version of the primary key from the DB resultset row that can be used to uniquely identify a row in this table.
@@ -292,9 +311,11 @@ class OutputViewTableMap extends TableMap
         if (null === $alias) {
             $criteria->addSelectColumn(OutputViewTableMap::COL_ID);
             $criteria->addSelectColumn(OutputViewTableMap::COL_NAME);
+            $criteria->addSelectColumn(OutputViewTableMap::COL_DISPLAY_ORDER);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.name');
+            $criteria->addSelectColumn($alias . '.display_order');
         }
     }
 

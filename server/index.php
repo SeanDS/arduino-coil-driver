@@ -4,6 +4,7 @@ require('require.php');
 
 use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
+use ArduinoCoilDriver\Outputs\OutputViewQuery;
 
 function getDriverOutputFromGet($returnUrl = 'index.php') {
     global $logger;
@@ -34,7 +35,10 @@ if (empty($do)) {
     // get drivers
     $drivers = DriverQuery::create()->orderByName()->find();
     
-    echo $templates->render('dashboard-list', ['drivers' => $drivers]);
+    // get groups
+    $groups = OutputViewQuery::create()->orderByDisplayOrder()->find();
+    
+    echo $templates->render('dashboard', ['drivers' => $drivers, 'groups' => $groups, 'tankUrls' => $tankUrls]);
 } elseif ($do === 'controloutput') {
     // control driver output
     

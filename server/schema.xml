@@ -101,6 +101,12 @@
   <table name="output_views" idMethod="native" phpName="OutputView" namespace="Outputs">
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="display_order" phpName="DisplayOrder" type="INTEGER" size="3" sqlType="int(3) unsigned" required="true"/>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: name, validator: NotBlank}" />
+      <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: display_order, validator: Range, options: {min: 1, max: 255}}" />
+    </behavior>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>
     </vendor>
@@ -109,6 +115,7 @@
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="output_id" phpName="OutputId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
     <column name="driver_output_id" phpName="DriverOutputId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="display_order" phpName="DisplayOrder" type="INTEGER" size="3" sqlType="int(3) unsigned" required="true"/>
     <foreign-key foreignTable="output_views" name="output_view_output_fk_1">
       <reference local="output_id" foreign="id"/>
     </foreign-key>
@@ -119,6 +126,9 @@
       <unique-column name="output_id"/>
       <unique-column name="driver_output_id"/>
     </unique>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: display_order, validator: Range, options: {min: 1, max: 255}}" />
+    </behavior>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>
     </vendor>
@@ -142,6 +152,9 @@
     <foreign-key foreignTable="states" name="state_bookmarks_fk_1">
       <reference local="state_id" foreign="id"/>
     </foreign-key>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: description, validator: Length, options: {max: 255}}" />
+    </behavior>
     <vendor type="mysql">
       <parameter name="Engine" value="InnoDB"/>
     </vendor>

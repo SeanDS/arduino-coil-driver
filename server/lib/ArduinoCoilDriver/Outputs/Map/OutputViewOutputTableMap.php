@@ -59,7 +59,7 @@ class OutputViewOutputTableMap extends TableMap
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 3;
+    const NUM_COLUMNS = 4;
 
     /**
      * The number of lazy-loaded columns
@@ -69,7 +69,7 @@ class OutputViewOutputTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 3;
+    const NUM_HYDRATE_COLUMNS = 4;
 
     /**
      * the column name for the id field
@@ -87,6 +87,11 @@ class OutputViewOutputTableMap extends TableMap
     const COL_DRIVER_OUTPUT_ID = 'output_view_output.driver_output_id';
 
     /**
+     * the column name for the display_order field
+     */
+    const COL_DISPLAY_ORDER = 'output_view_output.display_order';
+
+    /**
      * The default string format for model objects of the related table
      */
     const DEFAULT_STRING_FORMAT = 'YAML';
@@ -98,11 +103,11 @@ class OutputViewOutputTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'OutputId', 'DriverOutputId', ),
-        self::TYPE_CAMELNAME     => array('id', 'outputId', 'driverOutputId', ),
-        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID, OutputViewOutputTableMap::COL_OUTPUT_ID, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID, ),
-        self::TYPE_FIELDNAME     => array('id', 'output_id', 'driver_output_id', ),
-        self::TYPE_NUM           => array(0, 1, 2, )
+        self::TYPE_PHPNAME       => array('Id', 'OutputId', 'DriverOutputId', 'DisplayOrder', ),
+        self::TYPE_CAMELNAME     => array('id', 'outputId', 'driverOutputId', 'displayOrder', ),
+        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID, OutputViewOutputTableMap::COL_OUTPUT_ID, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID, OutputViewOutputTableMap::COL_DISPLAY_ORDER, ),
+        self::TYPE_FIELDNAME     => array('id', 'output_id', 'driver_output_id', 'display_order', ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
     /**
@@ -112,11 +117,11 @@ class OutputViewOutputTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'OutputId' => 1, 'DriverOutputId' => 2, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'outputId' => 1, 'driverOutputId' => 2, ),
-        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID => 0, OutputViewOutputTableMap::COL_OUTPUT_ID => 1, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID => 2, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'output_id' => 1, 'driver_output_id' => 2, ),
-        self::TYPE_NUM           => array(0, 1, 2, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'OutputId' => 1, 'DriverOutputId' => 2, 'DisplayOrder' => 3, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'outputId' => 1, 'driverOutputId' => 2, 'displayOrder' => 3, ),
+        self::TYPE_COLNAME       => array(OutputViewOutputTableMap::COL_ID => 0, OutputViewOutputTableMap::COL_OUTPUT_ID => 1, OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID => 2, OutputViewOutputTableMap::COL_DISPLAY_ORDER => 3, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'output_id' => 1, 'driver_output_id' => 2, 'display_order' => 3, ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
     /**
@@ -139,6 +144,7 @@ class OutputViewOutputTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
         $this->addForeignKey('output_id', 'OutputId', 'INTEGER', 'output_views', 'id', true, 10, null);
         $this->addForeignKey('driver_output_id', 'DriverOutputId', 'INTEGER', 'driver_outputs', 'id', true, 10, null);
+        $this->addColumn('display_order', 'DisplayOrder', 'INTEGER', true, 3, null);
     } // initialize()
 
     /**
@@ -161,6 +167,19 @@ class OutputViewOutputTableMap extends TableMap
   ),
 ), null, null, null, false);
     } // buildRelations()
+
+    /**
+     *
+     * Gets the list of behaviors registered for this table
+     *
+     * @return array Associative array (name => parameters) of behaviors
+     */
+    public function getBehaviors()
+    {
+        return array(
+            'validate' => array('rule1' => array ('column' => 'display_order','validator' => 'Range','options' => array ('min' => 1,'max' => 255,),), ),
+        );
+    } // getBehaviors()
 
     /**
      * Retrieves a string version of the primary key from the DB resultset row that can be used to uniquely identify a row in this table.
@@ -306,10 +325,12 @@ class OutputViewOutputTableMap extends TableMap
             $criteria->addSelectColumn(OutputViewOutputTableMap::COL_ID);
             $criteria->addSelectColumn(OutputViewOutputTableMap::COL_OUTPUT_ID);
             $criteria->addSelectColumn(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID);
+            $criteria->addSelectColumn(OutputViewOutputTableMap::COL_DISPLAY_ORDER);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.output_id');
             $criteria->addSelectColumn($alias . '.driver_output_id');
+            $criteria->addSelectColumn($alias . '.display_order');
         }
     }
 

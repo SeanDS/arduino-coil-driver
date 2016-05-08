@@ -22,9 +22,11 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildOutputViewQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildOutputViewQuery orderByName($order = Criteria::ASC) Order by the name column
+ * @method     ChildOutputViewQuery orderByDisplayOrder($order = Criteria::ASC) Order by the display_order column
  *
  * @method     ChildOutputViewQuery groupById() Group by the id column
  * @method     ChildOutputViewQuery groupByName() Group by the name column
+ * @method     ChildOutputViewQuery groupByDisplayOrder() Group by the display_order column
  *
  * @method     ChildOutputViewQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildOutputViewQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -50,17 +52,20 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildOutputView findOneOrCreate(ConnectionInterface $con = null) Return the first ChildOutputView matching the query, or a new ChildOutputView object populated from the query conditions when no match is found
  *
  * @method     ChildOutputView findOneById(int $id) Return the first ChildOutputView filtered by the id column
- * @method     ChildOutputView findOneByName(string $name) Return the first ChildOutputView filtered by the name column *
+ * @method     ChildOutputView findOneByName(string $name) Return the first ChildOutputView filtered by the name column
+ * @method     ChildOutputView findOneByDisplayOrder(int $display_order) Return the first ChildOutputView filtered by the display_order column *
 
  * @method     ChildOutputView requirePk($key, ConnectionInterface $con = null) Return the ChildOutputView by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildOutputView requireOne(ConnectionInterface $con = null) Return the first ChildOutputView matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildOutputView requireOneById(int $id) Return the first ChildOutputView filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildOutputView requireOneByName(string $name) Return the first ChildOutputView filtered by the name column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildOutputView requireOneByDisplayOrder(int $display_order) Return the first ChildOutputView filtered by the display_order column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildOutputView[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildOutputView objects based on current ModelCriteria
  * @method     ChildOutputView[]|ObjectCollection findById(int $id) Return ChildOutputView objects filtered by the id column
  * @method     ChildOutputView[]|ObjectCollection findByName(string $name) Return ChildOutputView objects filtered by the name column
+ * @method     ChildOutputView[]|ObjectCollection findByDisplayOrder(int $display_order) Return ChildOutputView objects filtered by the display_order column
  * @method     ChildOutputView[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -153,7 +158,7 @@ abstract class OutputViewQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, name FROM output_views WHERE id = :p0';
+        $sql = 'SELECT id, name, display_order FROM output_views WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -311,6 +316,47 @@ abstract class OutputViewQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(OutputViewTableMap::COL_NAME, $name, $comparison);
+    }
+
+    /**
+     * Filter the query on the display_order column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByDisplayOrder(1234); // WHERE display_order = 1234
+     * $query->filterByDisplayOrder(array(12, 34)); // WHERE display_order IN (12, 34)
+     * $query->filterByDisplayOrder(array('min' => 12)); // WHERE display_order > 12
+     * </code>
+     *
+     * @param     mixed $displayOrder The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildOutputViewQuery The current query, for fluid interface
+     */
+    public function filterByDisplayOrder($displayOrder = null, $comparison = null)
+    {
+        if (is_array($displayOrder)) {
+            $useMinMax = false;
+            if (isset($displayOrder['min'])) {
+                $this->addUsingAlias(OutputViewTableMap::COL_DISPLAY_ORDER, $displayOrder['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($displayOrder['max'])) {
+                $this->addUsingAlias(OutputViewTableMap::COL_DISPLAY_ORDER, $displayOrder['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(OutputViewTableMap::COL_DISPLAY_ORDER, $displayOrder, $comparison);
     }
 
     /**

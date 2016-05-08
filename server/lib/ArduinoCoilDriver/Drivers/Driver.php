@@ -45,6 +45,8 @@ class Driver extends BaseDriver
             throw $e;
         }
         
+        echo $statusPayload->getIp() . "," . $statusPayload->getMac();
+        
         // do some validation
         if ($statusPayload->getMac() !== $unregisteredDriver->getMac() || $statusPayload->getIp() !== $unregisteredDriver->getIp()) {
             $logger->addWarning(sprintf('Status reported by unregistered driver id %d differs from the record', $unregisteredDriver->getId()));
@@ -134,54 +136,11 @@ class Driver extends BaseDriver
     
     private function contact($get) {
         global $logger;
-    
-        // start clock
-        $startTime = microtime(true);
         
-        $logger->addInfo(sprintf('Contacting driver id %d', $this->getId()));
+        $logger->addInfo(sprintf('Contacting driver id %d: %s', $this->getId(), $get));
         
-        // open socket
-        $socket = @fsockopen($this->getIp(), 80, $errorCode, $errorString, DEFAULT_SOCKET_TIMEOUT);
-        
-        // if socket isn't open
-        if (! $socket) {            
-            throw new NoContactException($errorCode, $errorString);
-        }
-        
-        // ask for status
-        fwrite($socket, "GET " . $get . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
-
-        $body = "";
-        $header = "";
-        
-        $contentFlag = false;
-        
-        // compile returned message
-        while (! feof($socket)) {
-            $line = fgets($socket, MAXIMUM_SOCKET_LINE_LENGTH);
-            
-            if ($contentFlag) {
-                $body .= $line;
-            } else {
-                if ($line == "\r\n" && !$contentFlag) {
-                    // this is the last line
-                    $contentFlag = true;
-                } else {
-                    $header .= $line;
-                }
-            }
-        }
-        
-        // close socket
-        fclose($socket);
-        
-        // stop clock
-        $endTime = microtime(true);
-        
-        // create payload
-        $payload = ReceivePayload::createFromMessage($header, $body, $endTime - $startTime);
-        
-        return $payload;
+        // return payload
+        return ReceivePayload::payloadFromGet($this->getIp(), 80, $get);
     }
     
     public function dispatch(SendPayload $payload) {

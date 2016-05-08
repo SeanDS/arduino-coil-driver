@@ -24,10 +24,12 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildOutputViewOutputQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildOutputViewOutputQuery orderByOutputId($order = Criteria::ASC) Order by the output_id column
  * @method     ChildOutputViewOutputQuery orderByDriverOutputId($order = Criteria::ASC) Order by the driver_output_id column
+ * @method     ChildOutputViewOutputQuery orderByDisplayOrder($order = Criteria::ASC) Order by the display_order column
  *
  * @method     ChildOutputViewOutputQuery groupById() Group by the id column
  * @method     ChildOutputViewOutputQuery groupByOutputId() Group by the output_id column
  * @method     ChildOutputViewOutputQuery groupByDriverOutputId() Group by the driver_output_id column
+ * @method     ChildOutputViewOutputQuery groupByDisplayOrder() Group by the display_order column
  *
  * @method     ChildOutputViewOutputQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildOutputViewOutputQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -64,7 +66,8 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildOutputViewOutput findOneById(int $id) Return the first ChildOutputViewOutput filtered by the id column
  * @method     ChildOutputViewOutput findOneByOutputId(int $output_id) Return the first ChildOutputViewOutput filtered by the output_id column
- * @method     ChildOutputViewOutput findOneByDriverOutputId(int $driver_output_id) Return the first ChildOutputViewOutput filtered by the driver_output_id column *
+ * @method     ChildOutputViewOutput findOneByDriverOutputId(int $driver_output_id) Return the first ChildOutputViewOutput filtered by the driver_output_id column
+ * @method     ChildOutputViewOutput findOneByDisplayOrder(int $display_order) Return the first ChildOutputViewOutput filtered by the display_order column *
 
  * @method     ChildOutputViewOutput requirePk($key, ConnectionInterface $con = null) Return the ChildOutputViewOutput by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildOutputViewOutput requireOne(ConnectionInterface $con = null) Return the first ChildOutputViewOutput matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -72,11 +75,13 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildOutputViewOutput requireOneById(int $id) Return the first ChildOutputViewOutput filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildOutputViewOutput requireOneByOutputId(int $output_id) Return the first ChildOutputViewOutput filtered by the output_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildOutputViewOutput requireOneByDriverOutputId(int $driver_output_id) Return the first ChildOutputViewOutput filtered by the driver_output_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildOutputViewOutput requireOneByDisplayOrder(int $display_order) Return the first ChildOutputViewOutput filtered by the display_order column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildOutputViewOutput[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildOutputViewOutput objects based on current ModelCriteria
  * @method     ChildOutputViewOutput[]|ObjectCollection findById(int $id) Return ChildOutputViewOutput objects filtered by the id column
  * @method     ChildOutputViewOutput[]|ObjectCollection findByOutputId(int $output_id) Return ChildOutputViewOutput objects filtered by the output_id column
  * @method     ChildOutputViewOutput[]|ObjectCollection findByDriverOutputId(int $driver_output_id) Return ChildOutputViewOutput objects filtered by the driver_output_id column
+ * @method     ChildOutputViewOutput[]|ObjectCollection findByDisplayOrder(int $display_order) Return ChildOutputViewOutput objects filtered by the display_order column
  * @method     ChildOutputViewOutput[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -169,7 +174,7 @@ abstract class OutputViewOutputQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, output_id, driver_output_id FROM output_view_output WHERE id = :p0';
+        $sql = 'SELECT id, output_id, driver_output_id, display_order FROM output_view_output WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -384,6 +389,47 @@ abstract class OutputViewOutputQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(OutputViewOutputTableMap::COL_DRIVER_OUTPUT_ID, $driverOutputId, $comparison);
+    }
+
+    /**
+     * Filter the query on the display_order column
+     *
+     * Example usage:
+     * <code>
+     * $query->filterByDisplayOrder(1234); // WHERE display_order = 1234
+     * $query->filterByDisplayOrder(array(12, 34)); // WHERE display_order IN (12, 34)
+     * $query->filterByDisplayOrder(array('min' => 12)); // WHERE display_order > 12
+     * </code>
+     *
+     * @param     mixed $displayOrder The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return $this|ChildOutputViewOutputQuery The current query, for fluid interface
+     */
+    public function filterByDisplayOrder($displayOrder = null, $comparison = null)
+    {
+        if (is_array($displayOrder)) {
+            $useMinMax = false;
+            if (isset($displayOrder['min'])) {
+                $this->addUsingAlias(OutputViewOutputTableMap::COL_DISPLAY_ORDER, $displayOrder['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($displayOrder['max'])) {
+                $this->addUsingAlias(OutputViewOutputTableMap::COL_DISPLAY_ORDER, $displayOrder['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(OutputViewOutputTableMap::COL_DISPLAY_ORDER, $displayOrder, $comparison);
     }
 
     /**

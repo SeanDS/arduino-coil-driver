@@ -14,14 +14,27 @@ define('SESSION_TIME', 60 * 60 * 6);
 define('LDAP_HOSTNAME', 'ldap.example.com');
 define('LDAP_DN', 'dc=example,dc=com');
 
+// tank URLs, for SVG image
+$tankUrls = array(
+    'left_etm' => 'index.php?do=controloutput&oid=1',
+    'left_itm' => 'index.php?do=controloutput&oid=1',
+    'bottom_steering_left' => 'index.php?do=controloutput&oid=1',
+    'bottom_steering_centre' => 'index.php?do=controloutput&oid=1',
+    'middle_steering' => 'index.php?do=controloutput&oid=1',
+    'top_steering' => 'index.php?do=controloutput&oid=1',
+    'bottom_steering_right' => 'index.php?do=controloutput&oid=1',
+    'right_itm' => 'index.php?do=controloutput&oid=1',
+    'right_etm' => 'index.php?do=controloutput&oid=1'
+);
+
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
 // function (TODO: move elsewhere)
-function sortValidationErrorsByProperty($obj) {
+function sortValidationErrorsByProperty($obj, $namespace = "") {
     $errors = array();
     
     foreach ($obj->getValidationFailures() as $failure) {
-        $errors[$failure->getPropertyPath()][] = $failure->getMessage();
+        $errors[$namespace . $failure->getPropertyPath()][] = $failure->getMessage();
     }
     
     return $errors;

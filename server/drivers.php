@@ -9,16 +9,11 @@ use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Drivers\DriverPinQuery;
-use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
-use ArduinoCoilDriver\Drivers\DriverOutputPinQuery;
-use ArduinoCoilDriver\Drivers\UnregisteredDriver;
 use ArduinoCoilDriver\Drivers\UnregisteredDriverQuery;
 use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
-use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
-use ArduinoCoilDriver\States\Map\StateTableMap;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
@@ -35,7 +30,7 @@ function getDriverFromGet($returnUrl = 'drivers.php') {
     $driver = DriverQuery::create()->findPK($id);
     
     if ($driver === null) {
-        $logger->addWarning(sprintf('Specified driver id %d doesn\'t exist', $id));
+        $logger->addError(sprintf('Specified driver id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver not found.', 'returnUrl' => $returnUrl]);
         
@@ -56,7 +51,7 @@ function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
     $driverOutput = DriverOutputQuery::create()->findPK($id);
     
     if ($driverOutput === null) {
-        $logger->addWarning(sprintf('Specified driver output id %d doesn\'t exist', $id));
+        $logger->addError(sprintf('Specified driver output id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver output not found.', 'returnUrl' => $returnUrl]);
         
@@ -66,7 +61,7 @@ function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
     return $driverOutput;
 }
 
-function getUnregisteredDriverFromGet($returnUrl = 'drivers.php') {
+function getUnregisteredDriverFromGet($returnUrl = 'drivers.php?do=unregistered') {
     global $logger;
     global $templates;
 
@@ -77,9 +72,9 @@ function getUnregisteredDriverFromGet($returnUrl = 'drivers.php') {
     $unregisteredDriver = UnregisteredDriverQuery::create()->findPK($id);
     
     if (is_null($unregisteredDriver)) {
-        $logger->addWarning(sprintf('Specified unregistered driver id %d doesn\'t exist', $id));
+        $logger->addError(sprintf('Specified unregistered driver id %d doesn\'t exist', $id));
     
-        echo $templates->render('error', ['message' => 'Specified unregistered driver not found.', 'returnUrl' => 'drivers.php?do=unregistered']);
+        echo $templates->render('error', ['message' => 'Specified unregistered driver not found.', 'returnUrl' => $returnUrl]);
         
         exit();
     }
@@ -225,13 +220,13 @@ if (empty($do)) {
     try {
         $statusPayload = $driver->getStatus();
     } catch (NoContactException $e) {
-        $logger->addWarning(sprintf('Sriver id %d cannot be contacted', $driver->getId()));
+        $logger->addError(sprintf('Driver id %d cannot be contacted', $driver->getId()));
         
         echo $templates->render('error', ['message' => 'Specified driver cannot be contacted.', 'returnUrl' => 'drivers.php']);
             
         exit();
     } catch (InvalidJsonException $e) {
-        $logger->addWarning(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
+        $logger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
         
         echo $templates->render('error', ['message' => 'Specified driver returned an invalid message.', 'returnUrl' => 'drivers.php']);
             

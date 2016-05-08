@@ -17,7 +17,7 @@
       <div class="form-group<?php if (array_key_exists('mapping', $errors)): ?> has-error<?php endif; ?>">
         <label for="mapping" class="control-label col-md-4">Pin Mapping</label>
         <div class="col-md-3">
-          <input class="form-control" type="text" name="mapping" id="mapping" placeholder="64" maxlength="3" value="<?=$this->e($driverOutput->getMapping())?>"/>
+          <input class="form-control" type="number" name="mapping" id="mapping" placeholder="64" maxlength="3" value="<?=$this->e($driverOutput->getMapping())?>"/>
           <?php if (array_key_exists('mapping', $errors)): ?>
           <?php foreach ($errors['mapping'] as $error): ?>
           <span class="help-block"><?=$this->e($error)?></span>
@@ -28,7 +28,7 @@
       <div class="form-group<?php if (array_key_exists('overlap_value', $errors)): ?> has-error<?php endif; ?>">
         <label for="overlapvalue" class="control-label col-md-4">Overlap Value</label>
         <div class="col-md-3">
-          <input class="form-control" type="text" name="overlapvalue" id="overlapvalue" placeholder="127" maxlength="3" value="<?=$this->e($driverOutput->getOverlapValue())?>"/>
+          <input class="form-control" type="number" name="overlapvalue" id="overlapvalue" placeholder="127" maxlength="3" value="<?=$this->e($driverOutput->getOverlapValue())?>"/>
           <?php if (array_key_exists('overlap_value', $errors)): ?>
           <?php foreach ($errors['overlap_value'] as $error): ?>
           <span class="help-block"><?=$this->e($error)?></span>
@@ -40,7 +40,7 @@
         <label for="defaultdelay" class="control-label col-md-4">Default Delay</label>
         <div class="col-md-4">
           <div class="input-group">
-            <input class="form-control" type="text" name="defaultdelay" id="defaultdelay" placeholder="5" maxlength="5" value="<?=$this->e($driverOutput->getDefaultDelay())?>"/>
+            <input class="form-control" type="number" name="defaultdelay" id="defaultdelay" placeholder="5" maxlength="5" value="<?=$this->e($driverOutput->getDefaultDelay())?>"/>
             <div class="input-group-addon">ms</div>
           </div>
           <?php if (array_key_exists('default_delay', $errors)): ?>

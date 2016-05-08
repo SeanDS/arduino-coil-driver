@@ -3,9 +3,9 @@
 namespace ArduinoCoilDriver\Drivers;
 
 use ArduinoCoilDriver\Drivers\Base\UnregisteredDriver as BaseUnregisteredDriver;
-use ArduinoCoilDriver\Exceptions\NoContactException;
-use ArduinoCoilDriver\Payload\StatusPayload;
-use ArduinoCoilDriver\Payload\OutputPayload;
+use ArduinoCoilDriver\Payload\ReceivePayload;
+use ArduinoCoilDriver\Payload\StatusReceivePayload;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
 
 /**
  * Skeleton subclass for representing a row from the 'drivers_unregistered' table.
@@ -19,61 +19,40 @@ use ArduinoCoilDriver\Payload\OutputPayload;
  */
 class UnregisteredDriver extends BaseUnregisteredDriver
 {
-    private function contact($path) {
-        // start clock
-        $startTime = microtime(true);
+    private function contact($get) {
+        global $logger;
         
-        // open socket
-        $socket = @fsockopen($this->getIp(), 80, $errorCode, $errorString, DEFAULT_SOCKET_TIMEOUT);
+        $logger->addInfo(sprintf('Contacting unregistered driver id %d: %s', $this->getId(), $get));
         
-        // if socket isn't open
-        if (! $socket) {            
-            throw new NoContactException($errorCode, $errorString);
-        }
-        
-        // ask for status
-        fwrite($socket, "GET " . $path . " HTTP/1.1\r\nHOST: " . $this->getIp() . "\r\n\r\n");
-
-        $message = "";
-        
-        $contentFlag = false;
-        
-        // compile returned message
-        while (! feof($socket)) {
-            $line = fgets($socket, MAXIMUM_SOCKET_LINE_LENGTH);
-            
-            if ($contentFlag) {
-                $message .= $line;
-            } else {
-                if ($line == "\r\n" && !$contentFlag) {
-                    // this is the last line
-                    $contentFlag = true;
-                }
-            }
-        }
-        
-        // close socket
-        fclose($socket);
-        
-        // stop clock
-        $endTime = microtime(true);
-        
-        return $message;
+        // return payload
+        return ReceivePayload::payloadFromGet($this->getIp(), 80, $get);
     }
 
     public function getStatus() {
-        $startTime = microtime(true);
-        $message = $this->contact("/status");
-        $endTime = microtime(true);
+        global $logger;
         
-        return new StatusPayload($message, $endTime - $startTime);
+        $logger->addInfo(sprintf('Getting status of unregistered driver id %d', $this->getId()));
+        
+        $payload = $this->contact("/status");
+        
+        if (! $payload instanceof StatusReceivePayload) {
+            throw new Exception("Received payload is not a StatusReceivePayload");
+        }
+        
+        return $payload;
     }
     
     public function getOutputs() {
-        $startTime = microtime(true);
-        $message = $this->contact("/outputs");
-        $endTime = microtime(true);
+        global $logger;
         
-        return new OutputPayload($message, $endTime - $startTime);
+        $logger->addInfo(sprintf('Getting outputs of unregistered driver id %d', $this->getId()));
+        
+        $payload = $this->contact("/outputs");
+        
+        if (! $payload instanceof OutputReceivePayload) {
+            throw new Exception("Received payload is not a OutputReceivePayload");
+        }
+        
+        return $payload;
     }
 }
