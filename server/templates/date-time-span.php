@@ -1,3 +1,7 @@
+<?php if ($raw): ?>
+<span><?=$this->e($time->format(constant('DATETIME_FORMAT')))?></span>
+<?php else: ?>
+
 <?php
 
 $seconds = time() - $time->format('U');
@@ -17,4 +21,6 @@ $minutes = floor($seconds / 60);
 <span class="text-danger">never</span>
 <?php else: ?>
 <span class="text-danger"><?=$this->e($time->format(DATETIME_FORMAT))?></span>
+<?php endif; ?>
+
 <?php endif; ?>

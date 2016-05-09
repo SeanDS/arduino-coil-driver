@@ -2,6 +2,7 @@
 
 namespace ArduinoCoilDriver\States\Map;
 
+use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\StateQuery;
 use Propel\Runtime\Propel;
@@ -159,15 +160,25 @@ class StateTableMap extends TableMap
     0 => ':state_id',
     1 => ':id',
   ),
-), null, null, 'DriverPinValues', false);
-        $this->addRelation('StateBookmark', '\\ArduinoCoilDriver\\States\\StateBookmark', RelationMap::ONE_TO_MANY, array (
+), 'CASCADE', null, 'DriverPinValues', false);
+        $this->addRelation('StateBookmark', '\\ArduinoCoilDriver\\States\\StateBookmark', RelationMap::ONE_TO_ONE, array (
   0 =>
   array (
-    0 => ':state_id',
+    0 => ':id',
     1 => ':id',
   ),
-), null, null, 'StateBookmarks', false);
+), 'CASCADE', null, null, false);
     } // buildRelations()
+    /**
+     * Method to invalidate the instance pool of all tables related to states     * by a foreign key with ON DELETE CASCADE
+     */
+    public static function clearRelatedInstancePool()
+    {
+        // Invalidate objects in related instance pools,
+        // since one or more of them may be deleted by ON DELETE CASCADE/SETNULL rule.
+        DriverPinValueTableMap::clearInstancePool();
+        StateBookmarkTableMap::clearInstancePool();
+    }
 
     /**
      * Retrieves a string version of the primary key from the DB resultset row that can be used to uniquely identify a row in this table.

@@ -2,7 +2,11 @@
 
 namespace ArduinoCoilDriver\States;
 
+use Propel\Runtime\Propel;
 use ArduinoCoilDriver\States\Base\State as BaseState;
+use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
+use Propel\Runtime\Connection\ConnectionInterface;
+use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
 
 /**
  * Skeleton subclass for representing a row from the 'states' table.
@@ -26,5 +30,33 @@ class State extends BaseState
         $state->save();
         
         return $state;
+    }
+    
+    public function isDeletable() {
+        // check if this state is the most up-to-date for any pin        
+        $mostRecentState = DriverPinValueQuery::create()->groupBy('StateId')->innerJoinState()->useStateQuery()->orderByTime('desc')->endUse()->findOne();
+        
+        if ($mostRecentState != null && $mostRecentState->getStateId() === $this->getId()) {
+            // this state is the current state of at least one pin, so it is undeletable
+            return false;
+        }
+        
+        return true;
+    }
+    
+    public function preDelete(ConnectionInterface $connection = null) {
+        // NOTE: no delete function is needed for bookmarks or pin values, because ON DELETE = CASCADE is defined in SQL.
+        
+        if (! $this->isDeletable()) {
+            throw new CurrentStateUndeletableException($this);
+        }
+        
+        return true;
+    }
+    
+    public function postDelete(ConnectionInterface $connection = null) {
+        global $logger;
+        
+        $logger->addInfo(sprintf('State id %d deleted', $this->getId()));
     }
 }

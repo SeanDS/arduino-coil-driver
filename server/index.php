@@ -27,6 +27,27 @@ function getDriverOutputFromGet($returnUrl = 'index.php') {
     return $driverOutput;
 }
 
+function getOutputGroupFromGet($returnUrl = 'index.php') {
+    global $logger;
+    global $templates;
+
+    // get group id from HTTP_GET
+    $id = filter_input(INPUT_GET, 'oid', FILTER_VALIDATE_INT);
+    
+    // get output group
+    $group = OutputViewQuery::create()->findPK($id);
+    
+    if ($group === null) {
+        $logger->addWarning(sprintf('Specified output group id %d doesn\'t exist', $id));
+    
+        echo $templates->render('error', ['message' => 'Specified output group not found.', 'returnUrl' => $returnUrl]);
+        
+        exit();
+    }
+    
+    return $group;
+}
+
 $do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
 
 if (empty($do)) {   
@@ -46,6 +67,13 @@ if (empty($do)) {
     $driverOutput = getDriverOutputFromGet();
     
     echo $templates->render('dashboard-control-output', ['driverOutput' => $driverOutput]);
+} elseif ($do == 'controlgroup') {
+    // control output group
+    
+    // get group
+    $group = getOutputGroupFromGet();
+    
+    echo $templates->render('dashboard-control-group', ['group' => $group]);
 }
 
 ?>

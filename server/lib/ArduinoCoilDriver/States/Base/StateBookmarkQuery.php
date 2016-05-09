@@ -21,13 +21,9 @@ use Propel\Runtime\Exception\PropelException;
  *
  *
  * @method     ChildStateBookmarkQuery orderById($order = Criteria::ASC) Order by the id column
- * @method     ChildStateBookmarkQuery orderByStateId($order = Criteria::ASC) Order by the state_id column
- * @method     ChildStateBookmarkQuery orderByDate($order = Criteria::ASC) Order by the date column
  * @method     ChildStateBookmarkQuery orderByDescription($order = Criteria::ASC) Order by the description column
  *
  * @method     ChildStateBookmarkQuery groupById() Group by the id column
- * @method     ChildStateBookmarkQuery groupByStateId() Group by the state_id column
- * @method     ChildStateBookmarkQuery groupByDate() Group by the date column
  * @method     ChildStateBookmarkQuery groupByDescription() Group by the description column
  *
  * @method     ChildStateBookmarkQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
@@ -54,22 +50,16 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildStateBookmark findOneOrCreate(ConnectionInterface $con = null) Return the first ChildStateBookmark matching the query, or a new ChildStateBookmark object populated from the query conditions when no match is found
  *
  * @method     ChildStateBookmark findOneById(int $id) Return the first ChildStateBookmark filtered by the id column
- * @method     ChildStateBookmark findOneByStateId(int $state_id) Return the first ChildStateBookmark filtered by the state_id column
- * @method     ChildStateBookmark findOneByDate(string $date) Return the first ChildStateBookmark filtered by the date column
  * @method     ChildStateBookmark findOneByDescription(string $description) Return the first ChildStateBookmark filtered by the description column *
 
  * @method     ChildStateBookmark requirePk($key, ConnectionInterface $con = null) Return the ChildStateBookmark by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildStateBookmark requireOne(ConnectionInterface $con = null) Return the first ChildStateBookmark matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildStateBookmark requireOneById(int $id) Return the first ChildStateBookmark filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildStateBookmark requireOneByStateId(int $state_id) Return the first ChildStateBookmark filtered by the state_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildStateBookmark requireOneByDate(string $date) Return the first ChildStateBookmark filtered by the date column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildStateBookmark requireOneByDescription(string $description) Return the first ChildStateBookmark filtered by the description column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildStateBookmark[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildStateBookmark objects based on current ModelCriteria
  * @method     ChildStateBookmark[]|ObjectCollection findById(int $id) Return ChildStateBookmark objects filtered by the id column
- * @method     ChildStateBookmark[]|ObjectCollection findByStateId(int $state_id) Return ChildStateBookmark objects filtered by the state_id column
- * @method     ChildStateBookmark[]|ObjectCollection findByDate(string $date) Return ChildStateBookmark objects filtered by the date column
  * @method     ChildStateBookmark[]|ObjectCollection findByDescription(string $description) Return ChildStateBookmark objects filtered by the description column
  * @method     ChildStateBookmark[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
@@ -163,7 +153,7 @@ abstract class StateBookmarkQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, state_id, date, description FROM state_bookmarks WHERE id = :p0';
+        $sql = 'SELECT id, description FROM state_bookmarks WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -263,6 +253,8 @@ abstract class StateBookmarkQuery extends ModelCriteria
      * $query->filterById(array('min' => 12)); // WHERE id > 12
      * </code>
      *
+     * @see       filterByState()
+     *
      * @param     mixed $id The value to use as filter.
      *              Use scalar values for equality.
      *              Use array values for in_array() equivalent.
@@ -292,92 +284,6 @@ abstract class StateBookmarkQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(StateBookmarkTableMap::COL_ID, $id, $comparison);
-    }
-
-    /**
-     * Filter the query on the state_id column
-     *
-     * Example usage:
-     * <code>
-     * $query->filterByStateId(1234); // WHERE state_id = 1234
-     * $query->filterByStateId(array(12, 34)); // WHERE state_id IN (12, 34)
-     * $query->filterByStateId(array('min' => 12)); // WHERE state_id > 12
-     * </code>
-     *
-     * @see       filterByState()
-     *
-     * @param     mixed $stateId The value to use as filter.
-     *              Use scalar values for equality.
-     *              Use array values for in_array() equivalent.
-     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
-     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
-     *
-     * @return $this|ChildStateBookmarkQuery The current query, for fluid interface
-     */
-    public function filterByStateId($stateId = null, $comparison = null)
-    {
-        if (is_array($stateId)) {
-            $useMinMax = false;
-            if (isset($stateId['min'])) {
-                $this->addUsingAlias(StateBookmarkTableMap::COL_STATE_ID, $stateId['min'], Criteria::GREATER_EQUAL);
-                $useMinMax = true;
-            }
-            if (isset($stateId['max'])) {
-                $this->addUsingAlias(StateBookmarkTableMap::COL_STATE_ID, $stateId['max'], Criteria::LESS_EQUAL);
-                $useMinMax = true;
-            }
-            if ($useMinMax) {
-                return $this;
-            }
-            if (null === $comparison) {
-                $comparison = Criteria::IN;
-            }
-        }
-
-        return $this->addUsingAlias(StateBookmarkTableMap::COL_STATE_ID, $stateId, $comparison);
-    }
-
-    /**
-     * Filter the query on the date column
-     *
-     * Example usage:
-     * <code>
-     * $query->filterByDate('2011-03-14'); // WHERE date = '2011-03-14'
-     * $query->filterByDate('now'); // WHERE date = '2011-03-14'
-     * $query->filterByDate(array('max' => 'yesterday')); // WHERE date > '2011-03-13'
-     * </code>
-     *
-     * @param     mixed $date The value to use as filter.
-     *              Values can be integers (unix timestamps), DateTime objects, or strings.
-     *              Empty strings are treated as NULL.
-     *              Use scalar values for equality.
-     *              Use array values for in_array() equivalent.
-     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
-     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
-     *
-     * @return $this|ChildStateBookmarkQuery The current query, for fluid interface
-     */
-    public function filterByDate($date = null, $comparison = null)
-    {
-        if (is_array($date)) {
-            $useMinMax = false;
-            if (isset($date['min'])) {
-                $this->addUsingAlias(StateBookmarkTableMap::COL_DATE, $date['min'], Criteria::GREATER_EQUAL);
-                $useMinMax = true;
-            }
-            if (isset($date['max'])) {
-                $this->addUsingAlias(StateBookmarkTableMap::COL_DATE, $date['max'], Criteria::LESS_EQUAL);
-                $useMinMax = true;
-            }
-            if ($useMinMax) {
-                return $this;
-            }
-            if (null === $comparison) {
-                $comparison = Criteria::IN;
-            }
-        }
-
-        return $this->addUsingAlias(StateBookmarkTableMap::COL_DATE, $date, $comparison);
     }
 
     /**
@@ -423,14 +329,14 @@ abstract class StateBookmarkQuery extends ModelCriteria
     {
         if ($state instanceof \ArduinoCoilDriver\States\State) {
             return $this
-                ->addUsingAlias(StateBookmarkTableMap::COL_STATE_ID, $state->getId(), $comparison);
+                ->addUsingAlias(StateBookmarkTableMap::COL_ID, $state->getId(), $comparison);
         } elseif ($state instanceof ObjectCollection) {
             if (null === $comparison) {
                 $comparison = Criteria::IN;
             }
 
             return $this
-                ->addUsingAlias(StateBookmarkTableMap::COL_STATE_ID, $state->toKeyValue('PrimaryKey', 'Id'), $comparison);
+                ->addUsingAlias(StateBookmarkTableMap::COL_ID, $state->toKeyValue('PrimaryKey', 'Id'), $comparison);
         } else {
             throw new PropelException('filterByState() only accepts arguments of type \ArduinoCoilDriver\States\State or Collection');
         }

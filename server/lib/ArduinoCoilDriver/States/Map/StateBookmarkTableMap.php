@@ -59,7 +59,7 @@ class StateBookmarkTableMap extends TableMap
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 4;
+    const NUM_COLUMNS = 2;
 
     /**
      * The number of lazy-loaded columns
@@ -69,22 +69,12 @@ class StateBookmarkTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 4;
+    const NUM_HYDRATE_COLUMNS = 2;
 
     /**
      * the column name for the id field
      */
     const COL_ID = 'state_bookmarks.id';
-
-    /**
-     * the column name for the state_id field
-     */
-    const COL_STATE_ID = 'state_bookmarks.state_id';
-
-    /**
-     * the column name for the date field
-     */
-    const COL_DATE = 'state_bookmarks.date';
 
     /**
      * the column name for the description field
@@ -103,11 +93,11 @@ class StateBookmarkTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'StateId', 'Date', 'Description', ),
-        self::TYPE_CAMELNAME     => array('id', 'stateId', 'date', 'description', ),
-        self::TYPE_COLNAME       => array(StateBookmarkTableMap::COL_ID, StateBookmarkTableMap::COL_STATE_ID, StateBookmarkTableMap::COL_DATE, StateBookmarkTableMap::COL_DESCRIPTION, ),
-        self::TYPE_FIELDNAME     => array('id', 'state_id', 'date', 'description', ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, )
+        self::TYPE_PHPNAME       => array('Id', 'Description', ),
+        self::TYPE_CAMELNAME     => array('id', 'description', ),
+        self::TYPE_COLNAME       => array(StateBookmarkTableMap::COL_ID, StateBookmarkTableMap::COL_DESCRIPTION, ),
+        self::TYPE_FIELDNAME     => array('id', 'description', ),
+        self::TYPE_NUM           => array(0, 1, )
     );
 
     /**
@@ -117,11 +107,11 @@ class StateBookmarkTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'StateId' => 1, 'Date' => 2, 'Description' => 3, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'stateId' => 1, 'date' => 2, 'description' => 3, ),
-        self::TYPE_COLNAME       => array(StateBookmarkTableMap::COL_ID => 0, StateBookmarkTableMap::COL_STATE_ID => 1, StateBookmarkTableMap::COL_DATE => 2, StateBookmarkTableMap::COL_DESCRIPTION => 3, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'state_id' => 1, 'date' => 2, 'description' => 3, ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'Description' => 1, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'description' => 1, ),
+        self::TYPE_COLNAME       => array(StateBookmarkTableMap::COL_ID => 0, StateBookmarkTableMap::COL_DESCRIPTION => 1, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'description' => 1, ),
+        self::TYPE_NUM           => array(0, 1, )
     );
 
     /**
@@ -139,11 +129,9 @@ class StateBookmarkTableMap extends TableMap
         $this->setIdentifierQuoting(false);
         $this->setClassName('\\ArduinoCoilDriver\\States\\StateBookmark');
         $this->setPackage('ArduinoCoilDriver.States');
-        $this->setUseIdGenerator(true);
+        $this->setUseIdGenerator(false);
         // columns
-        $this->addPrimaryKey('id', 'Id', 'INTEGER', true, 10, null);
-        $this->addForeignKey('state_id', 'StateId', 'INTEGER', 'states', 'id', true, 10, null);
-        $this->addColumn('date', 'Date', 'TIMESTAMP', true, null, null);
+        $this->addForeignPrimaryKey('id', 'Id', 'INTEGER' , 'states', 'id', true, 10, null);
         $this->addColumn('description', 'Description', 'VARCHAR', true, 255, null);
     } // initialize()
 
@@ -155,11 +143,24 @@ class StateBookmarkTableMap extends TableMap
         $this->addRelation('State', '\\ArduinoCoilDriver\\States\\State', RelationMap::MANY_TO_ONE, array (
   0 =>
   array (
-    0 => ':state_id',
+    0 => ':id',
     1 => ':id',
   ),
-), null, null, null, false);
+), 'CASCADE', null, null, false);
     } // buildRelations()
+
+    /**
+     *
+     * Gets the list of behaviors registered for this table
+     *
+     * @return array Associative array (name => parameters) of behaviors
+     */
+    public function getBehaviors()
+    {
+        return array(
+            'validate' => array('rule1' => array ('column' => 'description','validator' => 'Length','options' => array ('max' => 255,),), ),
+        );
+    } // getBehaviors()
 
     /**
      * Retrieves a string version of the primary key from the DB resultset row that can be used to uniquely identify a row in this table.
@@ -303,13 +304,9 @@ class StateBookmarkTableMap extends TableMap
     {
         if (null === $alias) {
             $criteria->addSelectColumn(StateBookmarkTableMap::COL_ID);
-            $criteria->addSelectColumn(StateBookmarkTableMap::COL_STATE_ID);
-            $criteria->addSelectColumn(StateBookmarkTableMap::COL_DATE);
             $criteria->addSelectColumn(StateBookmarkTableMap::COL_DESCRIPTION);
         } else {
             $criteria->addSelectColumn($alias . '.id');
-            $criteria->addSelectColumn($alias . '.state_id');
-            $criteria->addSelectColumn($alias . '.date');
             $criteria->addSelectColumn($alias . '.description');
         }
     }
@@ -408,10 +405,6 @@ class StateBookmarkTableMap extends TableMap
             $criteria = clone $criteria; // rename for clarity
         } else {
             $criteria = $criteria->buildCriteria(); // build Criteria from StateBookmark object
-        }
-
-        if ($criteria->containsKey(StateBookmarkTableMap::COL_ID) && $criteria->keyContainsValue(StateBookmarkTableMap::COL_ID) ) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key ('.StateBookmarkTableMap::COL_ID.')');
         }
 
 

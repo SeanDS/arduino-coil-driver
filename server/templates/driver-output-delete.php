@@ -1,7 +1,7 @@
 <?php $this->layout('drivers-template') ?>
 <h2>Delete Driver Output</h2>
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-12">
     <form action="drivers.php?do=deleteoutput&amp;oid=<?=$this->e($driverOutput->getId())?>" method="post" class="form-horizontal">
       <input type="hidden" name="confirm" value="true"/>
       <p class="text-danger">Are you sure you wish to delete driver output "<?=$this->e($driverOutput->getName())?>"?</p>

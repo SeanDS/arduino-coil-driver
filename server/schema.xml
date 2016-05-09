@@ -50,7 +50,7 @@
     <foreign-key foreignTable="driver_pins" name="driver_pin_values_fk_1">
       <reference local="driver_pin_id" foreign="id"/>
     </foreign-key>
-    <foreign-key foreignTable="states" name="driver_pin_values_fk_2">
+    <foreign-key foreignTable="states" name="driver_pin_values_fk_2" onDelete="CASCADE">
       <reference local="state_id" foreign="id"/>
     </foreign-key>
     <vendor type="mysql">
@@ -137,7 +137,7 @@
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="user_id" phpName="UserId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
     <column name="time" phpName="Time" type="TIMESTAMP" required="true"/>
-    <foreign-key foreignTable="users" name="states_fk_1">
+    <foreign-key foreignTable="users" name="users_fk_1">
       <reference local="user_id" foreign="id"/>
     </foreign-key>
     <vendor type="mysql">
@@ -145,12 +145,10 @@
     </vendor>
   </table>
   <table name="state_bookmarks" idMethod="native" phpName="StateBookmark" namespace="States">
-    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
-    <column name="state_id" phpName="StateId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
-    <column name="date" phpName="Date" type="TIMESTAMP" required="true"/>
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" required="true"/>
     <column name="description" phpName="Description" type="VARCHAR" size="255" required="true"/>
-    <foreign-key foreignTable="states" name="state_bookmarks_fk_1">
-      <reference local="state_id" foreign="id"/>
+    <foreign-key foreignTable="states" name="state_bookmarks_fk_1" onDelete="CASCADE">
+      <reference local="id" foreign="id"/>
     </foreign-key>
     <behavior name="validate">
       <parameter name="rule1" value="{column: description, validator: Length, options: {max: 255}}" />

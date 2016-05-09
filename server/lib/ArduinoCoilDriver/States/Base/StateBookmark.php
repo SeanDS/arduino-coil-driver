@@ -2,7 +2,6 @@
 
 namespace ArduinoCoilDriver\States\Base;
 
-use \DateTime;
 use \Exception;
 use \PDO;
 use ArduinoCoilDriver\States\State as ChildState;
@@ -20,7 +19,16 @@ use Propel\Runtime\Exception\LogicException;
 use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Parser\AbstractParser;
-use Propel\Runtime\Util\PropelDateTime;
+use Symfony\Component\Validator\ConstraintValidatorFactory;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\DefaultTranslator;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Context\ExecutionContextFactory;
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
+use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
+use Symfony\Component\Validator\Validator\LegacyValidator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Base class that represents a row from the 'state_bookmarks' table.
@@ -71,20 +79,6 @@ abstract class StateBookmark implements ActiveRecordInterface
     protected $id;
 
     /**
-     * The value for the state_id field.
-     *
-     * @var        int
-     */
-    protected $state_id;
-
-    /**
-     * The value for the date field.
-     *
-     * @var        \DateTime
-     */
-    protected $date;
-
-    /**
      * The value for the description field.
      *
      * @var        string
@@ -103,6 +97,23 @@ abstract class StateBookmark implements ActiveRecordInterface
      * @var boolean
      */
     protected $alreadyInSave = false;
+
+    // validate behavior
+
+    /**
+     * Flag to prevent endless validation loop, if this object is referenced
+     * by another object which falls in this transaction.
+     * @var        boolean
+     */
+    protected $alreadyInValidation = false;
+
+    /**
+     * ConstraintViolationList object
+     *
+     * @see     http://api.symfony.com/2.0/Symfony/Component/Validator/ConstraintViolationList.html
+     * @var     ConstraintViolationList
+     */
+    protected $validationFailures;
 
     /**
      * Initializes internal state of ArduinoCoilDriver\States\Base\StateBookmark object.
@@ -337,36 +348,6 @@ abstract class StateBookmark implements ActiveRecordInterface
     }
 
     /**
-     * Get the [state_id] column value.
-     *
-     * @return int
-     */
-    public function getStateId()
-    {
-        return $this->state_id;
-    }
-
-    /**
-     * Get the [optionally formatted] temporal [date] column value.
-     *
-     *
-     * @param      string $format The date/time format string (either date()-style or strftime()-style).
-     *                            If format is NULL, then the raw DateTime object will be returned.
-     *
-     * @return string|DateTime Formatted date/time value as string or DateTime object (if format is NULL), NULL if column is NULL, and 0 if column value is 0000-00-00 00:00:00
-     *
-     * @throws PropelException - if unable to parse/validate the date/time value.
-     */
-    public function getDate($format = NULL)
-    {
-        if ($format === null) {
-            return $this->date;
-        } else {
-            return $this->date instanceof \DateTime ? $this->date->format($format) : null;
-        }
-    }
-
-    /**
      * Get the [description] column value.
      *
      * @return string
@@ -393,52 +374,12 @@ abstract class StateBookmark implements ActiveRecordInterface
             $this->modifiedColumns[StateBookmarkTableMap::COL_ID] = true;
         }
 
-        return $this;
-    } // setId()
-
-    /**
-     * Set the value of [state_id] column.
-     *
-     * @param int $v new value
-     * @return $this|\ArduinoCoilDriver\States\StateBookmark The current object (for fluent API support)
-     */
-    public function setStateId($v)
-    {
-        if ($v !== null) {
-            $v = (int) $v;
-        }
-
-        if ($this->state_id !== $v) {
-            $this->state_id = $v;
-            $this->modifiedColumns[StateBookmarkTableMap::COL_STATE_ID] = true;
-        }
-
         if ($this->aState !== null && $this->aState->getId() !== $v) {
             $this->aState = null;
         }
 
         return $this;
-    } // setStateId()
-
-    /**
-     * Sets the value of [date] column to a normalized version of the date/time value specified.
-     *
-     * @param  mixed $v string, integer (timestamp), or \DateTime value.
-     *               Empty strings are treated as NULL.
-     * @return $this|\ArduinoCoilDriver\States\StateBookmark The current object (for fluent API support)
-     */
-    public function setDate($v)
-    {
-        $dt = PropelDateTime::newInstance($v, null, 'DateTime');
-        if ($this->date !== null || $dt !== null) {
-            if ($this->date === null || $dt === null || $dt->format("Y-m-d H:i:s") !== $this->date->format("Y-m-d H:i:s")) {
-                $this->date = $dt === null ? null : clone $dt;
-                $this->modifiedColumns[StateBookmarkTableMap::COL_DATE] = true;
-            }
-        } // if either are not null
-
-        return $this;
-    } // setDate()
+    } // setId()
 
     /**
      * Set the value of [description] column.
@@ -499,16 +440,7 @@ abstract class StateBookmark implements ActiveRecordInterface
             $col = $row[TableMap::TYPE_NUM == $indexType ? 0 + $startcol : StateBookmarkTableMap::translateFieldName('Id', TableMap::TYPE_PHPNAME, $indexType)];
             $this->id = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : StateBookmarkTableMap::translateFieldName('StateId', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->state_id = (null !== $col) ? (int) $col : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : StateBookmarkTableMap::translateFieldName('Date', TableMap::TYPE_PHPNAME, $indexType)];
-            if ($col === '0000-00-00 00:00:00') {
-                $col = null;
-            }
-            $this->date = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : StateBookmarkTableMap::translateFieldName('Description', TableMap::TYPE_PHPNAME, $indexType)];
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : StateBookmarkTableMap::translateFieldName('Description', TableMap::TYPE_PHPNAME, $indexType)];
             $this->description = (null !== $col) ? (string) $col : null;
             $this->resetModified();
 
@@ -518,7 +450,7 @@ abstract class StateBookmark implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 4; // 4 = StateBookmarkTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 2; // 2 = StateBookmarkTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\ArduinoCoilDriver\\States\\StateBookmark'), 0, $e);
@@ -540,7 +472,7 @@ abstract class StateBookmark implements ActiveRecordInterface
      */
     public function ensureConsistency()
     {
-        if ($this->aState !== null && $this->state_id !== $this->aState->getId()) {
+        if ($this->aState !== null && $this->id !== $this->aState->getId()) {
             $this->aState = null;
         }
     } // ensureConsistency
@@ -725,20 +657,10 @@ abstract class StateBookmark implements ActiveRecordInterface
         $modifiedColumns = array();
         $index = 0;
 
-        $this->modifiedColumns[StateBookmarkTableMap::COL_ID] = true;
-        if (null !== $this->id) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key (' . StateBookmarkTableMap::COL_ID . ')');
-        }
 
          // check the columns in natural order for more readable SQL queries
         if ($this->isColumnModified(StateBookmarkTableMap::COL_ID)) {
             $modifiedColumns[':p' . $index++]  = 'id';
-        }
-        if ($this->isColumnModified(StateBookmarkTableMap::COL_STATE_ID)) {
-            $modifiedColumns[':p' . $index++]  = 'state_id';
-        }
-        if ($this->isColumnModified(StateBookmarkTableMap::COL_DATE)) {
-            $modifiedColumns[':p' . $index++]  = 'date';
         }
         if ($this->isColumnModified(StateBookmarkTableMap::COL_DESCRIPTION)) {
             $modifiedColumns[':p' . $index++]  = 'description';
@@ -757,12 +679,6 @@ abstract class StateBookmark implements ActiveRecordInterface
                     case 'id':
                         $stmt->bindValue($identifier, $this->id, PDO::PARAM_INT);
                         break;
-                    case 'state_id':
-                        $stmt->bindValue($identifier, $this->state_id, PDO::PARAM_INT);
-                        break;
-                    case 'date':
-                        $stmt->bindValue($identifier, $this->date ? $this->date->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
-                        break;
                     case 'description':
                         $stmt->bindValue($identifier, $this->description, PDO::PARAM_STR);
                         break;
@@ -773,13 +689,6 @@ abstract class StateBookmark implements ActiveRecordInterface
             Propel::log($e->getMessage(), Propel::LOG_ERR);
             throw new PropelException(sprintf('Unable to execute INSERT statement [%s]', $sql), 0, $e);
         }
-
-        try {
-            $pk = $con->lastInsertId();
-        } catch (Exception $e) {
-            throw new PropelException('Unable to get autoincrement id.', 0, $e);
-        }
-        $this->setId($pk);
 
         $this->setNew(false);
     }
@@ -832,12 +741,6 @@ abstract class StateBookmark implements ActiveRecordInterface
                 return $this->getId();
                 break;
             case 1:
-                return $this->getStateId();
-                break;
-            case 2:
-                return $this->getDate();
-                break;
-            case 3:
                 return $this->getDescription();
                 break;
             default:
@@ -871,18 +774,8 @@ abstract class StateBookmark implements ActiveRecordInterface
         $keys = StateBookmarkTableMap::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getId(),
-            $keys[1] => $this->getStateId(),
-            $keys[2] => $this->getDate(),
-            $keys[3] => $this->getDescription(),
+            $keys[1] => $this->getDescription(),
         );
-
-        $utc = new \DateTimeZone('utc');
-        if ($result[$keys[2]] instanceof \DateTime) {
-            // When changing timezone we don't want to change existing instances
-            $dateTime = clone $result[$keys[2]];
-            $result[$keys[2]] = $dateTime->setTimezone($utc)->format('Y-m-d\TH:i:s\Z');
-        }
-
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
             $result[$key] = $virtualColumn;
@@ -942,12 +835,6 @@ abstract class StateBookmark implements ActiveRecordInterface
                 $this->setId($value);
                 break;
             case 1:
-                $this->setStateId($value);
-                break;
-            case 2:
-                $this->setDate($value);
-                break;
-            case 3:
                 $this->setDescription($value);
                 break;
         } // switch()
@@ -980,13 +867,7 @@ abstract class StateBookmark implements ActiveRecordInterface
             $this->setId($arr[$keys[0]]);
         }
         if (array_key_exists($keys[1], $arr)) {
-            $this->setStateId($arr[$keys[1]]);
-        }
-        if (array_key_exists($keys[2], $arr)) {
-            $this->setDate($arr[$keys[2]]);
-        }
-        if (array_key_exists($keys[3], $arr)) {
-            $this->setDescription($arr[$keys[3]]);
+            $this->setDescription($arr[$keys[1]]);
         }
     }
 
@@ -1032,12 +913,6 @@ abstract class StateBookmark implements ActiveRecordInterface
         if ($this->isColumnModified(StateBookmarkTableMap::COL_ID)) {
             $criteria->add(StateBookmarkTableMap::COL_ID, $this->id);
         }
-        if ($this->isColumnModified(StateBookmarkTableMap::COL_STATE_ID)) {
-            $criteria->add(StateBookmarkTableMap::COL_STATE_ID, $this->state_id);
-        }
-        if ($this->isColumnModified(StateBookmarkTableMap::COL_DATE)) {
-            $criteria->add(StateBookmarkTableMap::COL_DATE, $this->date);
-        }
         if ($this->isColumnModified(StateBookmarkTableMap::COL_DESCRIPTION)) {
             $criteria->add(StateBookmarkTableMap::COL_DESCRIPTION, $this->description);
         }
@@ -1073,8 +948,15 @@ abstract class StateBookmark implements ActiveRecordInterface
     {
         $validPk = null !== $this->getId();
 
-        $validPrimaryKeyFKs = 0;
+        $validPrimaryKeyFKs = 1;
         $primaryKeyFKs = [];
+
+        //relation state_bookmarks_fk_1 to table states
+        if ($this->aState && $hash = spl_object_hash($this->aState)) {
+            $primaryKeyFKs[] = $hash;
+        } else {
+            $validPrimaryKeyFKs = false;
+        }
 
         if ($validPk) {
             return crc32(json_encode($this->getPrimaryKey(), JSON_UNESCAPED_UNICODE));
@@ -1127,12 +1009,10 @@ abstract class StateBookmark implements ActiveRecordInterface
      */
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
-        $copyObj->setStateId($this->getStateId());
-        $copyObj->setDate($this->getDate());
+        $copyObj->setId($this->getId());
         $copyObj->setDescription($this->getDescription());
         if ($makeNew) {
             $copyObj->setNew(true);
-            $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
         }
     }
 
@@ -1168,17 +1048,16 @@ abstract class StateBookmark implements ActiveRecordInterface
     public function setState(ChildState $v = null)
     {
         if ($v === null) {
-            $this->setStateId(NULL);
+            $this->setId(NULL);
         } else {
-            $this->setStateId($v->getId());
+            $this->setId($v->getId());
         }
 
         $this->aState = $v;
 
-        // Add binding for other direction of this n:n relationship.
-        // If this object has already been added to the ChildState object, it will not be re-added.
+        // Add binding for other direction of this 1:1 relationship.
         if ($v !== null) {
-            $v->addStateBookmark($this);
+            $v->setStateBookmark($this);
         }
 
 
@@ -1195,15 +1074,10 @@ abstract class StateBookmark implements ActiveRecordInterface
      */
     public function getState(ConnectionInterface $con = null)
     {
-        if ($this->aState === null && ($this->state_id !== null)) {
-            $this->aState = ChildStateQuery::create()->findPk($this->state_id, $con);
-            /* The following can be used additionally to
-                guarantee the related object contains a reference
-                to this object.  This level of coupling may, however, be
-                undesirable since it could result in an only partially populated collection
-                in the referenced object.
-                $this->aState->addStateBookmarks($this);
-             */
+        if ($this->aState === null && ($this->id !== null)) {
+            $this->aState = ChildStateQuery::create()->findPk($this->id, $con);
+            // Because this foreign key represents a one-to-one relationship, we will create a bi-directional association.
+            $this->aState->setStateBookmark($this);
         }
 
         return $this->aState;
@@ -1220,8 +1094,6 @@ abstract class StateBookmark implements ActiveRecordInterface
             $this->aState->removeStateBookmark($this);
         }
         $this->id = null;
-        $this->state_id = null;
-        $this->date = null;
         $this->description = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
@@ -1254,6 +1126,89 @@ abstract class StateBookmark implements ActiveRecordInterface
     public function __toString()
     {
         return (string) $this->exportTo(StateBookmarkTableMap::DEFAULT_STRING_FORMAT);
+    }
+
+    // validate behavior
+
+    /**
+     * Configure validators constraints. The Validator object uses this method
+     * to perform object validation.
+     *
+     * @param ClassMetadata $metadata
+     */
+    static public function loadValidatorMetadata(ClassMetadata $metadata)
+    {
+        $metadata->addPropertyConstraint('description', new Length(array ('max' => 255,)));
+    }
+
+    /**
+     * Validates the object and all objects related to this table.
+     *
+     * @see        getValidationFailures()
+     * @param      object $validator A Validator class instance
+     * @return     boolean Whether all objects pass validation.
+     */
+    public function validate(ValidatorInterface $validator = null)
+    {
+        if (null === $validator) {
+            if(class_exists('Symfony\\Component\\Validator\\Validator\\LegacyValidator')){
+                $validator = new LegacyValidator(
+                            new ExecutionContextFactory(new DefaultTranslator()),
+                            new ClassMetaDataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory()
+                );
+            }else{
+                $validator = new Validator(
+                            new ClassMetadataFactory(new StaticMethodLoader()),
+                            new ConstraintValidatorFactory(),
+                            new DefaultTranslator()
+                );
+            }
+        }
+
+        $failureMap = new ConstraintViolationList();
+
+        if (!$this->alreadyInValidation) {
+            $this->alreadyInValidation = true;
+            $retval = null;
+
+            // We call the validate method on the following object(s) if they
+            // were passed to this object by their corresponding set
+            // method.  This object relates to these object(s) by a
+            // foreign key reference.
+
+            // If validate() method exists, the validate-behavior is configured for related object
+            if (method_exists($this->aState, 'validate')) {
+                if (!$this->aState->validate($validator)) {
+                    $failureMap->addAll($this->aState->getValidationFailures());
+                }
+            }
+
+            $retval = $validator->validate($this);
+            if (count($retval) > 0) {
+                $failureMap->addAll($retval);
+            }
+
+
+            $this->alreadyInValidation = false;
+        }
+
+        $this->validationFailures = $failureMap;
+
+        return (Boolean) (!(count($this->validationFailures) > 0));
+
+    }
+
+    /**
+     * Gets any ConstraintViolation objects that resulted from last call to validate().
+     *
+     *
+     * @return     object ConstraintViolationList
+     * @see        validate()
+     */
+    public function getValidationFailures()
+    {
+        return $this->validationFailures;
     }
 
     /**

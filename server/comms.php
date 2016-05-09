@@ -2,8 +2,6 @@
 
 require('require.php');
 
-use ArduinoCoilDriver\Drivers\DriverQuery;
-use ArduinoCoilDriver\Drivers\DriverPin;
 use ArduinoCoilDriver\Drivers\DriverPinQuery;
 use ArduinoCoilDriver\Drivers\DriverOutput;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;

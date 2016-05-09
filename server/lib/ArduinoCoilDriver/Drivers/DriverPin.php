@@ -8,7 +8,6 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
-use ArduinoCoilDriver\Drivers\Map\DriverOutputPinValueTableMap;
 use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\States\State;

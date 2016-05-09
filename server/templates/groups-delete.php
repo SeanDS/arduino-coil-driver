@@ -1,7 +1,7 @@
 <?php $this->layout('groups-template') ?>
 <h2>Delete Group</h2>
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-12">
     <form action="groups.php?do=delete&amp;id=<?=$this->e($group->getId())?>" method="post" class="form-horizontal">
       <input type="hidden" name="confirm" value="true"/>
       <p class="text-danger">Are you sure you wish to delete group "<?=$this->e($group->getName())?>"?</p>

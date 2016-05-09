@@ -2,7 +2,11 @@
 
 namespace ArduinoCoilDriver\States;
 
+use Propel\Runtime\Propel;
 use ArduinoCoilDriver\States\Base\StateBookmark as BaseStateBookmark;
+use ArduinoCoilDriver\States\Map\StateBookmarkTableMap;
+use ArduinoCoilDriver\Exceptions\ValidationException;
+use ArduinoCoilDriver\States\State;
 
 /**
  * Skeleton subclass for representing a row from the 'state_bookmarks' table.
@@ -16,5 +20,36 @@ use ArduinoCoilDriver\States\Base\StateBookmark as BaseStateBookmark;
  */
 class StateBookmark extends BaseStateBookmark
 {
-
+    public static function create(State $state, $description) {
+        // create state bookmark
+        $bookmark = new self();
+    
+        // get a write connection
+        $connection = Propel::getWriteConnection(StateBookmarkTableMap::DATABASE_NAME);
+        
+        // start transaction
+        $connection->beginTransaction();
+        
+        // set parameters
+        $bookmark->setDescription($description);
+        
+        // validate
+        if (! $bookmark->validate()) {
+            $connection->rollback();
+            
+            throw new ValidationException($bookmark);
+        }
+        
+        // set state's bookmark to this
+        $state->setStateBookmark($bookmark);
+        
+        // save
+        $state->save();
+        $bookmark->save();
+        
+        // commit transaction
+        $connection->commit();
+        
+        return $bookmark;
+    }
 }

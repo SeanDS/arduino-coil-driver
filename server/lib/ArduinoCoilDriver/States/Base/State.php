@@ -103,10 +103,9 @@ abstract class State implements ActiveRecordInterface
     protected $collDriverPinValuesPartial;
 
     /**
-     * @var        ObjectCollection|ChildStateBookmark[] Collection to store aggregation of ChildStateBookmark objects.
+     * @var        ChildStateBookmark one-to-one related ChildStateBookmark object
      */
-    protected $collStateBookmarks;
-    protected $collStateBookmarksPartial;
+    protected $singleStateBookmark;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -121,12 +120,6 @@ abstract class State implements ActiveRecordInterface
      * @var ObjectCollection|DriverPinValue[]
      */
     protected $driverPinValuesScheduledForDeletion = null;
-
-    /**
-     * An array of objects scheduled for deletion.
-     * @var ObjectCollection|ChildStateBookmark[]
-     */
-    protected $stateBookmarksScheduledForDeletion = null;
 
     /**
      * Initializes internal state of ArduinoCoilDriver\States\Base\State object.
@@ -576,7 +569,7 @@ abstract class State implements ActiveRecordInterface
             $this->aUser = null;
             $this->collDriverPinValues = null;
 
-            $this->collStateBookmarks = null;
+            $this->singleStateBookmark = null;
 
         } // if (deep)
     }
@@ -717,20 +710,9 @@ abstract class State implements ActiveRecordInterface
                 }
             }
 
-            if ($this->stateBookmarksScheduledForDeletion !== null) {
-                if (!$this->stateBookmarksScheduledForDeletion->isEmpty()) {
-                    \ArduinoCoilDriver\States\StateBookmarkQuery::create()
-                        ->filterByPrimaryKeys($this->stateBookmarksScheduledForDeletion->getPrimaryKeys(false))
-                        ->delete($con);
-                    $this->stateBookmarksScheduledForDeletion = null;
-                }
-            }
-
-            if ($this->collStateBookmarks !== null) {
-                foreach ($this->collStateBookmarks as $referrerFK) {
-                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
-                        $affectedRows += $referrerFK->save($con);
-                    }
+            if ($this->singleStateBookmark !== null) {
+                if (!$this->singleStateBookmark->isDeleted() && ($this->singleStateBookmark->isNew() || $this->singleStateBookmark->isModified())) {
+                    $affectedRows += $this->singleStateBookmark->save($con);
                 }
             }
 
@@ -938,20 +920,20 @@ abstract class State implements ActiveRecordInterface
 
                 $result[$key] = $this->collDriverPinValues->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
             }
-            if (null !== $this->collStateBookmarks) {
+            if (null !== $this->singleStateBookmark) {
 
                 switch ($keyType) {
                     case TableMap::TYPE_CAMELNAME:
-                        $key = 'stateBookmarks';
+                        $key = 'stateBookmark';
                         break;
                     case TableMap::TYPE_FIELDNAME:
-                        $key = 'state_bookmarkss';
+                        $key = 'state_bookmarks';
                         break;
                     default:
-                        $key = 'StateBookmarks';
+                        $key = 'StateBookmark';
                 }
 
-                $result[$key] = $this->collStateBookmarks->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+                $result[$key] = $this->singleStateBookmark->toArray($keyType, $includeLazyLoadColumns, $alreadyDumpedObjects, true);
             }
         }
 
@@ -1181,10 +1163,9 @@ abstract class State implements ActiveRecordInterface
                 }
             }
 
-            foreach ($this->getStateBookmarks() as $relObj) {
-                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-                    $copyObj->addStateBookmark($relObj->copy($deepCopy));
-                }
+            $relObj = $this->getStateBookmark();
+            if ($relObj) {
+                $copyObj->setStateBookmark($relObj->copy($deepCopy));
             }
 
         } // if ($deepCopy)
@@ -1281,9 +1262,6 @@ abstract class State implements ActiveRecordInterface
     {
         if ('DriverPinValue' == $relationName) {
             return $this->initDriverPinValues();
-        }
-        if ('StateBookmark' == $relationName) {
-            return $this->initStateBookmarks();
         }
     }
 
@@ -1531,218 +1509,36 @@ abstract class State implements ActiveRecordInterface
     }
 
     /**
-     * Clears out the collStateBookmarks collection
+     * Gets a single ChildStateBookmark object, which is related to this object by a one-to-one relationship.
      *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     * @see        addStateBookmarks()
-     */
-    public function clearStateBookmarks()
-    {
-        $this->collStateBookmarks = null; // important to set this to NULL since that means it is uninitialized
-    }
-
-    /**
-     * Reset is the collStateBookmarks collection loaded partially.
-     */
-    public function resetPartialStateBookmarks($v = true)
-    {
-        $this->collStateBookmarksPartial = $v;
-    }
-
-    /**
-     * Initializes the collStateBookmarks collection.
-     *
-     * By default this just sets the collStateBookmarks collection to an empty array (like clearcollStateBookmarks());
-     * however, you may wish to override this method in your stub class to provide setting appropriate
-     * to your application -- for example, setting the initial array to the values stored in database.
-     *
-     * @param      boolean $overrideExisting If set to true, the method call initializes
-     *                                        the collection even if it is not empty
-     *
-     * @return void
-     */
-    public function initStateBookmarks($overrideExisting = true)
-    {
-        if (null !== $this->collStateBookmarks && !$overrideExisting) {
-            return;
-        }
-        $this->collStateBookmarks = new ObjectCollection();
-        $this->collStateBookmarks->setModel('\ArduinoCoilDriver\States\StateBookmark');
-    }
-
-    /**
-     * Gets an array of ChildStateBookmark objects which contain a foreign key that references this object.
-     *
-     * If the $criteria is not null, it is used to always fetch the results from the database.
-     * Otherwise the results are fetched from the database the first time, then cached.
-     * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this ChildState is new, it will return
-     * an empty collection or the current collection; the criteria is ignored on a new object.
-     *
-     * @param      Criteria $criteria optional Criteria object to narrow the query
-     * @param      ConnectionInterface $con optional connection object
-     * @return ObjectCollection|ChildStateBookmark[] List of ChildStateBookmark objects
+     * @param  ConnectionInterface $con optional connection object
+     * @return ChildStateBookmark
      * @throws PropelException
      */
-    public function getStateBookmarks(Criteria $criteria = null, ConnectionInterface $con = null)
+    public function getStateBookmark(ConnectionInterface $con = null)
     {
-        $partial = $this->collStateBookmarksPartial && !$this->isNew();
-        if (null === $this->collStateBookmarks || null !== $criteria  || $partial) {
-            if ($this->isNew() && null === $this->collStateBookmarks) {
-                // return empty collection
-                $this->initStateBookmarks();
-            } else {
-                $collStateBookmarks = ChildStateBookmarkQuery::create(null, $criteria)
-                    ->filterByState($this)
-                    ->find($con);
 
-                if (null !== $criteria) {
-                    if (false !== $this->collStateBookmarksPartial && count($collStateBookmarks)) {
-                        $this->initStateBookmarks(false);
-
-                        foreach ($collStateBookmarks as $obj) {
-                            if (false == $this->collStateBookmarks->contains($obj)) {
-                                $this->collStateBookmarks->append($obj);
-                            }
-                        }
-
-                        $this->collStateBookmarksPartial = true;
-                    }
-
-                    return $collStateBookmarks;
-                }
-
-                if ($partial && $this->collStateBookmarks) {
-                    foreach ($this->collStateBookmarks as $obj) {
-                        if ($obj->isNew()) {
-                            $collStateBookmarks[] = $obj;
-                        }
-                    }
-                }
-
-                $this->collStateBookmarks = $collStateBookmarks;
-                $this->collStateBookmarksPartial = false;
-            }
+        if ($this->singleStateBookmark === null && !$this->isNew()) {
+            $this->singleStateBookmark = ChildStateBookmarkQuery::create()->findPk($this->getPrimaryKey(), $con);
         }
 
-        return $this->collStateBookmarks;
+        return $this->singleStateBookmark;
     }
 
     /**
-     * Sets a collection of ChildStateBookmark objects related by a one-to-many relationship
-     * to the current object.
-     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
-     * and new objects from the given Propel collection.
+     * Sets a single ChildStateBookmark object as related to this object by a one-to-one relationship.
      *
-     * @param      Collection $stateBookmarks A Propel collection.
-     * @param      ConnectionInterface $con Optional connection object
-     * @return $this|ChildState The current object (for fluent API support)
-     */
-    public function setStateBookmarks(Collection $stateBookmarks, ConnectionInterface $con = null)
-    {
-        /** @var ChildStateBookmark[] $stateBookmarksToDelete */
-        $stateBookmarksToDelete = $this->getStateBookmarks(new Criteria(), $con)->diff($stateBookmarks);
-
-
-        $this->stateBookmarksScheduledForDeletion = $stateBookmarksToDelete;
-
-        foreach ($stateBookmarksToDelete as $stateBookmarkRemoved) {
-            $stateBookmarkRemoved->setState(null);
-        }
-
-        $this->collStateBookmarks = null;
-        foreach ($stateBookmarks as $stateBookmark) {
-            $this->addStateBookmark($stateBookmark);
-        }
-
-        $this->collStateBookmarks = $stateBookmarks;
-        $this->collStateBookmarksPartial = false;
-
-        return $this;
-    }
-
-    /**
-     * Returns the number of related StateBookmark objects.
-     *
-     * @param      Criteria $criteria
-     * @param      boolean $distinct
-     * @param      ConnectionInterface $con
-     * @return int             Count of related StateBookmark objects.
-     * @throws PropelException
-     */
-    public function countStateBookmarks(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
-    {
-        $partial = $this->collStateBookmarksPartial && !$this->isNew();
-        if (null === $this->collStateBookmarks || null !== $criteria || $partial) {
-            if ($this->isNew() && null === $this->collStateBookmarks) {
-                return 0;
-            }
-
-            if ($partial && !$criteria) {
-                return count($this->getStateBookmarks());
-            }
-
-            $query = ChildStateBookmarkQuery::create(null, $criteria);
-            if ($distinct) {
-                $query->distinct();
-            }
-
-            return $query
-                ->filterByState($this)
-                ->count($con);
-        }
-
-        return count($this->collStateBookmarks);
-    }
-
-    /**
-     * Method called to associate a ChildStateBookmark object to this object
-     * through the ChildStateBookmark foreign key attribute.
-     *
-     * @param  ChildStateBookmark $l ChildStateBookmark
+     * @param  ChildStateBookmark $v ChildStateBookmark
      * @return $this|\ArduinoCoilDriver\States\State The current object (for fluent API support)
+     * @throws PropelException
      */
-    public function addStateBookmark(ChildStateBookmark $l)
+    public function setStateBookmark(ChildStateBookmark $v = null)
     {
-        if ($this->collStateBookmarks === null) {
-            $this->initStateBookmarks();
-            $this->collStateBookmarksPartial = true;
-        }
+        $this->singleStateBookmark = $v;
 
-        if (!$this->collStateBookmarks->contains($l)) {
-            $this->doAddStateBookmark($l);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param ChildStateBookmark $stateBookmark The ChildStateBookmark object to add.
-     */
-    protected function doAddStateBookmark(ChildStateBookmark $stateBookmark)
-    {
-        $this->collStateBookmarks[]= $stateBookmark;
-        $stateBookmark->setState($this);
-    }
-
-    /**
-     * @param  ChildStateBookmark $stateBookmark The ChildStateBookmark object to remove.
-     * @return $this|ChildState The current object (for fluent API support)
-     */
-    public function removeStateBookmark(ChildStateBookmark $stateBookmark)
-    {
-        if ($this->getStateBookmarks()->contains($stateBookmark)) {
-            $pos = $this->collStateBookmarks->search($stateBookmark);
-            $this->collStateBookmarks->remove($pos);
-            if (null === $this->stateBookmarksScheduledForDeletion) {
-                $this->stateBookmarksScheduledForDeletion = clone $this->collStateBookmarks;
-                $this->stateBookmarksScheduledForDeletion->clear();
-            }
-            $this->stateBookmarksScheduledForDeletion[]= clone $stateBookmark;
-            $stateBookmark->setState(null);
+        // Make sure that that the passed-in ChildStateBookmark isn't already associated with this object
+        if ($v !== null && $v->getState(null, false) === null) {
+            $v->setState($this);
         }
 
         return $this;
@@ -1784,15 +1580,13 @@ abstract class State implements ActiveRecordInterface
                     $o->clearAllReferences($deep);
                 }
             }
-            if ($this->collStateBookmarks) {
-                foreach ($this->collStateBookmarks as $o) {
-                    $o->clearAllReferences($deep);
-                }
+            if ($this->singleStateBookmark) {
+                $this->singleStateBookmark->clearAllReferences($deep);
             }
         } // if ($deep)
 
         $this->collDriverPinValues = null;
-        $this->collStateBookmarks = null;
+        $this->singleStateBookmark = null;
         $this->aUser = null;
     }
 

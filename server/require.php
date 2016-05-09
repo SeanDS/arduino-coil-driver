@@ -16,15 +16,15 @@ define('LDAP_DN', 'dc=example,dc=com');
 
 // tank URLs, for SVG image
 $tankUrls = array(
-    'left_etm' => 'index.php?do=controloutput&oid=1',
-    'left_itm' => 'index.php?do=controloutput&oid=1',
-    'bottom_steering_left' => 'index.php?do=controloutput&oid=1',
-    'bottom_steering_centre' => 'index.php?do=controloutput&oid=1',
-    'middle_steering' => 'index.php?do=controloutput&oid=1',
-    'top_steering' => 'index.php?do=controloutput&oid=1',
-    'bottom_steering_right' => 'index.php?do=controloutput&oid=1',
-    'right_itm' => 'index.php?do=controloutput&oid=1',
-    'right_etm' => 'index.php?do=controloutput&oid=1'
+    'left_etm' => 'index.php?do=controlgroup&oid=1',
+    'left_itm' => 'index.php?do=controlgroup&oid=1',
+    'bottom_steering_left' => 'index.php?do=controlgroup&oid=1',
+    'bottom_steering_centre' => 'index.php?do=controlgroup&oid=1',
+    'middle_steering' => 'index.php?do=controlgroup&oid=1',
+    'top_steering' => 'index.php?do=controlgroup&oid=1',
+    'bottom_steering_right' => 'index.php?do=controlgroup&oid=1',
+    'right_itm' => 'index.php?do=controlgroup&oid=1',
+    'right_etm' => 'index.php?do=controlgroup&oid=1'
 );
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
@@ -38,6 +38,10 @@ function sortValidationErrorsByProperty($obj, $namespace = "") {
     }
     
     return $errors;
+}
+
+function formatDate($datetime) {
+    return $datetime->format(DATETIME_FORMAT);
 }
 
 /*

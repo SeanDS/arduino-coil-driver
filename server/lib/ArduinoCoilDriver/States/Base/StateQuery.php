@@ -559,7 +559,7 @@ abstract class StateQuery extends ModelCriteria
     {
         if ($stateBookmark instanceof \ArduinoCoilDriver\States\StateBookmark) {
             return $this
-                ->addUsingAlias(StateTableMap::COL_ID, $stateBookmark->getStateId(), $comparison);
+                ->addUsingAlias(StateTableMap::COL_ID, $stateBookmark->getId(), $comparison);
         } elseif ($stateBookmark instanceof ObjectCollection) {
             return $this
                 ->useStateBookmarkQuery()
