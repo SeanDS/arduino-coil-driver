@@ -2,11 +2,15 @@
 
 namespace ArduinoCoilDriver\States;
 
-use Propel\Runtime\Propel;
+use DateTime;
+use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\States\Base\State as BaseState;
 use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
 use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
+use ArduinoCoilDriver\Drivers\DriverOutputPin;
+use Propel\Runtime\ActiveQuery\Criteria;
+use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
 
 /**
  * Skeleton subclass for representing a row from the 'states' table.
@@ -32,6 +36,88 @@ class State extends BaseState
         return $state;
     }
     
+    public function load() {
+        // loads this state
+        
+        // check if this state is the latest (we don't need to load)
+        if ($this == self::getCurrentState()) {
+            throw new LatestStateAlreadyLoadedException($this);
+        }
+        
+        // take a copy of the current state
+        $currentState = clone $this;
+        
+        // get drivers
+        $drivers = DriverQuery::create()->find();
+        
+        try {
+            // snap each driver to this state, or nearest before
+            foreach ($drivers as $driver) {
+                $driver->snapToState($this);
+            }
+            
+            // update this state's time
+            $this->setTime(new DateTime());
+            
+            // save
+            $this->save();
+        } catch (Exception $e) {
+            // reset to current state
+            foreach ($drivers as $driver) {
+                $driver->snapToState($currentState);
+            }
+            
+            // throw the exception
+            throw $e;
+        }
+    }
+    
+    public function getValuesForDriverOutputPins(Array $outputs) {
+        // gets the values associated with the specified output pins and this state
+        
+        // array to hold values
+        $values = array();
+        
+        foreach ($outputs as $key => $output) {
+            $values[$key] = $this->getValueForDriverOutputPin($output);
+        }
+        
+        return $values;
+    }
+    
+    public function getValueForDriverOutputPin(DriverOutputPin $pin) {
+        // gets the value associated with the specified output pin and this state
+        
+        global $logger;
+        
+        // is there a value associated with this state?
+        $outputPinValue = DriverPinValueQuery::create()->filterByState($this)->findOneByDriverPinId($pin->getId());
+        
+        $logger->addInfo(sprintf("Looking for value associated with output pin id %d and state id %d", $pin->getId(), $this->getId()));
+        
+        if ($outputPinValue == null) {
+            // fetch the most up-to-date state before the current one
+            
+            $logger->addInfo("Did not find value - looking for next oldest state");
+            
+            $outputPinValue = DriverPinValueQuery::create()
+                    ->innerJoinState()
+                    ->useStateQuery()
+                        ->orderByTime('desc')
+                        ->filterByTime($this->getTime(), Criteria::LESS_THAN)
+                    ->endUse()
+                    ->findOneById($pin->getId());
+            
+            if ($outputPinValue == null) {
+                throw new Exception("Pin value not found - this should not happen (a state that contains this pin's value has been deleted)");
+            }
+        }
+        
+        $logger->addInfo(sprintf("Found value: %d", $outputPinValue->getValue()));
+            
+        return $outputPinValue->getValue();
+    }
+    
     public function isDeletable() {
         // check if this state is the most up-to-date for any pin        
         $mostRecentState = DriverPinValueQuery::create()->groupBy('StateId')->innerJoinState()->useStateQuery()->orderByTime('desc')->endUse()->findOne();
@@ -42,6 +128,10 @@ class State extends BaseState
         }
         
         return true;
+    }
+    
+    public static function getCurrentState() {
+        return StateQuery::create()->orderByTime('desc')->findOne();
     }
     
     public function preDelete(ConnectionInterface $connection = null) {

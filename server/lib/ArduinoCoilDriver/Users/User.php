@@ -3,6 +3,11 @@
 namespace ArduinoCoilDriver\Users;
 
 use ArduinoCoilDriver\Users\Base\User as BaseUser;
+use Toyota\Component\Ldap\Core\Manager;
+use Toyota\Component\Ldap\Platform\Native\Driver;
+use Toyota\Component\Ldap\Exception\BindException;
+use Toyota\Component\Ldap\Platform\Native\Search;
+use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
 
 /**
  * Skeleton subclass for representing a row from the 'users' table.
@@ -33,8 +38,26 @@ class User extends BaseUser
         // bind, checking credentials
         try {
             $manager->bind('uid=' . $username . ',' . LDAP_DN, $password);
-        } catch (BindingException $e) {
+        } catch (BindException $e) {
             throw new InvalidCredentialsException($e);
+        }
+        
+        // the user exists, but are they valid?
+        if (LDAP_SEARCH_FILTER != null) {
+            $search = $manager->search(Search::SCOPE_BASE, LDAP_DN, LDAP_SEARCH_FILTER);
+            
+            $entry = $search->next();
+            
+            if ($entry == null) {
+                throw new InvalidCredentialsException();
+            }
+            
+            $attributes = $entry->getAttributes();
+            
+            // check user has correct class
+            if (! array_key_exists('objectClass', $attributes) || ! in_array(LDAP_OBJECT_CLASS, $attributes)) {
+                throw new InvalidCredentialsException();
+            }
         }
         
         return UserQuery::create()->findOneByName($username);

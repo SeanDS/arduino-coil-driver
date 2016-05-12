@@ -1,20 +1,29 @@
 <?php
 
 use ArduinoCoilDriver\Users\User;
-use ArduinoCoilDriver\Users\UserQuery;
 use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
+use Toyota\Component\Ldap\Exception\ConnectionException;
 
 require('require.php');
 
-$post = filter_input_array(
-    INPUT_POST,
-    array(
-        'username'      =>  FILTER_UNSAFE_RAW,
-        'password'      =>  FILTER_UNSAFE_RAW
-    )
-);
+$do = filter_input(INPUT_GET, 'do', FILTER_SANITIZE_STRING);
 
-if (empty($get['do'])) {
+if (empty($do)) {    
+    $get = filter_input_array(
+        INPUT_GET,
+        array(
+            'mid'   =>  FILTER_VALIDATE_INT
+        )
+    );
+    
+    $post = filter_input_array(
+        INPUT_POST,
+        array(
+            'username'      =>  FILTER_UNSAFE_RAW,
+            'password'      =>  FILTER_UNSAFE_RAW
+        )
+    );
+    
     if (!empty($post['username']) && !empty($post['password'])) {
         // check submitted credentials
         try {
@@ -31,6 +40,8 @@ if (empty($get['do'])) {
         } catch (InvalidCredentialsException $e) {
             // set error in template
             $templates->addData(['badCredentials' => true], ['login']);
+        } catch (ConnectionException $e) {
+            $templates->addData(['ldapConnectionIssue' => true], ['login']);
         }
     }
     
@@ -38,6 +49,24 @@ if (empty($get['do'])) {
      * show login screen
      */
      
-    echo $templates->render('login');
+    echo $templates->render('login', ['messageId' => $get['mid']]);
+} elseif ($do === 'logout') {
+    // get user
+    
+    // show error if user isn't logged in
+    if ($user == null) {
+        $logger->addInfo("User not logged in so can't be logged out");
+    
+        echo $templates->render('error', ['message' => 'You cannot log out if you\'re not logged in!', 'returnUrl' => "login.php"]);
+        
+        exit();
+    }
+    
+    // delete session
+    session_destroy();
+    
+    // redirect to login
+    header('Location: login.php?mid=1');
 }
+
 ?>

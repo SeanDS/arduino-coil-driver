@@ -1,6 +1,6 @@
 <div class="row">
     <?php if ($badCredentials): ?>
-    <p class="text-danger">Invalid credentials. Please check your spelling.</p>
+    <p class="text-danger">Invalid credentials. If you think you should have access, contact IT and request to be added to the "<?=constant(LDAP_GROUP)?>" group.</p>
     <?php endif; ?>
     <p class="text-primary">Use the form below to login.</p>
     <form class="form-horizontal" role="form" action="login.php" method="post">

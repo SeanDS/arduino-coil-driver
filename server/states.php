@@ -3,6 +3,7 @@
 require('require.php');
 
 use Propel\Runtime\Propel;
+use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\StateQuery;
 use ArduinoCoilDriver\States\StateBookmarkQuery;
 use ArduinoCoilDriver\States\Map\StateTableMap;
@@ -10,6 +11,7 @@ use ArduinoCoilDriver\States\Map\StateBookmarkTableMap;
 use ArduinoCoilDriver\States\StateBookmark;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
+use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
 
 function getStateFromGet($returnUrl = 'states.php') {
     global $logger;
@@ -75,10 +77,13 @@ if (empty($do)) {
         $get['spage'] = 1;
     }
     
+    // get current state
+    $currentState = State::getCurrentState();
+    
     $bookmarkedStatesPager = StateQuery::create()->orderByTime('desc')->innerJoinStateBookmark()->paginate($page = $get['page'], $maxPerPage = 25);
     $statesPager = StateQuery::create()->orderByTime('desc')->paginate($page = $get['spage'], $maxPerPage = 25);
     
-    echo $templates->render('states', ['bookmarksPager' => $bookmarkedStatesPager, 'statesPager' => $statesPager, 'messageId' => $get['mid']]);
+    echo $templates->render('states', ['currentState' => $currentState, 'bookmarksPager' => $bookmarkedStatesPager, 'statesPager' => $statesPager, 'messageId' => $get['mid']]);
 } elseif ($do === 'newbookmark') {
     // bookmark a state
     
@@ -172,6 +177,22 @@ if (empty($do)) {
     }
     
     echo $templates->render('state-bookmarks-delete', ['bookmark' => $bookmark]);
+} elseif ($do === 'load') {
+    // load a state
+    
+    // get state
+    $state = getStateFromGet();
+    
+    // load state
+    try {
+        $state->load();
+        
+        // redirect to main screen with message
+        header('Location: states.php?mid=5');
+    } catch (LatestStateAlreadyLoadedException $e) {
+        // show message saying current state is already loaded
+        header('Location: states.php?mid=6');
+    }
 } elseif ($do === 'delete') {
     // delete a state
     

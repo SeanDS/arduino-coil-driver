@@ -13,6 +13,7 @@ use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
+use ArduinoCoilDriver\States\State;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_outputs' table.
@@ -67,8 +68,6 @@ class DriverOutput extends BaseDriverOutput
         
         // commit transaction
         $connection->commit();
-        
-        return $driverPin;
     }
     
     public function getValue() {
@@ -89,23 +88,37 @@ class DriverOutput extends BaseDriverOutput
         } elseif ($value < 0) {
             $value = 0;
         }
+        
+        // array to hold values
+        $pinValues = array();
+        
+        // calculate coarse value
+        $pinValues['coarse'] = intval(floor($value / $this->getMapping()));
+        
+        // calculate fine value
+        $pinValues['fine'] = $value % $this->getMapping();
+        
+        // set values
+        return $this->setOutputValueFromPinValues($pinValues, $toggleMode);
+    }
     
+    private function setOutputValueFromPinValues(Array $pinValues, $toggleMode, State $state = null) {
         // get output pins
         $outputPins = $this->getOutputPins();
         
-        // calculate coarse value
-        $newCoarseValue = intval(floor($value / $this->getMapping()));
-        
-        // calculate fine value
-        $newFineValue = $value % $this->getMapping();
-        
         // create message
-        $payload = $this->createTogglePayload($toggleMode, $outputPins['coarse'], $newCoarseValue, $outputPins['fine'], $newFineValue);
+        $payload = $this->createTogglePayload($toggleMode, $outputPins['coarse'], $pinValues['coarse'], $outputPins['fine'], $pinValues['fine']);
+        
+        return $this->sendReceive($payload, $state);
+    }
+    
+    private function sendReceive($payload, $state) {
+        // send a payload and handle the response
         
         $receivePayload = $this->getDriver()->dispatch($payload);
         
         if ($receivePayload instanceof OutputReceivePayload) {
-            $this->getDriver()->updatePinsFromOutputReceivePayload($receivePayload);
+            $this->getDriver()->updatePinsFromOutputReceivePayload($receivePayload, $state);
             
             // set the updated value in the payload
             $receivePayload->setOutputValue($this->getValue());
@@ -179,6 +192,24 @@ class DriverOutput extends BaseDriverOutput
         }
     
         return new SendPayload("/toggle", $settings);
+    }
+    
+    public function snapToState(State $state) {
+        // snaps this output's value to the value associated with the specified state
+        
+        global $logger;
+        
+        // get this output's pins
+        $pins = $this->getOutputPins();
+        
+        $logger->addInfo(sprintf("Getting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        
+        // get the state's values for the pins
+        $pinValues = $state->getValuesForDriverOutputPins($pins);
+        
+        $logger->addInfo(sprintf("Setting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        
+        $this->setOutputValueFromPinValues($pinValues, self::TOGGLE_MODE_SNAP, $state);
     }
 
     public function preDelete(ConnectionInterface $connection = null) {

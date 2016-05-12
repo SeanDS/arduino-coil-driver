@@ -91,6 +91,18 @@ class Driver extends BaseDriver
         return $driver;
     }
     
+    public function snapToState(State $state) {
+        // snaps the outputs in this driver to the specified state, or nearest before
+        
+        // get this driver's outputs
+        $outputs = $this->getDriverOutputs();
+        
+        // set each output to the required value
+        foreach ($outputs as $output) {
+            $output->snapToState($state);
+        }
+    }
+    
     public function postInsert(ConnectionInterface $connection = null) {
         global $logger;
         
@@ -152,7 +164,7 @@ class Driver extends BaseDriver
         return $this->contact($payload->getRequest());
     }
     
-    public function updatePinsFromOutputReceivePayload(OutputReceivePayload $payload) {
+    public function updatePinsFromOutputReceivePayload(OutputReceivePayload $payload, State $state = null) {
         $pinValues = $payload->getPinValues();
         
         // get a write connection
@@ -161,8 +173,10 @@ class Driver extends BaseDriver
         // start transaction
         $connection->beginTransaction();
         
-        // create new state
-        $state = State::init();
+        // create new state if needed
+        if ($state == null) {
+            $state = State::init();
+        }
         
         // update pins
         foreach ($this->getDriverPins() as $driverPin) {

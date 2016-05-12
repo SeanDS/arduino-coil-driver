@@ -1,3 +1,14 @@
+<?php if ($messageId === 5): ?>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    State loaded.
+</div>
+<?php elseif ($messageId === 6): ?>
+<div class="alert alert-warning alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    State is already loaded.
+</div>
+<?php endif; ?>
 <h2>Bookmarked States</h2>
 <?php if ($messageId === 1): ?>
 <div class="alert alert-success alert-dismissible" role="alert">
@@ -17,7 +28,7 @@
 <?php endif; ?>
 <table class="table table-bordered table-hover table-striped">
     <thead>
-        <th class="col-md-2 text-center">Time</th>
+        <th class="col-md-2 text-center">Last Loaded</th>
         <th class="col-md-2 text-center">User</th>
         <th class="col-md-6 text-center">Description</th>
         <th class="col-md-2 text-center">Actions</th>
@@ -31,7 +42,9 @@
             <td><?=$this->e($state->getStateBookmark()->getDescription())?></td>
             <td class="text-center">
                 <div class="btn-group">
+                    <?php if ($state != $currentState): ?>
                     <a href="states.php?do=load&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Load</a>
+                    <?php endif; ?>
                     <a href="states.php?do=editbookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Edit</a>
                     <a href="states.php?do=deletebookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-danger">Delete</a>
                 </div>
@@ -64,7 +77,7 @@
 <?php endif; ?>
 <table class="table table-bordered table-hover table-striped">
     <thead>
-        <th class="col-md-4 text-center">Time</th>
+        <th class="col-md-4 text-center">Last Loaded</th>
         <th class="col-md-4 text-center">User</th>
         <th class="col-md-4 text-center">Actions</th>
     </thead>
@@ -76,7 +89,9 @@
             <td class="text-center"><?=$this->e($state->getUser()->getName())?></td>
             <td class="text-center">
                 <div class="btn-group">
+                    <?php if ($state != $currentState): ?>
                     <a href="states.php?do=load&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Load</a>
+                    <?php endif; ?>
                     <?php if ($state->getStateBookmark() === null): ?>
                     <a href="states.php?do=newbookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Bookmark</a>
                     <?php endif; ?>

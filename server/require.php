@@ -12,7 +12,8 @@ define('SERVER_ROOT', '/arduino-coil-driver/server/');
 define('SESSION_LABEL', 'arduinocoildriver');
 define('SESSION_TIME', 60 * 60 * 6);
 define('LDAP_HOSTNAME', 'ldap.example.com');
-define('LDAP_DN', 'dc=example,dc=com');
+define('LDAP_DN', 'dc=example,dc=com'); // full bind RDN becomes uid=albert.einstein,LDAP_DN
+define('LDAP_OBJECT_CLASS', 'interferometry'); // for objectClass entry within user's directory
 
 // tank URLs, for SVG image
 $tankUrls = array(

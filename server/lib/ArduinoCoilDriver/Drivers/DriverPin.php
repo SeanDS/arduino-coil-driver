@@ -88,8 +88,16 @@ class DriverPin extends BaseDriverPin
     }
     
     public function updateValue($newValue, State $state) {
-        // create driver pin value
-        $driverPinValue = new DriverPinValue();
+        // check if the value/state combination exists already
+        $driverPinValue = DriverPinValueQuery::create()
+                ->filterByState($state)
+                ->filterByValue($newValue)
+                ->findOneByDriverPinId($this->getId());
+        
+        if ($driverPinValue == null) {
+            // the pin value / state doesn't exist yet, so create it
+            $driverPinValue = new DriverPinValue();
+        }
     
         // get a write connection
         $connection = Propel::getWriteConnection(DriverPinValueTableMap::DATABASE_NAME);
