@@ -8,6 +8,11 @@
     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     State is already loaded.
 </div>
+<?php elseif ($messageId === 7): ?>
+<div class="alert alert-danger alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    One or more drivers could not be contacted. <a href="drivers.php">Check network connectivity</a>.
+</div>
 <?php endif; ?>
 <h2>Bookmarked States</h2>
 <?php if ($messageId === 1): ?>
@@ -36,7 +41,7 @@
     <tbody>
     <?php if ($bookmarksPager->getNbResults()): ?>
         <?php foreach($bookmarksPager as $state): ?>
-        <tr>
+        <tr<?php if ($state == $currentState): ?> class="success"<?php endif; ?>>
             <td class="text-center"><?php $this->insert('date-time-span', ['time' => $state->getTime(), 'raw' => true]) ?></td>
             <td class="text-center"><?=$this->e($state->getUser()->getName())?></td>
             <td><?=$this->e($state->getStateBookmark()->getDescription())?></td>
@@ -84,7 +89,7 @@
     <tbody>
     <?php if ($statesPager->getNbResults()): ?>
         <?php foreach($statesPager as $state): ?>
-        <tr>
+        <tr<?php if ($state == $currentState): ?> class="success"<?php endif; ?>>
             <td class="text-center"><?php $this->insert('date-time-span', ['time' => $state->getTime()]) ?></td>
             <td class="text-center"><?=$this->e($state->getUser()->getName())?></td>
             <td class="text-center">

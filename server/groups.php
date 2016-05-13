@@ -65,7 +65,7 @@ if (empty($do)) {
         )
     );
     
-    if (! in_array(null, array($post['display_order'], $post['name'], $post['driver_outputs'], $post['driver_outputs_display_order']), true)) {
+    if (! empty($post)) {
         // new group submitted
         
         // get driver outputs specified
@@ -126,7 +126,7 @@ if (empty($do)) {
     );
     
     // process HTTP_POST data if submitted
-    if (! in_array(null, array($post['display_order'], $post['name'], $post['driver_outputs'], $post['driver_outputs_display_order']), true)) {
+    if (! empty($post)) {
         $group->setDisplayOrder($post['display_order']);
         $group->setName($post['name']);
         
@@ -153,19 +153,23 @@ if (empty($do)) {
             }
         }
         
+        // empty errors array
+        $errors = array();
+        
         try {
             // replace existing driver outputs
             $group->replaceOutputs($driverOutputs);
-            
-            // validate
-            $group->validate();
-            
-            // save
-            $group->save();
-            
-            header('Location: groups.php?mid=2');
         } catch (ValidationException $e) {
-            $errors = $e->getErrors();
+            $errors = array_merge($errors, $e->getErrors());
+        }
+        
+        if ($group->validate() && count($errors) === 0) {
+            $group->save();
+        
+            header('Location: groups.php?mid=2');
+        } else {
+            // compile list of errors
+            $errors = array_merge($errors, sortValidationErrorsByProperty($group));
         }
     }
     

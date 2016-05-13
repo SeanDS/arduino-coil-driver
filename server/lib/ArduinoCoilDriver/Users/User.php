@@ -60,6 +60,8 @@ class User extends BaseUser
             }
         }
         
+        // TODO: set firstlogin and lastlogin
+        
         return UserQuery::create()->findOneByName($username);
     }
 }

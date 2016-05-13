@@ -81,13 +81,6 @@ abstract class User implements ActiveRecordInterface
     protected $name;
 
     /**
-     * The value for the role field.
-     *
-     * @var        string
-     */
-    protected $role;
-
-    /**
      * The value for the first_login field.
      *
      * @var        \DateTime
@@ -364,16 +357,6 @@ abstract class User implements ActiveRecordInterface
     }
 
     /**
-     * Get the [role] column value.
-     *
-     * @return string
-     */
-    public function getRole()
-    {
-        return $this->role;
-    }
-
-    /**
      * Get the [optionally formatted] temporal [first_login] column value.
      *
      *
@@ -452,26 +435,6 @@ abstract class User implements ActiveRecordInterface
 
         return $this;
     } // setName()
-
-    /**
-     * Set the value of [role] column.
-     *
-     * @param string $v new value
-     * @return $this|\ArduinoCoilDriver\Users\User The current object (for fluent API support)
-     */
-    public function setRole($v)
-    {
-        if ($v !== null) {
-            $v = (string) $v;
-        }
-
-        if ($this->role !== $v) {
-            $this->role = $v;
-            $this->modifiedColumns[UserTableMap::COL_ROLE] = true;
-        }
-
-        return $this;
-    } // setRole()
 
     /**
      * Sets the value of [first_login] column to a normalized version of the date/time value specified.
@@ -555,16 +518,13 @@ abstract class User implements ActiveRecordInterface
             $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : UserTableMap::translateFieldName('Name', TableMap::TYPE_PHPNAME, $indexType)];
             $this->name = (null !== $col) ? (string) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : UserTableMap::translateFieldName('Role', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->role = (null !== $col) ? (string) $col : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : UserTableMap::translateFieldName('FirstLogin', TableMap::TYPE_PHPNAME, $indexType)];
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : UserTableMap::translateFieldName('FirstLogin', TableMap::TYPE_PHPNAME, $indexType)];
             if ($col === '0000-00-00 00:00:00') {
                 $col = null;
             }
             $this->first_login = (null !== $col) ? PropelDateTime::newInstance($col, null, 'DateTime') : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 4 + $startcol : UserTableMap::translateFieldName('LastLogin', TableMap::TYPE_PHPNAME, $indexType)];
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : UserTableMap::translateFieldName('LastLogin', TableMap::TYPE_PHPNAME, $indexType)];
             if ($col === '0000-00-00 00:00:00') {
                 $col = null;
             }
@@ -577,7 +537,7 @@ abstract class User implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 5; // 5 = UserTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 4; // 4 = UserTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\ArduinoCoilDriver\\Users\\User'), 0, $e);
@@ -799,9 +759,6 @@ abstract class User implements ActiveRecordInterface
         if ($this->isColumnModified(UserTableMap::COL_NAME)) {
             $modifiedColumns[':p' . $index++]  = 'name';
         }
-        if ($this->isColumnModified(UserTableMap::COL_ROLE)) {
-            $modifiedColumns[':p' . $index++]  = 'role';
-        }
         if ($this->isColumnModified(UserTableMap::COL_FIRST_LOGIN)) {
             $modifiedColumns[':p' . $index++]  = 'first_login';
         }
@@ -824,9 +781,6 @@ abstract class User implements ActiveRecordInterface
                         break;
                     case 'name':
                         $stmt->bindValue($identifier, $this->name, PDO::PARAM_STR);
-                        break;
-                    case 'role':
-                        $stmt->bindValue($identifier, $this->role, PDO::PARAM_STR);
                         break;
                     case 'first_login':
                         $stmt->bindValue($identifier, $this->first_login ? $this->first_login->format("Y-m-d H:i:s") : null, PDO::PARAM_STR);
@@ -903,12 +857,9 @@ abstract class User implements ActiveRecordInterface
                 return $this->getName();
                 break;
             case 2:
-                return $this->getRole();
-                break;
-            case 3:
                 return $this->getFirstLogin();
                 break;
-            case 4:
+            case 3:
                 return $this->getLastLogin();
                 break;
             default:
@@ -943,22 +894,21 @@ abstract class User implements ActiveRecordInterface
         $result = array(
             $keys[0] => $this->getId(),
             $keys[1] => $this->getName(),
-            $keys[2] => $this->getRole(),
-            $keys[3] => $this->getFirstLogin(),
-            $keys[4] => $this->getLastLogin(),
+            $keys[2] => $this->getFirstLogin(),
+            $keys[3] => $this->getLastLogin(),
         );
 
         $utc = new \DateTimeZone('utc');
+        if ($result[$keys[2]] instanceof \DateTime) {
+            // When changing timezone we don't want to change existing instances
+            $dateTime = clone $result[$keys[2]];
+            $result[$keys[2]] = $dateTime->setTimezone($utc)->format('Y-m-d\TH:i:s\Z');
+        }
+
         if ($result[$keys[3]] instanceof \DateTime) {
             // When changing timezone we don't want to change existing instances
             $dateTime = clone $result[$keys[3]];
             $result[$keys[3]] = $dateTime->setTimezone($utc)->format('Y-m-d\TH:i:s\Z');
-        }
-
-        if ($result[$keys[4]] instanceof \DateTime) {
-            // When changing timezone we don't want to change existing instances
-            $dateTime = clone $result[$keys[4]];
-            $result[$keys[4]] = $dateTime->setTimezone($utc)->format('Y-m-d\TH:i:s\Z');
         }
 
         $virtualColumns = $this->virtualColumns;
@@ -1023,12 +973,9 @@ abstract class User implements ActiveRecordInterface
                 $this->setName($value);
                 break;
             case 2:
-                $this->setRole($value);
-                break;
-            case 3:
                 $this->setFirstLogin($value);
                 break;
-            case 4:
+            case 3:
                 $this->setLastLogin($value);
                 break;
         } // switch()
@@ -1064,13 +1011,10 @@ abstract class User implements ActiveRecordInterface
             $this->setName($arr[$keys[1]]);
         }
         if (array_key_exists($keys[2], $arr)) {
-            $this->setRole($arr[$keys[2]]);
+            $this->setFirstLogin($arr[$keys[2]]);
         }
         if (array_key_exists($keys[3], $arr)) {
-            $this->setFirstLogin($arr[$keys[3]]);
-        }
-        if (array_key_exists($keys[4], $arr)) {
-            $this->setLastLogin($arr[$keys[4]]);
+            $this->setLastLogin($arr[$keys[3]]);
         }
     }
 
@@ -1118,9 +1062,6 @@ abstract class User implements ActiveRecordInterface
         }
         if ($this->isColumnModified(UserTableMap::COL_NAME)) {
             $criteria->add(UserTableMap::COL_NAME, $this->name);
-        }
-        if ($this->isColumnModified(UserTableMap::COL_ROLE)) {
-            $criteria->add(UserTableMap::COL_ROLE, $this->role);
         }
         if ($this->isColumnModified(UserTableMap::COL_FIRST_LOGIN)) {
             $criteria->add(UserTableMap::COL_FIRST_LOGIN, $this->first_login);
@@ -1215,7 +1156,6 @@ abstract class User implements ActiveRecordInterface
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
         $copyObj->setName($this->getName());
-        $copyObj->setRole($this->getRole());
         $copyObj->setFirstLogin($this->getFirstLogin());
         $copyObj->setLastLogin($this->getLastLogin());
 
@@ -1503,7 +1443,6 @@ abstract class User implements ActiveRecordInterface
     {
         $this->id = null;
         $this->name = null;
-        $this->role = null;
         $this->first_login = null;
         $this->last_login = null;
         $this->alreadyInSave = false;

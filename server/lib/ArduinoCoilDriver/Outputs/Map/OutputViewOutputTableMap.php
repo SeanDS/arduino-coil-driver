@@ -165,7 +165,7 @@ class OutputViewOutputTableMap extends TableMap
     0 => ':driver_output_id',
     1 => ':id',
   ),
-), null, null, null, false);
+), 'CASCADE', null, null, false);
     } // buildRelations()
 
     /**

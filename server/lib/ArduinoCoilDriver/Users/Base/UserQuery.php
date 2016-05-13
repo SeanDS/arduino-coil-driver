@@ -23,13 +23,11 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildUserQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildUserQuery orderByName($order = Criteria::ASC) Order by the name column
- * @method     ChildUserQuery orderByRole($order = Criteria::ASC) Order by the role column
  * @method     ChildUserQuery orderByFirstLogin($order = Criteria::ASC) Order by the first_login column
  * @method     ChildUserQuery orderByLastLogin($order = Criteria::ASC) Order by the last_login column
  *
  * @method     ChildUserQuery groupById() Group by the id column
  * @method     ChildUserQuery groupByName() Group by the name column
- * @method     ChildUserQuery groupByRole() Group by the role column
  * @method     ChildUserQuery groupByFirstLogin() Group by the first_login column
  * @method     ChildUserQuery groupByLastLogin() Group by the last_login column
  *
@@ -58,7 +56,6 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildUser findOneById(int $id) Return the first ChildUser filtered by the id column
  * @method     ChildUser findOneByName(string $name) Return the first ChildUser filtered by the name column
- * @method     ChildUser findOneByRole(string $role) Return the first ChildUser filtered by the role column
  * @method     ChildUser findOneByFirstLogin(string $first_login) Return the first ChildUser filtered by the first_login column
  * @method     ChildUser findOneByLastLogin(string $last_login) Return the first ChildUser filtered by the last_login column *
 
@@ -67,14 +64,12 @@ use Propel\Runtime\Exception\PropelException;
  *
  * @method     ChildUser requireOneById(int $id) Return the first ChildUser filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOneByName(string $name) Return the first ChildUser filtered by the name column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildUser requireOneByRole(string $role) Return the first ChildUser filtered by the role column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOneByFirstLogin(string $first_login) Return the first ChildUser filtered by the first_login column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildUser requireOneByLastLogin(string $last_login) Return the first ChildUser filtered by the last_login column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildUser[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildUser objects based on current ModelCriteria
  * @method     ChildUser[]|ObjectCollection findById(int $id) Return ChildUser objects filtered by the id column
  * @method     ChildUser[]|ObjectCollection findByName(string $name) Return ChildUser objects filtered by the name column
- * @method     ChildUser[]|ObjectCollection findByRole(string $role) Return ChildUser objects filtered by the role column
  * @method     ChildUser[]|ObjectCollection findByFirstLogin(string $first_login) Return ChildUser objects filtered by the first_login column
  * @method     ChildUser[]|ObjectCollection findByLastLogin(string $last_login) Return ChildUser objects filtered by the last_login column
  * @method     ChildUser[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
@@ -169,7 +164,7 @@ abstract class UserQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, name, role, first_login, last_login FROM users WHERE id = :p0';
+        $sql = 'SELECT id, name, first_login, last_login FROM users WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -327,35 +322,6 @@ abstract class UserQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(UserTableMap::COL_NAME, $name, $comparison);
-    }
-
-    /**
-     * Filter the query on the role column
-     *
-     * Example usage:
-     * <code>
-     * $query->filterByRole('fooValue');   // WHERE role = 'fooValue'
-     * $query->filterByRole('%fooValue%'); // WHERE role LIKE '%fooValue%'
-     * </code>
-     *
-     * @param     string $role The value to use as filter.
-     *              Accepts wildcards (* and % trigger a LIKE)
-     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
-     *
-     * @return $this|ChildUserQuery The current query, for fluid interface
-     */
-    public function filterByRole($role = null, $comparison = null)
-    {
-        if (null === $comparison) {
-            if (is_array($role)) {
-                $comparison = Criteria::IN;
-            } elseif (preg_match('/[\%\*]/', $role)) {
-                $role = str_replace('*', '%', $role);
-                $comparison = Criteria::LIKE;
-            }
-        }
-
-        return $this->addUsingAlias(UserTableMap::COL_ROLE, $role, $comparison);
     }
 
     /**

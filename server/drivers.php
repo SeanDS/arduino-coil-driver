@@ -169,7 +169,7 @@ if (empty($do)) {
     );
     
     // process HTTP_POST data if submitted
-    if ($post['name']) {
+    if (! empty($post)) {
         $driver->setName($post['name']);
         
         if ($driver->validate()) {
@@ -278,7 +278,7 @@ if (empty($do)) {
         )
     );
     
-    if (! in_array(null, array($post['name'], $post['coarsepinid'], $post['finepinid'], $post['mapping'], $post['overlapvalue'], $post['defaultdelay']), true)) {
+    if (! empty($post)) {
         // new output submitted
         
         // get pins
@@ -322,7 +322,7 @@ if (empty($do)) {
     );
     
     // process HTTP_POST data if submitted
-    if (! in_array(null, array($post['name'], $post['mapping'], $post['overlapvalue'], $post['defaultdelay']), true)) {
+    if (! empty($post)) {
         $driverOutput->setName($post['name']);
         $driverOutput->setMapping($post['mapping']);
         $driverOutput->setOverlapValue($post['overlapvalue']);

@@ -34,10 +34,9 @@
                     </ul>
                     <?php if (! is_null($user)): ?>
                     <ul class="nav navbar-nav navbar-right">
-                      <li<?php if ($page == 'admin'): ?> class="active"<?php endif; ?>><a href="admin.php">Admin</a></li>
                       <li><a href="login.php?do=logout">Logout</a></li>
                     </ul>
-                    <p class="navbar-text navbar-right navbar-username">Logged in as <?=$user->getName()?></p>
+                    <p class="navbar-text navbar-right navbar-username"><?=$user->getName()?></p>
                     <?php endif; ?>
                 </div>
             </div>

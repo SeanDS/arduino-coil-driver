@@ -91,7 +91,7 @@
     <foreign-key foreignTable="driver_outputs" name="driver_output_pins_fk_1">
       <reference local="driver_output_id" foreign="id"/>
     </foreign-key>
-    <foreign-key foreignTable="driver_pins" name="driver_output_pins_fk_2">
+    <foreign-key foreignTable="driver_pins" name="driver_output_pins_fk_2" onDelete="CASCADE">
       <reference local="driver_pin_id" foreign="id"/>
     </foreign-key>
     <vendor type="mysql">
@@ -119,7 +119,7 @@
     <foreign-key foreignTable="output_views" name="output_view_output_fk_1">
       <reference local="output_id" foreign="id"/>
     </foreign-key>
-    <foreign-key foreignTable="driver_outputs" name="output_view_output_fk_2">
+    <foreign-key foreignTable="driver_outputs" name="output_view_output_fk_2" onDelete="CASCADE">
       <reference local="driver_output_id" foreign="id"/>
     </foreign-key>
     <unique name="outputpinid">
@@ -160,7 +160,6 @@
   <table name="users" idMethod="native" phpName="User" namespace="Users">
     <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
     <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
-    <column name="role" phpName="Role" type="VARCHAR" size="32" required="true"/>
     <column name="first_login" phpName="FirstLogin" type="TIMESTAMP" required="true"/>
     <column name="last_login" phpName="LastLogin" type="TIMESTAMP" required="true"/>
     <vendor type="mysql">

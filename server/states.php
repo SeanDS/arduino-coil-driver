@@ -12,6 +12,7 @@ use ArduinoCoilDriver\States\StateBookmark;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
 use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
+use ArduinoCoilDriver\Exceptions\NoContactException;
 
 function getStateFromGet($returnUrl = 'states.php') {
     global $logger;
@@ -107,7 +108,7 @@ if (empty($do)) {
         )
     );
     
-    if (! in_array(null, array($post['description']), true)) {
+    if (! empty($post)) {
         // new bookmark submitted
         
         // create bookmark
@@ -135,7 +136,7 @@ if (empty($do)) {
         )
     );
     
-    if (! in_array(null, array($post['description']), true)) {
+    if (! empty($post)) {
         // bookmark edit submitted
         
         // edit bookmark
@@ -192,6 +193,9 @@ if (empty($do)) {
     } catch (LatestStateAlreadyLoadedException $e) {
         // show message saying current state is already loaded
         header('Location: states.php?mid=6');
+    } catch (NoContactException $e) {
+        // show message saying no contact
+        header('Location: states.php?mid=7');
     }
 } elseif ($do === 'delete') {
     // delete a state

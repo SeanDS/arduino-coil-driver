@@ -10,7 +10,6 @@ use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
 use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
-use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 use ArduinoCoilDriver\States\State;

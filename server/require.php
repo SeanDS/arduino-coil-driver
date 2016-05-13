@@ -78,8 +78,6 @@ $serviceContainer->setLogger('logger', $logger);
 /*
  * Create the template engine
  */
- 
-use Expenses\TreePlatesExtension;
 
 $templates = new League\Plates\Engine(TEMPLATE_DIR);
 
