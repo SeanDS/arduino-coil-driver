@@ -7,7 +7,7 @@ use ArduinoCoilDriver\Drivers\DriverOutputQuery;
 use ArduinoCoilDriver\Outputs\OutputViewQuery;
 
 function getDriverOutputFromGet($returnUrl = 'index.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -17,7 +17,7 @@ function getDriverOutputFromGet($returnUrl = 'index.php') {
     $driverOutput = DriverOutputQuery::create()->findPK($id);
     
     if ($driverOutput === null) {
-        $logger->addWarning(sprintf('Specified driver output id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver output not found.', 'returnUrl' => $returnUrl]);
         
@@ -28,7 +28,7 @@ function getDriverOutputFromGet($returnUrl = 'index.php') {
 }
 
 function getOutputGroupFromGet($returnUrl = 'index.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // get group id from HTTP_GET
@@ -38,7 +38,7 @@ function getOutputGroupFromGet($returnUrl = 'index.php') {
     $group = OutputViewQuery::create()->findPK($id);
     
     if ($group === null) {
-        $logger->addWarning(sprintf('Specified output group id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified output group id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified output group not found.', 'returnUrl' => $returnUrl]);
         

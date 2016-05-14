@@ -7,12 +7,12 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverOutput as BaseDriverOutput;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
+use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\Payload\SendPayload;
 use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
-use ArduinoCoilDriver\States\State;
 
 /**
  * Skeleton subclass for representing a row from the 'driver_outputs' table.
@@ -196,17 +196,17 @@ class DriverOutput extends BaseDriverOutput
     public function snapToState(State $state) {
         // snaps this output's value to the value associated with the specified state
         
-        global $logger;
+        global $infoLogger;
         
         // get this output's pins
         $pins = $this->getOutputPins();
         
-        $logger->addInfo(sprintf("Getting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        $infoLogger->addInfo(sprintf("Getting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
         
         // get the state's values for the pins
         $pinValues = $state->getValuesForDriverOutputPins($pins);
         
-        $logger->addInfo(sprintf("Setting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        $infoLogger->addInfo(sprintf("Setting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
         
         $this->setOutputValueFromPinValues($pinValues, self::TOGGLE_MODE_SNAP, $state);
     }
@@ -232,20 +232,20 @@ class DriverOutput extends BaseDriverOutput
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output id %d updated', $this->getId()));
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output id %d deleted', $this->getId()));
     }
 }

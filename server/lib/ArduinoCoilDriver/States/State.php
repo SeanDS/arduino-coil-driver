@@ -3,13 +3,13 @@
 namespace ArduinoCoilDriver\States;
 
 use DateTime;
-use ArduinoCoilDriver\Drivers\DriverQuery;
-use ArduinoCoilDriver\States\Base\State as BaseState;
-use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
-use Propel\Runtime\Connection\ConnectionInterface;
-use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
-use ArduinoCoilDriver\Drivers\DriverOutputPin;
 use Propel\Runtime\ActiveQuery\Criteria;
+use Propel\Runtime\Connection\ConnectionInterface;
+use ArduinoCoilDriver\Drivers\DriverQuery;
+use ArduinoCoilDriver\Drivers\DriverOutputPin;
+use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
+use ArduinoCoilDriver\States\Base\State as BaseState;
+use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
 use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
 
 /**
@@ -88,17 +88,17 @@ class State extends BaseState
     public function getValueForDriverOutputPin(DriverOutputPin $pin) {
         // gets the value associated with the specified output pin and this state
         
-        global $logger;
+        global $infoLogger;
         
         // is there a value associated with this state?
         $outputPinValue = DriverPinValueQuery::create()->filterByState($this)->findOneByDriverPinId($pin->getId());
         
-        $logger->addInfo(sprintf("Looking for value associated with output pin id %d and state id %d", $pin->getId(), $this->getId()));
+        $infoLogger->addInfo(sprintf("Looking for value associated with output pin id %d and state id %d", $pin->getId(), $this->getId()));
         
         if ($outputPinValue == null) {
             // fetch the most up-to-date state before the current one
             
-            $logger->addInfo("Did not find value - looking for next oldest state");
+            $infoLogger->addInfo("Did not find value - looking for next oldest state");
             
             $outputPinValue = DriverPinValueQuery::create()
                     ->innerJoinState()
@@ -113,7 +113,7 @@ class State extends BaseState
             }
         }
         
-        $logger->addInfo(sprintf("Found value: %d", $outputPinValue->getValue()));
+        $infoLogger->addInfo(sprintf("Found value: %d", $outputPinValue->getValue()));
             
         return $outputPinValue->getValue();
     }
@@ -145,8 +145,8 @@ class State extends BaseState
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('State id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('State id %d deleted', $this->getId()));
     }
 }

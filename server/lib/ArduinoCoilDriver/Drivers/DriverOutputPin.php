@@ -43,20 +43,20 @@ class DriverOutputPin extends BaseDriverOutputPin
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output pin inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output pin inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output pin id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output pin id %d updated', $this->getId()));
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver output pin id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver output pin id %d deleted', $this->getId()));
     }
 }

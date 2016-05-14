@@ -18,12 +18,12 @@ abstract class ReceivePayload
     }
     
     public static function payloadFromGet($host, $port, $get) {
-        global $logger;
+        global $infoLogger;
 
         // start clock
         $startTime = microtime(true);
 
-        $logger->addInfo(sprintf('Contacting %s:%d: %s', $host, $port, $get));
+        $infoLogger->addInfo(sprintf('Contacting %s:%d: %s', $host, $port, $get));
 
         // open socket
         $socket = @fsockopen($host, $port, $errorCode, $errorString, DEFAULT_SOCKET_TIMEOUT);

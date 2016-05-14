@@ -14,13 +14,15 @@ use ArduinoCoilDriver\Drivers\Map\DriverTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverOutputPinTableMap;
+use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidJsonException;
 use ArduinoCoilDriver\Exceptions\IdenticalOutputPinsException;
 use ArduinoCoilDriver\Exceptions\ValidationException;
+use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
 
 function getDriverFromGet($returnUrl = 'drivers.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -30,7 +32,7 @@ function getDriverFromGet($returnUrl = 'drivers.php') {
     $driver = DriverQuery::create()->findPK($id);
     
     if ($driver === null) {
-        $logger->addError(sprintf('Specified driver id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified driver id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver not found.', 'returnUrl' => $returnUrl]);
         
@@ -41,7 +43,7 @@ function getDriverFromGet($returnUrl = 'drivers.php') {
 }
 
 function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -51,7 +53,7 @@ function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
     $driverOutput = DriverOutputQuery::create()->findPK($id);
     
     if ($driverOutput === null) {
-        $logger->addError(sprintf('Specified driver output id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver output not found.', 'returnUrl' => $returnUrl]);
         
@@ -62,7 +64,7 @@ function getDriverOutputFromGet($returnUrl = 'drivers.php?do=listoutputs') {
 }
 
 function getUnregisteredDriverFromGet($returnUrl = 'drivers.php?do=unregistered') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -72,7 +74,7 @@ function getUnregisteredDriverFromGet($returnUrl = 'drivers.php?do=unregistered'
     $unregisteredDriver = UnregisteredDriverQuery::create()->findPK($id);
     
     if (is_null($unregisteredDriver)) {
-        $logger->addError(sprintf('Specified unregistered driver id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified unregistered driver id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified unregistered driver not found.', 'returnUrl' => $returnUrl]);
         
@@ -109,7 +111,7 @@ if (empty($do)) {
     // get specified unregistered driver
     $unregisteredDriver = getUnregisteredDriverFromGet();
     
-    $logger->addInfo(sprintf('User wants to register unregistered driver id %d', $unregisteredDriver->getId()));
+    $infoLogger->addInfo(sprintf('User wants to register unregistered driver id %d', $unregisteredDriver->getId()));
     
     /*
      * ok, we're ready to add a new driver
@@ -220,13 +222,13 @@ if (empty($do)) {
     try {
         $statusPayload = $driver->getStatus();
     } catch (NoContactException $e) {
-        $logger->addError(sprintf('Driver id %d cannot be contacted', $driver->getId()));
+        $errorLogger->addError(sprintf('Driver id %d cannot be contacted', $driver->getId()));
         
         echo $templates->render('error', ['message' => 'Specified driver cannot be contacted.', 'returnUrl' => 'drivers.php']);
             
         exit();
     } catch (InvalidJsonException $e) {
-        $logger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
+        $errorLogger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
         
         echo $templates->render('error', ['message' => 'Specified driver returned an invalid message.', 'returnUrl' => 'drivers.php']);
             
@@ -235,6 +237,62 @@ if (empty($do)) {
     
     // print status
     echo $templates->render('drivers-status', ['driver' => $driver, 'status' => $statusPayload]);
+} elseif ($do === 'sync') {
+    // synchronise the server with this driver's pin settings
+    
+    // get driver
+    $driver = getDriverFromGet();
+    
+    try {
+        // synchronise
+        $driver->synchronise();
+    } catch (NoContactException $e) {
+        $errorLogger->addError(sprintf('Driver %s could not be contacted', $driver->getName()));
+        
+        echo $templates->render('error', ['message' => 'Specified driver could not be contacted.', 'returnUrl' => 'drivers.php']);
+            
+        exit();
+    }
+    
+    header('Location: drivers.php?mid=4');
+} elseif ($do === 'syncall') {
+    // synchronise the server with all drivers' pin settings
+    
+    // get drivers
+    $drivers = DriverQuery::create()->find();
+    
+    // get the current state, for reference
+    $currentState = State::getCurrentState();
+    
+    // create a new state for the updated values
+    $newState = State::init();
+    
+    try {
+        // synchronise each driver
+        
+        foreach ($drivers as $driver) {
+            $driver->synchronise($newState);
+        }
+    } catch (Exception $e) {
+        $errorLogger->addError(sprintf('Error during full sync: %s', $e->getMessage()));
+        
+        // roll back to last state
+        try {
+            $currentState->load();
+        } catch (LatestStateAlreadyLoadedException $e) {
+            // Well, that's good. No damage done.
+        }
+        
+        // delete the new state
+        $newState->delete();
+        
+        // display error        
+        echo $templates->render('error', ['message' => 'There was an error during synchronisation. The current state has been restored.', 'returnUrl' => 'drivers.php']);
+            
+        exit();
+    }
+    
+    header('Location: drivers.php?mid=5');
 } elseif ($do === 'listpins') {
     // list driver pins
     

@@ -5,17 +5,17 @@ require('require.php');
 use Propel\Runtime\Propel;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\StateQuery;
+use ArduinoCoilDriver\States\StateBookmark;
 use ArduinoCoilDriver\States\StateBookmarkQuery;
 use ArduinoCoilDriver\States\Map\StateTableMap;
 use ArduinoCoilDriver\States\Map\StateBookmarkTableMap;
-use ArduinoCoilDriver\States\StateBookmark;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
 use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
 use ArduinoCoilDriver\Exceptions\NoContactException;
 
 function getStateFromGet($returnUrl = 'states.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // get HTTP_GET id
@@ -25,7 +25,7 @@ function getStateFromGet($returnUrl = 'states.php') {
     $state = StateQuery::create()->findPK($id);
     
     if ($state === null) {
-        $logger->addError(sprintf('Specified state bookmark id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified state bookmark id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified state bookmark not found.', 'returnUrl' => $returnUrl]);
         
@@ -36,7 +36,7 @@ function getStateFromGet($returnUrl = 'states.php') {
 }
 
 function getStateBookmarkFromGet($returnUrl = 'states.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // get HTTP_GET id
@@ -46,7 +46,7 @@ function getStateBookmarkFromGet($returnUrl = 'states.php') {
     $state = StateBookmarkQuery::create()->findPK($id);
     
     if ($state === null) {
-        $logger->addError(sprintf('Specified state id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified state id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified state not found.', 'returnUrl' => $returnUrl]);
         
@@ -93,7 +93,7 @@ if (empty($do)) {
     
     // check if bookmark already exists
     if ($state->getStateBookmark() != null) {
-        $logger->addError(sprintf('Specified state %d already has a bookmark', $id));
+        $errorLogger->addError(sprintf('Specified state %d already has a bookmark', $id));
     
         echo $templates->render('error', ['message' => 'Specified state already has a bookmark.', 'returnUrl' => 'states.php']);
         

@@ -52,20 +52,20 @@ class OutputViewOutput extends BaseOutputViewOutput
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view output inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view output inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view output id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view output id %d updated', $this->getId()));
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view output id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view output id %d deleted', $this->getId()));
     }
 }

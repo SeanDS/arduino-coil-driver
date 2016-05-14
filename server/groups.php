@@ -3,14 +3,14 @@
 require('require.php');
 
 use Propel\Runtime\Propel;
-use ArduinoCoilDriver\Outputs\OutputViewQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputQuery;
+use ArduinoCoilDriver\Outputs\OutputViewQuery;
 use ArduinoCoilDriver\Outputs\OutputView;
 use ArduinoCoilDriver\Outputs\Map\OutputViewTableMap;
 use ArduinoCoilDriver\Exceptions\ValidationException;
 
 function getOutputGroupFromGet($returnUrl = 'groups.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // get HTTP_GET id
@@ -20,7 +20,7 @@ function getOutputGroupFromGet($returnUrl = 'groups.php') {
     $group = OutputViewQuery::create()->findPK($id);
     
     if ($group === null) {
-        $logger->addError(sprintf('Specified output group id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified output group id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified output group not found.', 'returnUrl' => $returnUrl]);
         
@@ -81,7 +81,7 @@ if (empty($do)) {
                 if ($driverOutput === null) {
                     // invalid driver output specified
                     
-                    $logger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
+                    $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
                     
                     echo $templates->render('error', ['message' => 'Invalid driver output id specified', 'returnUrl' => 'groups.php?do=new']);
                     exit();
@@ -143,7 +143,7 @@ if (empty($do)) {
                 if ($driverOutput === null) {
                     // invalid driver output specified
                     
-                    $logger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
+                    $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
                     
                     echo $templates->render('error', ['message' => 'Invalid driver output id specified', 'returnUrl' => 'groups.php?do=edit&amp;id=' . $group->getId()]);
                     exit();

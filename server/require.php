@@ -1,7 +1,8 @@
 <?php
 
 // config settings - TODO: move somewhere else
-define('LOG_FILE', '/var/log/arduinocoildriver/web.log'); // directory must be writable by web user
+define('ERROR_LOG_FILE', '/var/log/arduinocoildriver/error.log'); // directory must be writable by web user
+define('INFO_LOG_FILE', '/var/log/arduinocoildriver/info.log'); // directory must be writable by web user
 define('MAX_LOG_FILES', 10);
 define('TEMPLATE_DIR', 'templates');
 define('DATETIME_FORMAT', 'Y-m-d H:i:s');
@@ -59,12 +60,19 @@ use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Processor\WebProcessor;
 use ArduinoCoilDriver\Logger\UserProcessor;
+use Propel\Runtime\Propel;
 
-// create logging instance
-$logger = new Logger('logger');
-$logger->pushHandler(new RotatingFileHandler(LOG_FILE, MAX_LOG_FILES, Logger::INFO));
-$logger->pushProcessor(new WebProcessor());
-$logger->pushProcessor(new UserProcessor());
+// create error logger
+$errorLogger = new Logger('defaultLogger');
+$errorLogger->pushHandler(new RotatingFileHandler(ERROR_LOG_FILE, MAX_LOG_FILES, Logger::ERROR));
+$errorLogger->pushProcessor(new WebProcessor());
+$errorLogger->pushProcessor(new UserProcessor());
+
+// create info logger
+$infoLogger = new Logger('infoLogger');
+$infoLogger->pushHandler(new RotatingFileHandler(INFO_LOG_FILE, MAX_LOG_FILES, Logger::INFO));
+$infoLogger->pushProcessor(new WebProcessor());
+$infoLogger->pushProcessor(new UserProcessor());
 
 /*
  * Setup object relationship manager
@@ -72,8 +80,9 @@ $logger->pushProcessor(new UserProcessor());
 
 require_once('config.php');
 
-// tell ORM about the logger
-$serviceContainer->setLogger('logger', $logger);
+// set loggers in Propel
+Propel::getServiceContainer()->setLogger('defaultLogger', $errorLogger);
+Propel::getServiceContainer()->setLogger('infoLogger', $infoLogger);
 
 /*
  * Create the template engine
@@ -87,7 +96,6 @@ $templates->addData(['mainTitle' => SERVER_NAME]);
  * Check user credentials
  */
 
-use ArduinoCoilDriver\Users\User;
 use ArduinoCoilDriver\Users\UserQuery;
 
 session_name(SESSION_LABEL);

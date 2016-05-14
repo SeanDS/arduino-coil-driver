@@ -12,7 +12,7 @@ use ArduinoCoilDriver\Exceptions\NoContactException;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 
 function getDriverPinFromGet($returnUrl = 'comms.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -22,7 +22,7 @@ function getDriverPinFromGet($returnUrl = 'comms.php') {
     $driverPin = DriverPinQuery::create()->findPK($id);
     
     if ($driverPin === null) {
-        $logger->addWarning(sprintf('Specified driver pin id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified driver pin id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver pin not found.', 'returnUrl' => $returnUrl]);
         
@@ -33,7 +33,7 @@ function getDriverPinFromGet($returnUrl = 'comms.php') {
 }
 
 function getDriverOutputFromGet($returnUrl = 'comms.php') {
-    global $logger;
+    global $errorLogger;
     global $templates;
 
     // load driver by HTTP_GET id
@@ -43,7 +43,7 @@ function getDriverOutputFromGet($returnUrl = 'comms.php') {
     $driverOutput = DriverOutputQuery::create()->findPK($id);
     
     if ($driverOutput === null) {
-        $logger->addWarning(sprintf('Specified driver output id %d doesn\'t exist', $id));
+        $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $id));
     
         echo $templates->render('error', ['message' => 'Specified driver output not found.', 'returnUrl' => $returnUrl]);
         

@@ -5,8 +5,8 @@ namespace ArduinoCoilDriver\States;
 use Propel\Runtime\Propel;
 use ArduinoCoilDriver\States\Base\StateBookmark as BaseStateBookmark;
 use ArduinoCoilDriver\States\Map\StateBookmarkTableMap;
-use ArduinoCoilDriver\Exceptions\ValidationException;
 use ArduinoCoilDriver\States\State;
+use ArduinoCoilDriver\Exceptions\ValidationException;
 
 /**
  * Skeleton subclass for representing a row from the 'state_bookmarks' table.

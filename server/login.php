@@ -55,7 +55,7 @@ if (empty($do)) {
     
     // show error if user isn't logged in
     if ($user == null) {
-        $logger->addInfo("User not logged in so can't be logged out");
+        $infoLogger->addInfo("User not logged in so can't be logged out");
     
         echo $templates->render('error', ['message' => 'You cannot log out if you\'re not logged in!', 'returnUrl' => "login.php"]);
         

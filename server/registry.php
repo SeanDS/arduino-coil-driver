@@ -2,7 +2,6 @@
 
 require('require.php');
 
-use ArduinoCoilDriver\Drivers\Driver;
 use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\Drivers\UnregisteredDriver;
 use ArduinoCoilDriver\Drivers\UnregisteredDriverQuery;
@@ -22,18 +21,18 @@ if (empty($do)) {
     // get driver's IP address
     $driverIp = $_SERVER['REMOTE_ADDR'];
     
-    $logger->addInfo(sprintf('New checkin from driver %s', $driverIp));
+    $infoLogger->addInfo(sprintf('New checkin from driver %s', $driverIp));
     
     // check JSON string is valid
     $message = json_decode($get['message'], true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {
         // error
-        $logger->addError(sprintf('Message from %s is invalid JSON: %s', $driverIp, $get['message']));
+        $errorLogger->addError(sprintf('Message from %s is invalid JSON: %s', $driverIp, $get['message']));
         
         exit();
     } elseif (!is_array($message)) {
-        $logger->addError(sprintf('Message from %s is empty.', $driverIp));
+        $errorLogger->addError(sprintf('Message from %s is empty.', $driverIp));
         
         exit();
     }
@@ -42,13 +41,13 @@ if (empty($do)) {
     $missingKeys = array_diff($requiredKeys, array_flip($message));
     
     if (count($missingKeys)) {
-        $logger->addError(sprintf('Message from %s doesn\'t contain required key(s): %s', $driverIp, implode(',', $missingKeys)));
+        $errorLogger->addError(sprintf('Message from %s doesn\'t contain required key(s): %s', $driverIp, implode(',', $missingKeys)));
         
         exit();
     }
     
-    $logger->addInfo('Driver\'s message is valid');
-    $logger->addInfo('Keys: ' . implode(', ', array_keys($message)) . ', Vals: ' . implode(', ', $message));
+    $infoLogger->addInfo('Driver\'s message is valid');
+    $infoLogger->addInfo('Keys: ' . implode(', ', array_keys($message)) . ', Vals: ' . implode(', ', $message));
     
     // convert MAC from base 10 to base 16
     $pieces = explode(':', $message['mac']);
@@ -71,14 +70,14 @@ if (empty($do)) {
     
     if (is_null($driver)) {
         // driver isn't known
-        $logger->addInfo('Driver isn\'t registered');
+        $infoLogger->addInfo('Driver isn\'t registered');
         
         // is it in the list of unregistered drivers?
         $unregisteredDriver = UnregisteredDriverQuery::create()->filterByMac($message['mac'])->filterByIp($_SERVER['REMOTE_ADDR'])->findOne();
         
         if (is_null($unregisteredDriver)) {
             // driver is new
-            $logger->addInfo('Driver isn\'t in unregistered list');
+            $infoLogger->addInfo('Driver isn\'t in unregistered list');
             
             // add it to list of unregistered
             $newUnregisteredDriver = new UnregisteredDriver();
@@ -87,10 +86,10 @@ if (empty($do)) {
             $newUnregisteredDriver->setLastCheckIn('now');
             $newUnregisteredDriver->save();
             
-            $logger->addInfo(sprintf('Driver added to unregistered list with ID %d', $newUnregisteredDriver->getId()));
+            $infoLogger->addInfo(sprintf('Driver added to unregistered list with ID %d', $newUnregisteredDriver->getId()));
         } else {
             // driver is known
-            $logger->addInfo(sprintf('Driver is known by unregistered driver ID %d - checking in', $unregisteredDriver->getId()));
+            $infoLogger->addInfo(sprintf('Driver is known by unregistered driver ID %d - checking in', $unregisteredDriver->getId()));
             
             // update last checkin
             $unregisteredDriver->setLastCheckIn('now');
@@ -98,7 +97,7 @@ if (empty($do)) {
         }
     } else {
         // driver is known
-        $logger->addInfo(sprintf('Driver is known by driver ID %d - checking in', $driver->getId()));
+        $infoLogger->addInfo(sprintf('Driver is known by driver ID %d - checking in', $driver->getId()));
         
         // update
         $driver->setLastCheckIn('now');

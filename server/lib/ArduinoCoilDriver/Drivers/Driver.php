@@ -29,18 +29,18 @@ use ArduinoCoilDriver\Exceptions\ConflictingStatusException;
 class Driver extends BaseDriver
 {
     public static function createFromUnregistered(UnregisteredDriver $unregisteredDriver) {
-        global $logger;
+        global $errorLogger;
     
         // get the unregistered driver's status and output payloads
         try {
             $statusPayload = $unregisteredDriver->getStatus();
             $outputPayload = $unregisteredDriver->getOutputs();
         } catch (NoContactException $e) {
-            $logger->addWarning(sprintf('Unregistered driver id %d cannot be contacted', $unregisteredDriver->getId()));
+            $errorLogger->addError(sprintf('Unregistered driver id %d cannot be contacted', $unregisteredDriver->getId()));
             
             throw $e;
         } catch (InvalidJsonException $e) {
-            $logger->addWarning(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
+            $errorLogger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
             
             throw $e;
         }
@@ -49,7 +49,7 @@ class Driver extends BaseDriver
         
         // do some validation
         if ($statusPayload->getMac() !== $unregisteredDriver->getMac() || $statusPayload->getIp() !== $unregisteredDriver->getIp()) {
-            $logger->addWarning(sprintf('Status reported by unregistered driver id %d differs from the record', $unregisteredDriver->getId()));
+            $errorLogger->addError(sprintf('Status reported by unregistered driver id %d differs from the record', $unregisteredDriver->getId()));
             
             throw new ConflictingStatusException($unregisteredDriver);
         }
@@ -104,15 +104,15 @@ class Driver extends BaseDriver
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver id %d updated', $this->getId()));
     }
     
     public function preDelete(ConnectionInterface $connection = null) {
@@ -141,30 +141,33 @@ class Driver extends BaseDriver
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver id %d deleted', $this->getId()));
     }
     
     private function contact($get) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Contacting driver id %d: %s', $this->getId(), $get));
+        $infoLogger->addInfo(sprintf('Contacting driver id %d: %s', $this->getId(), $get));
         
         // return payload
         return ReceivePayload::payloadFromGet($this->getIp(), 80, $get);
     }
     
     public function dispatch(SendPayload $payload) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Dispatching payload to driver id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Dispatching payload to driver id %d', $this->getId()));
         
         // send payload to driver and get message
         return $this->contact($payload->getRequest());
     }
     
     public function updatePinsFromOutputReceivePayload(OutputReceivePayload $payload, State $state = null) {
+        // Updates the pins of this driver from the specified payload, optionally with a state to specify
+        // these outputs for. If no state is provided, a new one is created.
+        
         $pinValues = $payload->getPinValues();
         
         // get a write connection
@@ -190,9 +193,9 @@ class Driver extends BaseDriver
     }
     
     public function getStatus() {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Getting status of driver id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Getting status of driver id %d', $this->getId()));
         
         $payload = $this->contact("/status");
         
@@ -204,9 +207,9 @@ class Driver extends BaseDriver
     }
     
     public function getOutputs() {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Getting outputs of driver id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Getting outputs of driver id %d', $this->getId()));
         
         $payload = $this->contact("/outputs");
         
@@ -215,5 +218,24 @@ class Driver extends BaseDriver
         }
         
         return $payload;
+    }
+    
+    public function synchronise(State $state = null) {
+        // synchronises the server's values with that of the driver, optionally
+        // with a state to use
+        
+        global $errorLogger;
+        
+        // get the driver's output payloads
+        try {
+            $outputPayload = $this->getOutputs();
+        } catch (NoContactException $e) {
+            $errorLogger->addError(sprintf('Driver id %d cannot be contacted', $this->getId()));
+            
+            throw $e;
+        }
+        
+        // update driver's outputs
+        $this->updatePinsFromOutputReceivePayload($outputPayload, $state);
     }
 }

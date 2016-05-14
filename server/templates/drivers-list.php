@@ -13,15 +13,25 @@
     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     Driver deleted.
 </div>
+<?php elseif ($messageId === 4): ?>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    Server synchronised with driver.
+</div>
+<?php elseif ($messageId === 5): ?>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    Server synchronised with drivers.
+</div>
 <?php endif; ?>
 <table class="table table-bordered table-hover table-striped">
     <thead>
-        <th class="col-md-3 text-center">Name</th>
+        <th class="col-md-2 text-center">Name</th>
         <th class="col-md-2 text-center">Last check-in</th>
         <th class="col-md-3 text-center">Coil contact</th>
         <th class="col-md-1 text-center">Pins</th>
         <th class="col-md-1 text-center">Outputs</th>
-        <th class="col-md-2 text-center">Actions</th>
+        <th class="col-md-3 text-center">Actions</th>
     </thead>
     <tbody>
     <?php if ($drivers->count()): ?>
@@ -36,6 +46,7 @@
                 <div class="btn-group">
                     <a href="drivers.php?do=edit&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Edit</a>
                     <a href="drivers.php?do=status&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Status</a>
+                    <a href="drivers.php?do=sync&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-default">Sync</a>
                     <a href="drivers.php?do=delete&amp;id=<?=$this->e($driver->getId())?>" class="btn btn-xs btn-danger">Delete</a>
                 </div>
             </td>

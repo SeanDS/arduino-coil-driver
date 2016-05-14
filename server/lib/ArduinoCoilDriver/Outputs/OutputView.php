@@ -60,9 +60,9 @@ class OutputView extends BaseOutputView
     public function replaceOutputs($driverOutputs) {
         // replace existing outputs with new list
         
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Replacing outputs associated with output view id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Replacing outputs associated with output view id %d', $this->getId()));
         
         // get a write connection
         $connection = Propel::getWriteConnection(OutputViewTableMap::DATABASE_NAME);
@@ -86,15 +86,15 @@ class OutputView extends BaseOutputView
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view id %d updated', $this->getId()));
     }
     
     public function preDelete(ConnectionInterface $connection = null) {
@@ -118,8 +118,8 @@ class OutputView extends BaseOutputView
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Output view id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Output view id %d deleted', $this->getId()));
     }
 }

@@ -8,10 +8,10 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\Base\DriverPin as BaseDriverPin;
 use ArduinoCoilDriver\Drivers\Map\DriverPinTableMap;
 use ArduinoCoilDriver\Drivers\Map\DriverPinValueTableMap;
-use ArduinoCoilDriver\Payload\SendPayload;
-use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\States\State;
 use ArduinoCoilDriver\States\Map\StateTableMap;
+use ArduinoCoilDriver\Payload\SendPayload;
+use ArduinoCoilDriver\Payload\OutputReceivePayload;
 use ArduinoCoilDriver\Exceptions\InvalidToggleException;
 
 /**
@@ -122,15 +122,15 @@ class DriverPin extends BaseDriverPin
     }
     
     public function postInsert(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver pin inserted with id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver pin inserted with id %d', $this->getId()));
     }
     
     public function postUpdate(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver pin id %d updated', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver pin id %d updated', $this->getId()));
     }
     
     public function preDelete(ConnectionInterface $connection = null) {
@@ -154,8 +154,8 @@ class DriverPin extends BaseDriverPin
     }
     
     public function postDelete(ConnectionInterface $connection = null) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Driver pin id %d deleted', $this->getId()));
+        $infoLogger->addInfo(sprintf('Driver pin id %d deleted', $this->getId()));
     }
 }

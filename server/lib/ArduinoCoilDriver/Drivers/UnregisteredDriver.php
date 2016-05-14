@@ -20,18 +20,18 @@ use ArduinoCoilDriver\Payload\OutputReceivePayload;
 class UnregisteredDriver extends BaseUnregisteredDriver
 {
     private function contact($get) {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Contacting unregistered driver id %d: %s', $this->getId(), $get));
+        $infoLogger->addInfo(sprintf('Contacting unregistered driver id %d: %s', $this->getId(), $get));
         
         // return payload
         return ReceivePayload::payloadFromGet($this->getIp(), 80, $get);
     }
 
     public function getStatus() {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Getting status of unregistered driver id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Getting status of unregistered driver id %d', $this->getId()));
         
         $payload = $this->contact("/status");
         
@@ -43,9 +43,9 @@ class UnregisteredDriver extends BaseUnregisteredDriver
     }
     
     public function getOutputs() {
-        global $logger;
+        global $infoLogger;
         
-        $logger->addInfo(sprintf('Getting outputs of unregistered driver id %d', $this->getId()));
+        $infoLogger->addInfo(sprintf('Getting outputs of unregistered driver id %d', $this->getId()));
         
         $payload = $this->contact("/outputs");
         
