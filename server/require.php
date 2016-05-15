@@ -1,33 +1,7 @@
 <?php
 
-// config settings - TODO: move somewhere else
-define('ERROR_LOG_FILE', '/var/log/arduinocoildriver/error.log'); // directory must be writable by web user
-define('INFO_LOG_FILE', '/var/log/arduinocoildriver/info.log'); // directory must be writable by web user
-define('MAX_LOG_FILES', 10);
-define('TEMPLATE_DIR', 'templates');
-define('DATETIME_FORMAT', 'Y-m-d H:i:s');
-define('SERVER_NAME', 'Arduino Coil Driver');
-define('DEFAULT_SOCKET_TIMEOUT', 5); // default timeout for communication with Arduinos
-define('MAXIMUM_SOCKET_LINE_LENGTH', 1024);
-define('SERVER_ROOT', '/arduino-coil-driver/server/');
-define('SESSION_LABEL', 'arduinocoildriver');
-define('SESSION_TIME', 60 * 60 * 6);
-define('LDAP_HOSTNAME', 'ldap.example.com');
-define('LDAP_DN', 'dc=example,dc=com'); // full bind RDN becomes uid=albert.einstein,LDAP_DN
-define('LDAP_OBJECT_CLASS', 'interferometry'); // for objectClass entry within user's directory
-
-// tank URLs, for SVG image
-$tankUrls = array(
-    'left_etm' => 'index.php?do=controlgroup&oid=1',
-    'left_itm' => 'index.php?do=controlgroup&oid=1',
-    'bottom_steering_left' => 'index.php?do=controlgroup&oid=1',
-    'bottom_steering_centre' => 'index.php?do=controlgroup&oid=1',
-    'middle_steering' => 'index.php?do=controlgroup&oid=1',
-    'top_steering' => 'index.php?do=controlgroup&oid=1',
-    'bottom_steering_right' => 'index.php?do=controlgroup&oid=1',
-    'right_itm' => 'index.php?do=controlgroup&oid=1',
-    'right_etm' => 'index.php?do=controlgroup&oid=1'
-);
+// load config
+require_once('config.php');
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
@@ -53,6 +27,13 @@ function formatDate($datetime) {
 require_once('vendor/autoload.php');
 
 /*
+ * Import Propel ORM
+ */
+
+use Propel\Runtime\Propel;
+use Propel\Runtime\Connection\ConnectionManagerSingle;
+
+/*
  * Setup logger
  */
 
@@ -60,7 +41,6 @@ use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Processor\WebProcessor;
 use ArduinoCoilDriver\Logger\UserProcessor;
-use Propel\Runtime\Propel;
 
 // create error logger
 $errorLogger = new Logger('defaultLogger');
@@ -78,7 +58,26 @@ $infoLogger->pushProcessor(new UserProcessor());
  * Setup object relationship manager
  */
 
-require_once('config.php');
+$serviceContainer = Propel::getServiceContainer();
+$serviceContainer->checkVersion('2.0.0-dev');
+$serviceContainer->setAdapterClass('default', 'mysql');
+
+$manager = new ConnectionManagerSingle();
+$manager->setConfiguration(
+    array(
+        'classname' => 'Propel\\Runtime\\Connection\\DebugPDO',
+        'dsn' => 'mysql:host=localhost;dbname=' . DATABASE,
+        'user' => DATABASE_USER,
+        'password' => DATABASE_PASSWORD,
+        'attributes' => array(
+            'ATTR_EMULATE_PREPARES' => false,
+        ),
+    )
+);
+$manager->setName('default');
+
+$serviceContainer->setConnectionManager('default', $manager);
+$serviceContainer->setDefaultDatasource('default');
 
 // set loggers in Propel
 Propel::getServiceContainer()->setLogger('defaultLogger', $errorLogger);
