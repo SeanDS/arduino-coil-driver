@@ -5,7 +5,6 @@ require_once('config.php');
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
-// function (TODO: move elsewhere)
 function sortValidationErrorsByProperty($obj, $namespace = "") {
     $errors = array();
     
