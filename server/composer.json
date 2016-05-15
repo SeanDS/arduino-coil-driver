@@ -5,7 +5,6 @@
     "require": {
         "league/plates": "3.*",
         "propel/propel": "~2.0@dev",
-        "monolog/monolog": "1.17.*",
-        "tiesa/ldap": "dev-master"
+        "monolog/monolog": "1.17.*"
     }    
 }

@@ -2,7 +2,6 @@
 
 use ArduinoCoilDriver\Users\User;
 use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
-use Toyota\Component\Ldap\Exception\ConnectionException;
 
 require('require.php');
 
@@ -40,8 +39,6 @@ if (empty($do)) {
         } catch (InvalidCredentialsException $e) {
             // set error in template
             $templates->addData(['badCredentials' => true], ['login']);
-        } catch (ConnectionException $e) {
-            $templates->addData(['ldapConnectionIssue' => true], ['login']);
         }
     }
     

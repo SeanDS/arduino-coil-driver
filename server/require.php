@@ -3,7 +3,12 @@
 // load config
 require_once('config.php');
 
+// set up error display
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+
+if (DEBUG) {
+    ini_set('display_errors', 1);
+}
 
 function sortValidationErrorsByProperty($obj, $namespace = "") {
     $errors = array();

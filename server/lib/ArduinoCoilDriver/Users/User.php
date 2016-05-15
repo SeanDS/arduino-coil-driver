@@ -3,10 +3,6 @@
 namespace ArduinoCoilDriver\Users;
 
 use ArduinoCoilDriver\Users\Base\User as BaseUser;
-use Toyota\Component\Ldap\Core\Manager;
-use Toyota\Component\Ldap\Platform\Native\Driver;
-use Toyota\Component\Ldap\Exception\BindException;
-use Toyota\Component\Ldap\Platform\Native\Search;
 use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
 
 /**
@@ -21,47 +17,56 @@ use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
  */
 class User extends BaseUser
 {
-    public static function login($username, $password) {
-        return UserQuery::create()->findOneByName('sean.leavey');
-    
-        $params = array(
-            'hostname'      => LDAP_HOSTNAME,
-            'base_dn'       => LDAP_DN
-        );
-        
-        // create LDAP connection
-        $manager = new Manager($params, new Driver());
-
-        // connect
-        $manager->connect();
+    public static function login($username, $password) {    
+        $connection = ldap_connect(LDAP_HOSTNAME, LDAP_PORT);
 
         // bind, checking credentials
-        try {
-            $manager->bind('uid=' . $username . ',' . LDAP_DN, $password);
-        } catch (BindException $e) {
-            throw new InvalidCredentialsException($e);
+        if (! ldap_bind($connection, 'uid=' . $username . ',' . LDAP_DN, $password)) {
+            throw new InvalidCredentialsException();
         }
+        
+        // default found
+        $found = false;
+        
+        // I apologise for the horribleness of the code below. There's
+        // something horrifically wrong with either the LDAP server
+        // I use, or LDAP in general (probably both) that makes this
+        // search routine so weird.
         
         // the user exists, but are they valid?
         if (LDAP_SEARCH_FILTER != null) {
-            $search = $manager->search(Search::SCOPE_BASE, LDAP_DN, LDAP_SEARCH_FILTER);
+            $search = ldap_search($connection, LDAP_SEARCH_DN, LDAP_SEARCH_FILTER, array('uniquemember'));
             
-            $entry = $search->next();
+            $entries = ldap_get_entries($connection, $search);
             
-            if ($entry == null) {
-                throw new InvalidCredentialsException();
+            foreach ($entries[0][LDAP_SEARCH_ATTRIBUTES] as $member) {
+                if (substr($member, 0, 4) === 'uid=') {
+                    if (substr($member, 4) === $username . "," . LDAP_DN) {
+                        $found = true;
+                    }
+                }
             }
-            
-            $attributes = $entry->getAttributes();
-            
-            // check user has correct class
-            if (! array_key_exists('objectClass', $attributes) || ! in_array(LDAP_OBJECT_CLASS, $attributes)) {
-                throw new InvalidCredentialsException();
-            }
+        } else {
+            $found = true;
         }
         
-        // TODO: set firstlogin and lastlogin
+        if (! $found) {
+            throw new InvalidCredentialsException();
+        }
         
-        return UserQuery::create()->findOneByName($username);
+        $user = UserQuery::create()->findOneByName($username);
+        
+        if ($user == null) {
+            // user hasn't been created yet
+            $user = new self();
+            $user->setName($username);
+            $user->setFirstLogin(time());
+            $user->save();
+        }
+        
+        $user->setLastLogin(time());
+        $user->save();
+        
+        return $user;
     }
 }

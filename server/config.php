@@ -1,5 +1,8 @@
 <?php
 
+// debug mode
+define('DEBUG', true);
+
 // database settings
 define('DATABASE', 'arduinocoildriver');
 define('DATABASE_USER', 'jif');
@@ -27,7 +30,9 @@ define('MAXIMUM_SOCKET_LINE_LENGTH', 1024);
 // LDAP settings
 define('LDAP_HOSTNAME', 'ldap.example.com');
 define('LDAP_DN', 'dc=example,dc=com'); // full bind RDN becomes uid=albert.einstein,LDAP_DN
-define('LDAP_OBJECT_CLASS', 'interferometry'); // for objectClass entry within user's directory
+define('LDAP_SEARCH_DN', 'cn=groupname,ou=Groups,dc=example,dc=com');
+define('LDAP_SEARCH_FILTER', '(uniqueMember=*)');
+define('LDAP_SEARCH_ATTRIBUTES', 'uniquemember');
 
 // tank URLs, for SVG image
 $tankUrls = array(
