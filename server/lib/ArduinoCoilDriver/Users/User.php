@@ -17,7 +17,7 @@ use ArduinoCoilDriver\Exceptions\InvalidCredentialsException;
  */
 class User extends BaseUser
 {
-    public static function login($username, $password) {    
+    public static function login($username, $password) {
         $connection = ldap_connect(LDAP_HOSTNAME, LDAP_PORT);
 
         // bind, checking credentials

@@ -8,6 +8,7 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use ArduinoCoilDriver\Drivers\DriverQuery;
 use ArduinoCoilDriver\Drivers\DriverOutputPin;
 use ArduinoCoilDriver\Drivers\DriverPinValueQuery;
+use ArduinoCoilDriver\Drivers\DriverOutputPinQuery;
 use ArduinoCoilDriver\States\Base\State as BaseState;
 use ArduinoCoilDriver\Exceptions\CurrentStateUndeletableException;
 use ArduinoCoilDriver\Exceptions\LatestStateAlreadyLoadedException;
@@ -72,6 +73,25 @@ class State extends BaseState
         }
     }
     
+    public function getAllDriverPinValues() {
+        // gets the driver pin values not only associated with this state but those of the
+        // next most up to date states for other drivers (i.e. this is a list of values
+        // associated with this state)
+        
+        // driver pins
+        $pins = DriverOutputPinQuery::create()->find();
+        
+        // values
+        $values = array();
+        
+        // get values for this state
+        foreach ($pins as $pin) {
+            $values[$pin->getDriverPin()->getDriverId()][$pin->getId()] = $this->getDriverPinValueForDriverOutputPin($pin);
+        }
+        
+        return $values;
+    }
+    
     public function getValuesForDriverOutputPins(Array $outputs) {
         // gets the values associated with the specified output pins and this state
         
@@ -79,16 +99,19 @@ class State extends BaseState
         $values = array();
         
         foreach ($outputs as $key => $output) {
-            $values[$key] = $this->getValueForDriverOutputPin($output);
+            $values[$key] = $this->getDriverPinValueForDriverOutputPin($output)->getValue();
         }
         
         return $values;
     }
     
-    public function getValueForDriverOutputPin(DriverOutputPin $pin) {
-        // gets the value associated with the specified output pin and this state
+    public function getDriverPinValueForDriverOutputPin(DriverOutputPin $outputPin) {
+        // gets the DriverPinValue associated with the specified output pin and this state
         
         global $infoLogger;
+        
+        // get driver pin
+        $pin = $outputPin->getDriverPin();
         
         // is there a value associated with this state?
         $outputPinValue = DriverPinValueQuery::create()->filterByState($this)->findOneByDriverPinId($pin->getId());
@@ -106,16 +129,16 @@ class State extends BaseState
                         ->orderByTime('desc')
                         ->filterByTime($this->getTime(), Criteria::LESS_THAN)
                     ->endUse()
-                    ->findOneById($pin->getId());
+                    ->findOneByDriverPinId($pin->getId());
             
             if ($outputPinValue == null) {
-                throw new Exception("Pin value not found - this should not happen (a state that contains this pin's value has been deleted)");
+                throw new \Exception("Pin value not found - this should not happenb (a state that contains this pin's value has been deleted?)");
             }
         }
         
         $infoLogger->addInfo(sprintf("Found value: %d", $outputPinValue->getValue()));
-            
-        return $outputPinValue->getValue();
+        
+        return $outputPinValue;
     }
     
     public function isDeletable() {

@@ -232,6 +232,13 @@ if (empty($do)) {
     }
     
     echo $templates->render('states-delete', ['state' => $state]);
+} elseif ($do === 'info') {
+    // list state info
+    
+    // get state
+    $state = getStateFromGet();
+    
+    echo $templates->render('states-state-info', ['state' => $state]);
 }
 
 ?>

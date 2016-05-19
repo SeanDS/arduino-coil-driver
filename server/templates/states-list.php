@@ -35,8 +35,8 @@
     <thead>
         <th class="col-md-2 text-center">Last Loaded</th>
         <th class="col-md-2 text-center">User</th>
-        <th class="col-md-6 text-center">Description</th>
-        <th class="col-md-2 text-center">Actions</th>
+        <th class="col-md-5 text-center">Description</th>
+        <th class="col-md-3 text-center">Actions</th>
     </thead>
     <tbody>
     <?php if ($bookmarksPager->getNbResults()): ?>
@@ -50,6 +50,7 @@
                     <?php if ($state != $currentState): ?>
                     <a href="states.php?do=load&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Load</a>
                     <?php endif; ?>
+                    <a href="states.php?do=info&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Info</a>
                     <a href="states.php?do=editbookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Edit</a>
                     <a href="states.php?do=deletebookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-danger">Delete</a>
                 </div>
@@ -97,6 +98,7 @@
                     <?php if ($state != $currentState): ?>
                     <a href="states.php?do=load&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Load</a>
                     <?php endif; ?>
+                    <a href="states.php?do=info&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Info</a>
                     <?php if ($state->getStateBookmark() === null): ?>
                     <a href="states.php?do=newbookmark&amp;id=<?=$this->e($state->getId())?>" class="btn btn-xs btn-default">Bookmark</a>
                     <?php endif; ?>
@@ -117,10 +119,10 @@
 <p class="text-info">Some states are unable to be deleted as they are the most up-to-date states for one or more pins.</p>
 <nav>
     <ul class="pager">
-        <li><a href="states.php?page=<?=$this->e($statesPager->getFirstPage())?>">First</a></li>
+        <li><a href="states.php?spage=<?=$this->e($statesPager->getFirstPage())?>">First</a></li>
         <?php foreach ($statesPager->getLinks(5) as $link): ?>
-        <li><a href="states.php?page=<?=$this->e($link)?>"><?=$this->e($link)?></a></li>
+        <li><a href="states.php?spage=<?=$this->e($link)?>"><?=$this->e($link)?></a></li>
         <?php endforeach; ?>
-        <li><a href="states.php?page=<?=$this->e($statesPager->getLastPage())?>">Last</a></li>
+        <li><a href="states.php?spage=<?=$this->e($statesPager->getLastPage())?>">Last</a></li>
     </ul>
 </nav>

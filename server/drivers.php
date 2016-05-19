@@ -228,7 +228,7 @@ if (empty($do)) {
             
         exit();
     } catch (InvalidJsonException $e) {
-        $errorLogger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $unregisteredDriver->getId()));
+        $errorLogger->addError(sprintf('Unregistered driver id %d returned invalid JSON message', $driver->getId()));
         
         echo $templates->render('error', ['message' => 'Specified driver returned an invalid message.', 'returnUrl' => 'drivers.php']);
             
