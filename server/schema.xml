@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<database name="default" defaultIdMethod="native" defaultPhpNamingMethod="underscore" namespace="ArduinoCoilDriver">
+  <table name="drivers" idMethod="native" phpName="Driver" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="mac" phpName="Mac" type="CHAR" size="17" required="true"/>
+    <column name="ip" phpName="Ip" type="VARCHAR" size="15" required="true"/>
+    <column name="added" phpName="Added" type="TIMESTAMP" required="true"/>
+    <column name="last_check_in" phpName="LastCheckIn" type="TIMESTAMP" required="true"/>
+    <column name="coil_contact" phpName="CoilContact" type="BOOLEAN" size="1" required="true"/>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: name, validator: NotBlank}" />
+      <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: mac, validator: Length, options: {min: 17, max: 17}}" />
+      <parameter name="rule4" value="{column: ip, validator: Length, options: {min: 7, max: 15}}" />
+    </behavior>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="drivers_unregistered" idMethod="native" phpName="UnregisteredDriver" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="mac" phpName="Mac" type="CHAR" size="17" required="true"/>
+    <column name="ip" phpName="Ip" type="VARCHAR" size="15" required="true"/>
+    <column name="last_check_in" phpName="LastCheckIn" type="TIMESTAMP" required="true"/>
+    <unique name="macip">
+      <unique-column name="mac"/>
+      <unique-column name="ip"/>
+    </unique>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="driver_pins" idMethod="native" phpName="DriverPin" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="driver_id" phpName="DriverId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="pin" phpName="Pin" type="TINYINT" size="3" sqlType="tinyint(3) unsigned" required="true"/>
+    <foreign-key foreignTable="drivers" name="driver_pins_fk_1">
+      <reference local="driver_id" foreign="id"/>
+    </foreign-key>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="driver_pin_values" idMethod="native" phpName="DriverPinValue" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="driver_pin_id" phpName="DriverPinId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="state_id" phpName="StateId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="value" phpName="Value" type="INTEGER" size="5" sqlType="int(5) unsigned" required="true"/>
+    <foreign-key foreignTable="driver_pins" name="driver_pin_values_fk_1">
+      <reference local="driver_pin_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="states" name="driver_pin_values_fk_2" onDelete="CASCADE">
+      <reference local="state_id" foreign="id"/>
+    </foreign-key>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="driver_outputs" idMethod="native" phpName="DriverOutput" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="driver_id" phpName="DriverId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="mapping" phpName="Mapping" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="overlap_value" phpName="OverlapValue" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="central_value" phpName="CentralValue" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="default_delay" phpName="DefaultDelay" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <foreign-key foreignTable="drivers" name="driver_outputs_fk_1">
+      <reference local="driver_id" foreign="id"/>
+    </foreign-key>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: name, validator: NotBlank}" />
+      <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: mapping, validator: Range, options: {min: 1, max: 255}}" />
+      <parameter name="rule4" value="{column: overlap_value, validator: Range, options: {min: 0, max: 255}}" />
+      <parameter name="rule5" value="{column: central_value, validator: Range, options: {min: 0, max: 65536}}" />
+      <parameter name="rule6" value="{column: default_delay, validator: Range, options: {min: 0, max: 250}}" />
+    </behavior>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="driver_output_pins" idMethod="native" phpName="DriverOutputPin" namespace="Drivers">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="driver_output_id" phpName="DriverOutputId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="driver_pin_id" phpName="DriverPinId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="type" phpName="Type" type="ENUM" valueSet="coarse, fine" required="true" defaultValue="coarse"/>
+    <unique>
+      <unique-column name="driver_pin_id"/>
+    </unique>
+    <foreign-key foreignTable="driver_outputs" name="driver_output_pins_fk_1">
+      <reference local="driver_output_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="driver_pins" name="driver_output_pins_fk_2" onDelete="CASCADE">
+      <reference local="driver_pin_id" foreign="id"/>
+    </foreign-key>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="output_views" idMethod="native" phpName="OutputView" namespace="Outputs">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="display_order" phpName="DisplayOrder" type="INTEGER" size="3" sqlType="int(3) unsigned" required="true"/>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: name, validator: NotBlank}" />
+      <parameter name="rule2" value="{column: name, validator: Length, options: {min: 3, max: 32}}" />
+      <parameter name="rule3" value="{column: display_order, validator: Range, options: {min: 1, max: 255}}" />
+    </behavior>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="output_view_output" idMethod="native" phpName="OutputViewOutput" namespace="Outputs">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="output_id" phpName="OutputId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="driver_output_id" phpName="DriverOutputId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="display_order" phpName="DisplayOrder" type="INTEGER" size="3" sqlType="int(3) unsigned" required="true"/>
+    <foreign-key foreignTable="output_views" name="output_view_output_fk_1">
+      <reference local="output_id" foreign="id"/>
+    </foreign-key>
+    <foreign-key foreignTable="driver_outputs" name="output_view_output_fk_2" onDelete="CASCADE">
+      <reference local="driver_output_id" foreign="id"/>
+    </foreign-key>
+    <unique name="outputpinid">
+      <unique-column name="output_id"/>
+      <unique-column name="driver_output_id"/>
+    </unique>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: display_order, validator: Range, options: {min: 1, max: 255}}" />
+    </behavior>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="states" idMethod="native" phpName="State" namespace="States">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="user_id" phpName="UserId" type="INTEGER" size="10" sqlType="int(10) unsigned" required="true"/>
+    <column name="time" phpName="Time" type="TIMESTAMP" required="true"/>
+    <foreign-key foreignTable="users" name="users_fk_1">
+      <reference local="user_id" foreign="id"/>
+    </foreign-key>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="state_bookmarks" idMethod="native" phpName="StateBookmark" namespace="States">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" required="true"/>
+    <column name="description" phpName="Description" type="VARCHAR" size="255" required="true"/>
+    <foreign-key foreignTable="states" name="state_bookmarks_fk_1" onDelete="CASCADE">
+      <reference local="id" foreign="id"/>
+    </foreign-key>
+    <behavior name="validate">
+      <parameter name="rule1" value="{column: description, validator: Length, options: {max: 255}}" />
+    </behavior>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+  <table name="users" idMethod="native" phpName="User" namespace="Users">
+    <column name="id" phpName="Id" type="INTEGER" size="10" sqlType="int(10) unsigned" primaryKey="true" autoIncrement="true" required="true"/>
+    <column name="name" phpName="Name" type="VARCHAR" size="32" required="true"/>
+    <column name="first_login" phpName="FirstLogin" type="TIMESTAMP" required="true"/>
+    <column name="last_login" phpName="LastLogin" type="TIMESTAMP" required="true"/>
+    <vendor type="mysql">
+      <parameter name="Engine" value="InnoDB"/>
+    </vendor>
+  </table>
+</database>
