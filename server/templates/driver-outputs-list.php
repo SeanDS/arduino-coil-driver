@@ -39,7 +39,7 @@
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="3">No driver outputs defined.</td>
+                <td class="text-center" colspan="3">No driver outputs defined.</td>
             </tr>
         <?php endif; ?>
         </tbody>    

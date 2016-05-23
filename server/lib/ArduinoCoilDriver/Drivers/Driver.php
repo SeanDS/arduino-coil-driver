@@ -91,15 +91,15 @@ class Driver extends BaseDriver
         return $driver;
     }
     
-    public function snapToState(State $state) {
-        // snaps the outputs in this driver to the specified state, or nearest before
+    public function snapToValuesFromState(State $stateForValues, State $newState) {
+        // snaps the outputs in this driver to the values of the specified state, or nearest before; uses $newState as the new state
         
         // get this driver's outputs
         $outputs = $this->getDriverOutputs();
         
         // set each output to the required value
         foreach ($outputs as $output) {
-            $output->snapToState($state);
+            $output->snapToValuesFromState($stateForValues, $newState);
         }
     }
     

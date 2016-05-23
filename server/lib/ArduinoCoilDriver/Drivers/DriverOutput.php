@@ -193,22 +193,22 @@ class DriverOutput extends BaseDriverOutput
         return new SendPayload("/toggle", $settings);
     }
     
-    public function snapToState(State $state) {
-        // snaps this output's value to the value associated with the specified state
+    public function snapToValuesFromState(State $stateForValues, State $newState) {
+        // snaps this output's value to the value associated with the specified state, and uses $newState for the new state
         
         global $infoLogger;
         
         // get this output's pins
         $pins = $this->getOutputPins();
         
-        $infoLogger->addInfo(sprintf("Getting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        $infoLogger->addInfo(sprintf("Getting values associated with driver output id %d and state id %d", $this->getId(), $stateForValues->getId()));
         
         // get the state's values for the pins
-        $pinValues = $state->getValuesForDriverOutputPins($pins);
+        $pinValues = $stateForValues->getValuesForDriverOutputPins($pins);
         
-        $infoLogger->addInfo(sprintf("Setting values associated with driver output id %d and state id %d", $this->getId(), $state->getId()));
+        $infoLogger->addInfo(sprintf("Setting values associated with driver output id %d and state id %d", $this->getId(), $stateForValues->getId()));
         
-        $this->setOutputValueFromPinValues($pinValues, self::TOGGLE_MODE_SNAP, $state);
+        $this->setOutputValueFromPinValues($pinValues, self::TOGGLE_MODE_SNAP, $newState);
     }
 
     public function preDelete(ConnectionInterface $connection = null) {

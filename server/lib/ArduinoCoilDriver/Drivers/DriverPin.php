@@ -88,10 +88,9 @@ class DriverPin extends BaseDriverPin
     }
     
     public function updateValue($newValue, State $state) {
-        // check if the value/state combination exists already
+        // check if the pin/state combination exists already
         $driverPinValue = DriverPinValueQuery::create()
                 ->filterByState($state)
-                ->filterByValue($newValue)
                 ->findOneByDriverPinId($this->getId());
         
         if ($driverPinValue == null) {
@@ -118,7 +117,7 @@ class DriverPin extends BaseDriverPin
     }
     
     public function getLatestDriverPinValue() {
-        return DriverPinValueQuery::create()->addJoin(DriverPinValueTableMap::COL_STATE_ID, StateTableMap::COL_ID, Criteria::INNER_JOIN)->add(DriverPinValueTableMap::COL_DRIVER_PIN_ID, $this->getId(), Criteria::EQUAL)->addDescendingOrderByColumn(StateTableMap::COL_TIME)->findOne();
+        return State::getCurrentState()->getDriverPinValueForDriverPin($this);
     }
     
     public function postInsert(ConnectionInterface $connection = null) {

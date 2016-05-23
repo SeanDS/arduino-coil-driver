@@ -321,7 +321,7 @@ if (empty($do)) {
     $driver = getDriverFromGet();
     
     // get driver pins that aren't already a driver output pin
-    $driverPins = DriverPinQuery::create()->addJoin(DriverPinTableMap::COL_ID, DriverOutputPinTableMap::COL_DRIVER_PIN_ID, Criteria::LEFT_JOIN)->add(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, null, Criteria::ISNULL);
+    $driverPins = DriverPinQuery::create()->addJoin(DriverPinTableMap::COL_ID, DriverOutputPinTableMap::COL_DRIVER_PIN_ID, Criteria::LEFT_JOIN)->add(DriverOutputPinTableMap::COL_DRIVER_PIN_ID, null, Criteria::ISNULL)->filterByDriver($driver);
     
     // check for POST data
     $post = filter_input_array(

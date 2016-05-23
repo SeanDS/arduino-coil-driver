@@ -59,7 +59,7 @@
         <?php endforeach; ?>
     <?php else: ?>
         <tr>
-            <td colspan="6">No states.</td>
+            <td class="text-center" colspan="6">No states.</td>
         </tr>
     <?php endif; ?>
     </tbody>
@@ -111,7 +111,7 @@
         <?php endforeach; ?>
     <?php else: ?>
         <tr>
-            <td colspan="6">No states.</td>
+            <td class="text-center" colspan="6">No states.</td>
         </tr>
     <?php endif; ?>
     </tbody>

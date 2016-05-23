@@ -36,6 +36,7 @@
             </td>
             <td class="text-center">
                 <div class="btn-group">
+                    <a href="index.php?do=controlgroup&amp;oid=<?=$this->e($group->getId())?>" class="btn btn-xs btn-default">View</a>
                     <a href="groups.php?do=edit&amp;id=<?=$this->e($group->getId())?>" class="btn btn-xs btn-default">Edit</a>
                     <a href="groups.php?do=delete&amp;id=<?=$this->e($group->getId())?>" class="btn btn-xs btn-danger">Delete</a>
                 </div>
@@ -44,7 +45,7 @@
         <?php endforeach; ?>
     <?php else: ?>
         <tr>
-            <td colspan="6">No groups.</td>
+            <td class="text-center" colspan="6">No groups.</td>
         </tr>
     <?php endif; ?>
     </tbody>    
