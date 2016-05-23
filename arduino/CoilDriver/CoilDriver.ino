@@ -1,7 +1,7 @@
 /*
 * Coil Driver Arduino Server
 *
-* Version 0.98, October 2015
+* Version 0.99, May 2016
 *
 * Sean Leavey
 * s.leavey.1@research.gla.ac.uk
@@ -10,7 +10,7 @@
 */
 
 // comment out for production mode (for greatly enhanced speed)
-#define DEBUG
+//#define DEBUG
 
 #include <SPI.h>
 #include <Ethernet.h>
@@ -32,17 +32,17 @@ const int DEFAULT_OUTPUT_VALUE = 128;
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0F, 0xD2, 0x67};
 
 // IP address of the controller, static
-IPAddress ipAddressController(192, 168, 1, 84);
+IPAddress ipAddressController(192, 168, 1, 1);
 
 // fully qualified path to software on server
-String path = "/arduino-coil-driver/server/";
+String path = "/path/to/server/";
 
 //
 // STOP EDITING
 //
 
 // software version
-const char* SOFTWARE_VERSION = "0.98";
+const char* SOFTWARE_VERSION = "0.99";
 
 // slave select pins
 const int SD_SS_PIN = 4;          // SD card slave select
@@ -127,10 +127,10 @@ void setup()
   requestErrorMessages[REQUEST_ERROR_NO_PIN_VALUE]        = "No pin value specified";
   requestErrorMessages[REQUEST_ERROR_INVALID_PIN_VALUE]   = "Invalid pin value";
 
-  #ifdef DEBUG
+#ifdef DEBUG
   // open serial communications and wait for port to open:
   Serial.begin(9600);
-  #endif
+#endif
 
   // set analogue write resolution to 8-bits, which is the fundamental limit of the Due's PWM outputs
   analogWriteResolution(8);
@@ -175,30 +175,30 @@ void setup()
 }
 
 void loop()
-{  
+{
   loopCounter++;
 
   if (loopCounter >= 666000) { // approximately 30s
-      // send a status report to controller
+    // send a status report to controller
 
-      debugPrint("Reporting in with server");
+    debugPrint("Reporting in with server");
 
-      // initialise a client
-      EthernetClient statusClient;
+    // initialise a client
+    EthernetClient statusClient;
 
-      // connect and send message
-      if (statusClient.connect(ipAddressController, 80)) {
-          String message = messageEncode("{" + getStatusJSON() + "}");
-          debugPrint(message);
-          statusClient.println("GET " + path + "registry.php?do=report&message=" + message + " HTTP/1.0");
-          statusClient.println();
-          statusClient.stop();
-      } else {
-          debugPrint("Status report failed");
-      }
+    // connect and send message
+    if (statusClient.connect(ipAddressController, 80)) {
+      String message = messageEncode("{" + getStatusJSON() + "}");
+      debugPrint(message);
+      statusClient.println("GET " + path + "registry.php?do=report&message=" + message + " HTTP/1.0");
+      statusClient.println();
+      statusClient.stop();
+    } else {
+      debugPrint("Status report failed");
+    }
 
-      // reset loop counter
-      loopCounter = 0;
+    // reset loop counter
+    loopCounter = 0;
   }
 
   // listen for incoming client
@@ -222,9 +222,9 @@ void loop()
 }
 
 void debugPrint(String message) {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.println(message);
-  #endif
+#endif
 }
 
 String getClientRequest(EthernetClient client) {
@@ -280,7 +280,7 @@ void startServer() {
   debugPrint("Server started");
 
   // print server IP address
-  debugPrint("IP address: "+ Ethernet.localIP());
+  debugPrint("IP address: " + ipToString(Ethernet.localIP()));
 }
 
 String ipToString(IPAddress ipAddress) {
@@ -338,7 +338,7 @@ void handleRequest(String request, EthernetClient client) {
     sendOutputs(client);
   } else if (request.indexOf("GET /toggle") > -1) {
     int requestResult = handleToggleRequest(request);
-    
+
     if (requestResult == REQUEST_ERROR_NONE) {
       // everything is ok
       // send list of outputs and corresponding values
@@ -462,7 +462,7 @@ int handleToggleRequest(String request) {
     // didn't find required information in request
     return REQUEST_ERROR_INVALID_REQUEST;
   }
-  
+
   // get characters from "input=" to end of request
   String jsonString = request.substring(setIndex + 4, httpIndex);
 
@@ -479,7 +479,7 @@ int handleToggleRequest(String request) {
 
     return REQUEST_ERROR_INVALID_JSON;
   }
-  
+
   debugPrint("Successfully parsed JSON object");
 
   //
@@ -489,13 +489,13 @@ int handleToggleRequest(String request) {
   if (! root.containsKey("pinmode")) {
     return REQUEST_ERROR_NO_PIN_MODE;
   }
-  
+
   // check for "single pin" mode
   if (root["pinmode"].as<int>() == PIN_MODE_SINGLE) {
     // single pin mode
     debugPrint("[Single pin mode]");
 
-    /* 
+    /*
      * For single pin mode, we require the following information to be specified as keys of the JSON object:
      *   pin: the output pin to set
      *   value: the output value to set
@@ -505,12 +505,12 @@ int handleToggleRequest(String request) {
 
     int outputPin;
     int outputValue;
-    
+
     if (! root.containsKey("pin")) {
       // required key not specified
       return REQUEST_ERROR_NO_PIN;
     }
-    
+
     outputPin = int(root["pin"]);
 
     if (! outputPinExists(outputPin)) {
@@ -521,7 +521,7 @@ int handleToggleRequest(String request) {
       // output value not specified
       return REQUEST_ERROR_NO_PIN_VALUE;
     }
-    
+
     outputValue = int(root["value"]);
 
     if (! outputValueIsValid(outputValue)) {
@@ -532,21 +532,21 @@ int handleToggleRequest(String request) {
       // no toggle mode specified
       return REQUEST_ERROR_NO_TOGGLE_MODE;
     }
-    
+
     if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
       debugPrint("[Snap toggle mode]");
-      
+
       snapToValue(outputPin, outputValue);
     } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
       debugPrint("[Ramp toggle mode]");
-      
+
       int rampDelay;
-      
+
       if (! root.containsKey("delay")) {
         // ramp delay not specified
         return REQUEST_ERROR_NO_DELAY;
       }
-      
+
       rampDelay = int(root["delay"]);
 
       if (rampDelay < 0) {
@@ -566,7 +566,7 @@ int handleToggleRequest(String request) {
     // dual pin mode
     debugPrint("[Dual pin mode]");
 
-    /* 
+    /*
      * For dual pin mode, we require the following information to be specified as keys of the JSON object:
      *   pin1: the 'coarse' output pin to set
      *   pin2: the 'fine' output pin to set
@@ -576,7 +576,7 @@ int handleToggleRequest(String request) {
      *   map: a mapping between levels of the 'fine' pin and levels of the 'coarse' pin
      *   togglemode: the toggle mode, snap or ramp
      *   delay: wait time in ms between 'fine' output levels (only required if togglemode == ramp)
-     *  
+     *
      * Dual pin mode uses the 'fine' pin to bridge the gap between the 'coarse' output levels. It is assumed
      * that the 'coarse' and 'fine' pins are connected to the same device, but with different gains. The mapping
      * between signal magnitudes is specified by the 'map' key.
@@ -593,7 +593,7 @@ int handleToggleRequest(String request) {
       // required key not specified
       return REQUEST_ERROR_NO_PIN;
     }
-    
+
     coarsePin = int(root["pin1"]);
 
     if (! outputPinExists(coarsePin)) {
@@ -604,7 +604,7 @@ int handleToggleRequest(String request) {
       // required key not specified
       return REQUEST_ERROR_NO_PIN;
     }
-    
+
     finePin = int(root["pin2"]);
 
     if (! outputPinExists(finePin)) {
@@ -615,7 +615,7 @@ int handleToggleRequest(String request) {
       // output value not specified
       return REQUEST_ERROR_NO_PIN_VALUE;
     }
-    
+
     coarseValue = int(root["value1"]);
 
     if (! outputValueIsValid(coarseValue)) {
@@ -626,7 +626,7 @@ int handleToggleRequest(String request) {
       // output value not specified
       return REQUEST_ERROR_NO_PIN_VALUE;
     }
-    
+
     fineValue = int(root["value2"]);
 
     if (! outputValueIsValid(fineValue)) {
@@ -637,7 +637,7 @@ int handleToggleRequest(String request) {
       // overlap value not specified
       return REQUEST_ERROR_NO_OVERLAP;
     }
-    
+
     overlapValue = int(root["overlap"]);
 
     if (! outputValueIsValid(overlapValue)) {
@@ -648,7 +648,7 @@ int handleToggleRequest(String request) {
       // mapping not specified
       return REQUEST_ERROR_NO_MAPPING;
     }
-      
+
     mapping = int(root["mapping"]);
 
     if (mapping < 0) {
@@ -660,73 +660,73 @@ int handleToggleRequest(String request) {
       // no toggle mode specified
       return REQUEST_ERROR_NO_TOGGLE_MODE;
     }
-      
+
     if (root["togglemode"].as<int>() == TOGGLE_MODE_SNAP) {
       debugPrint("[Snap toggle mode]");
-      
+
       snapToValue(coarsePin, coarseValue);
       snapToValue(finePin, fineValue);
     } else if (root["togglemode"].as<int>() == TOGGLE_MODE_RAMP) {
       debugPrint("[Ramp toggle mode]");
 
       int rampDelay;
-  
+
       if (! root.containsKey("delay")) {
         // ramp delay not specified
         return REQUEST_ERROR_NO_DELAY;
       }
-      
+
       rampDelay = int(root["delay"]);
 
       if (rampDelay < 0) {
         // invalid ramp delay
         return REQUEST_ERROR_INVALID_DELAY;
       }
-  
+
       /*
        * Now that we've collected valid parameters, we ramp to the correct output.
        */
-  
+
       int currentCoarseValue = pinValues[getPinPosition(coarsePin)];
       int currentFineValue = pinValues[getPinPosition(finePin)];
-  
+
       // number of coarse steps to make
       int coarseSteps = coarseValue - currentCoarseValue;
-  
+
       debugPrint("There are " + String(coarseSteps) + " coarse steps to make");
-  
+
       // true means pin output is to increase, false means decrease
       int coarseDirection;
-  
+
       if (coarseSteps > 0) {
         coarseDirection = 1;
       } else {
         coarseDirection = -1;
       }
-  
+
       debugPrint("Direction: " + coarseDirection);
-  
+
       if (coarseSteps != 0) {
         // we need to use the fine pins to ramp to the next coarse level, and so on, until we reach the correct coarse level
-  
+
         // move fine output to middle of range
         //rampToValue(finePin, MID_OUTPUT_LEVEL, rampDelay);
-  
+
         // loop over coarse steps
         for (int i = 0; i < abs(coarseSteps); i++) {
           // move fine pin to next 'coarse' level
           rampToValue(finePin, MID_OUTPUT_LEVEL + coarseDirection * mapping, rampDelay);
-  
+
           // snap coarse pin to next value and fine pins back to mid level
           snapToValue(coarsePin, currentCoarseValue + coarseDirection);
           snapToValue(finePin, MID_OUTPUT_LEVEL);
-  
+
           // update current pin values
           currentCoarseValue = pinValues[getPinPosition(coarsePin)];
           currentFineValue = pinValues[getPinPosition(finePin)];
         }
       }
-      
+
       // adjust fine output
       rampToValue(finePin, fineValue, rampDelay);
     } else {
@@ -762,21 +762,21 @@ int handleToggleRequest(String request) {
  */
 String getStatusJSON()
 {
-    reply = "\"sdcard\":";
+  reply = "\"sdcard\":";
 
-    if (sdcardPresent) {
-        reply += "\"present\"";
-    } else {
-        reply += "\"vacant\"";
-    }
+  if (sdcardPresent) {
+    reply += "\"present\"";
+  } else {
+    reply += "\"vacant\"";
+  }
 
-    // add coil contact information
-    reply += ",\"coil_contact_1\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_1))  + "\",\"coil_contact_2\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_2)) + "\"";
+  // add coil contact information
+  reply += ",\"coil_contact_1\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_1))  + "\",\"coil_contact_2\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_2)) + "\"";
 
-    // add other auxiliary information
-    reply += ",\"mac\":\"" + macString  + "\",\"ip\":\"" + ipString + "\",\"version\":\"" + SOFTWARE_VERSION + "\"";
+  // add other auxiliary information
+  reply += ",\"mac\":\"" + macString  + "\",\"ip\":\"" + ipString + "\",\"version\":\"" + SOFTWARE_VERSION + "\"";
 
-    return reply;
+  return reply;
 }
 
 /*
@@ -786,24 +786,24 @@ String getStatusJSON()
  */
 String characterEncode(const char* message)
 {
-    const char *hex = "0123456789abcdef";
-    String encodedMessage = "";
+  const char *hex = "0123456789abcdef";
+  String encodedMessage = "";
 
-    while (*message != '\0') {
-        if(('a' <= *message && *message <= 'z')
-                || ('A' <= *message && *message <= 'Z')
-                || ('0' <= *message && *message <= '9') ) {
-            encodedMessage += *message;
-        } else {
-            encodedMessage += '%';
-            encodedMessage += hex[*message >> 4];
-            encodedMessage += hex[*message & 15];
-        }
-
-        message++;
+  while (*message != '\0') {
+    if (('a' <= *message && *message <= 'z')
+        || ('A' <= *message && *message <= 'Z')
+        || ('0' <= *message && *message <= '9') ) {
+      encodedMessage += *message;
+    } else {
+      encodedMessage += '%';
+      encodedMessage += hex[*message >> 4];
+      encodedMessage += hex[*message & 15];
     }
 
-    return encodedMessage;
+    message++;
+  }
+
+  return encodedMessage;
 }
 
 /*
@@ -813,10 +813,10 @@ String characterEncode(const char* message)
  */
 String messageEncode(String message)
 {
-    char buffer[1024];
-    message.toCharArray(buffer, 1024);
+  char buffer[1024];
+  message.toCharArray(buffer, 1024);
 
-    return characterEncode(buffer);
+  return characterEncode(buffer);
 }
 
 /*
@@ -839,26 +839,26 @@ char* getPinFilename(int pin)
  */
 void rampToValue(int pin, int newValue, int stepPause)
 {
-   if (pinExists(pin)) {
-      int currentValue = pinValues[getPinPosition(pin)];
-      int difference = newValue - currentValue;
+  if (pinExists(pin)) {
+    int currentValue = pinValues[getPinPosition(pin)];
+    int difference = newValue - currentValue;
 
-      while (difference != 0) {
-          if (difference > 0) {
-              // set point is higher than current value
-              currentValue++;
-          } else {
-              // set point is lower than current value
-              currentValue--;
-          }
-          
-          snapToValue(pin, currentValue);
-
-          delay(stepPause);
-
-          difference = newValue - currentValue;
+    while (difference != 0) {
+      if (difference > 0) {
+        // set point is higher than current value
+        currentValue++;
+      } else {
+        // set point is lower than current value
+        currentValue--;
       }
-   }
+
+      snapToValue(pin, currentValue);
+
+      delay(stepPause);
+
+      difference = newValue - currentValue;
+    }
+  }
 }
 
 /*
@@ -866,12 +866,12 @@ void rampToValue(int pin, int newValue, int stepPause)
  */
 void snapToValue(int pin, int value) {
   debugPrint("Setting " + String(pin) + String(" from ") + String(pinValues[getPinPosition(pin)]) + String(" to ") + String(value) + String("..."));
-  
+
   // change the output level
   analogWrite(pin, value);
 
   debugPrint(" done");
-  
+
   // update pin value array with new value
   pinValues[getPinPosition(pin)] = value;
 }
@@ -881,13 +881,13 @@ void snapToValue(int pin, int value) {
  */
 int getPinPosition(int pin)
 {
-    for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
-      if (pin == outputPins[i]) {
-        return i;
-      }
+  for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
+    if (pin == outputPins[i]) {
+      return i;
     }
+  }
 
-    return -1;
+  return -1;
 }
 
 /*
@@ -964,29 +964,29 @@ boolean savePinValue(int pin)
   String filename = "PIN";
   filename += String(pin);
   filename += ".TXT";
-  
+
   char filenameChar[filename.length() + 1];
   filename.toCharArray(filenameChar, sizeof(filenameChar));
-  
+
   // erase existing file (because we can't overwrite its contents)
   SD.remove(filenameChar);
   // make new file with value
   File filePointer = SD.open(filenameChar, FILE_WRITE);
-  
+
   if (filePointer) {
-      debugPrint("Writing pin value to file...");
+    debugPrint("Writing pin value to file...");
 
-      // get value
-      int value = pinValues[getPinPosition(pin)];
-    
-      filePointer.println(String(value));
-      filePointer.close();
-      
-      debugPrint("Done.");
+    // get value
+    int value = pinValues[getPinPosition(pin)];
+
+    filePointer.println(String(value));
+    filePointer.close();
+
+    debugPrint("Done.");
   } else {
-      debugPrint("Failed to write to file.");
+    debugPrint("Failed to write to file.");
 
-      return false;
+    return false;
   }
 
   return true;
@@ -1013,3 +1013,4 @@ boolean outputValueIsValid(int value) {
 String getErrorMessage(int errorLevel) {
   return requestErrorMessages[errorLevel];
 }
+
