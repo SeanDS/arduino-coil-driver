@@ -1,7 +1,7 @@
 /*
 * Coil Driver Arduino Server
 *
-* Version 0.99, May 2016
+* Version 0.9.1, August 2016
 *
 * Sean Leavey
 * s.leavey.1@research.gla.ac.uk
@@ -42,7 +42,7 @@ String path = "/path/to/server/";
 //
 
 // software version
-const char* SOFTWARE_VERSION = "0.99";
+const char* SOFTWARE_VERSION = "0.9.1";
 
 // slave select pins
 const int SD_SS_PIN = 4;          // SD card slave select
@@ -180,22 +180,7 @@ void loop()
 
   if (loopCounter >= 666000) { // approximately 30s
     // send a status report to controller
-
-    debugPrint("Reporting in with server");
-
-    // initialise a client
-    EthernetClient statusClient;
-
-    // connect and send message
-    if (statusClient.connect(ipAddressController, 80)) {
-      String message = messageEncode("{" + getStatusJSON() + "}");
-      debugPrint(message);
-      statusClient.println("GET " + path + "registry.php?do=report&message=" + message + " HTTP/1.0");
-      statusClient.println();
-      statusClient.stop();
-    } else {
-      debugPrint("Status report failed");
-    }
+    sendCheckIn();
 
     // reset loop counter
     loopCounter = 0;
@@ -333,31 +318,51 @@ void handleRequest(String request, EthernetClient client) {
 
   // parse the requested information
   if (request.indexOf("GET /status") > -1) {
+    // send 200 OK header
+    sendOkHeaders(client);
+    
+    // send status as JSON message
     sendStatus(client);
   } else if (request.indexOf("GET /outputs") > -1) {
+    // send 200 OK header
+    sendOkHeaders(client);
+    
+    // send outputs as JSON message
     sendOutputs(client);
   } else if (request.indexOf("GET /toggle") > -1) {
     int requestResult = handleToggleRequest(request);
 
     if (requestResult == REQUEST_ERROR_NONE) {
       // everything is ok
+      sendOkHeaders(client);
+        
       // send list of outputs and corresponding values
       sendOutputs(client);
     } else {
-      // request error
-      // send an error message
+      // request error - send error header
+      sendBadRequestHeaders(client);
+      
+      // send appropriate error message
       sendErrorMessage(client, requestResult);
     }
   } else {
+    // the message wasn't recognised
+    // send 404 headers
+    sendNotFoundHeaders(client);
+    
+    // send message
     sendNotFoundMessage(client);
   }
 }
 
 void sendStatus(EthernetClient client) {
-  sendOkHeaders(client);
+  JsonObject& root = getStatusJSON();
 
+  root.printTo(client);
+}
+
+JsonObject& getStatusJSON() {
   StaticJsonBuffer<1024> jsonBuffer;
-
   JsonObject& root = jsonBuffer.createObject();
 
   // set type
@@ -374,15 +379,19 @@ void sendStatus(EthernetClient client) {
   root["version"] = SOFTWARE_VERSION;
   root["digital_input_1"] = digitalRead(DIGITAL_INPUT_PIN_1);
   root["digital_input_2"] = digitalRead(DIGITAL_INPUT_PIN_2);
+  
+  return root;
+}
+
+void sendOutputs(EthernetClient client) {
+  JsonObject& root = getOutputsJSON();
 
   root.printTo(client);
 }
 
-void sendOutputs(EthernetClient client) {
-  sendOkHeaders(client);
-
+JsonObject& getOutputsJSON() {
   StaticJsonBuffer<1024> jsonBuffer;
-
+  
   JsonObject& root = jsonBuffer.createObject();
 
   // set type
@@ -400,37 +409,32 @@ void sendOutputs(EthernetClient client) {
   for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
     root.set(keyNames[i], pinValues[i]);
   }
-
-  root.printTo(client);
+  
+  return root;
 }
 
 void sendNotFoundMessage(EthernetClient client) {
-  sendNotFoundHeaders(client);
-
-  debugPrint("404 Not found");
-
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root.set("type", "error");
-  root.set("message", "Not found");
-
-  root.printTo(client);
+  sendErrorMessage(client, REQUEST_ERROR_INVALID_REQUEST);
 }
 
 void sendErrorMessage(EthernetClient client, int errorLevel) {
-  sendBadRequestHeaders(client);
-
   // get error message
   String message = getErrorMessage(errorLevel);
 
   debugPrint("Error: " + message);
 
+  JsonObject& root = getErrorMessageJSON(message);
+
+  root.printTo(client);
+}
+
+JsonObject& getErrorMessageJSON(String message) {
   StaticJsonBuffer<1024> jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   root.set("type", "error");
   root.set("message", message);
-
-  root.printTo(client);
+  
+  return root;
 }
 
 void sendOkHeaders(EthernetClient client) {
@@ -452,6 +456,42 @@ void sendBadRequestHeaders(EthernetClient client) {
   client.println("Content-Type: application/json");
   client.println("Connection: close");
   client.println();
+}
+
+void sendCheckIn() {
+  debugPrint("Reporting in with server");
+
+  // initialise a client
+  EthernetClient statusClient;
+
+  // connect and send message
+  if (statusClient.connect(ipAddressController, 80)) {
+    // get the JSON status
+    JsonObject& root = getStatusJSON();
+    
+    // calculate message length
+    int messageLength = root.measureLength();
+    // +8 for "message="
+    messageLength += 8;
+    
+    // print POST header
+    statusClient.println("POST " + path + "registry.php?do=report HTTP/1.0");
+    statusClient.println("Content-Type: text/html; charset=utf-8");
+    statusClient.print("Content-Length: ");
+    statusClient.println(messageLength);
+    
+    // required blank line
+    statusClient.println();
+ 
+    // print POST parameter
+    statusClient.print("message=");
+    // print value (the JSON status string)
+    root.printTo(statusClient);
+    
+    statusClient.stop();
+  } else {
+    debugPrint("Status report failed");
+  }
 }
 
 int handleToggleRequest(String request) {
@@ -745,95 +785,6 @@ int handleToggleRequest(String request) {
   return REQUEST_ERROR_NONE;
 }
 
-//char* stringToChar(String message, int len) {
-//  char characters[len];
-//
-//  message.toCharArray(characters, len);
-//
-//  characters[len] = '\0';
-//
-//  return characters;
-//}
-
-/*
- * Gets a status message formatted as JSON (but without the enclosed curly brackets).
- *
- * DEPRECATED
- */
-String getStatusJSON()
-{
-  reply = "\"sdcard\":";
-
-  if (sdcardPresent) {
-    reply += "\"present\"";
-  } else {
-    reply += "\"vacant\"";
-  }
-
-  // add coil contact information
-  reply += ",\"coil_contact_1\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_1))  + "\",\"coil_contact_2\":\"" + String(digitalRead(DIGITAL_INPUT_PIN_2)) + "\"";
-
-  // add other auxiliary information
-  reply += ",\"mac\":\"" + macString  + "\",\"ip\":\"" + ipString + "\",\"version\":\"" + SOFTWARE_VERSION + "\"";
-
-  return reply;
-}
-
-/*
- * URL encodes a given char array for safe use with HTTP
- *
- * DEPRECATED
- */
-String characterEncode(const char* message)
-{
-  const char *hex = "0123456789abcdef";
-  String encodedMessage = "";
-
-  while (*message != '\0') {
-    if (('a' <= *message && *message <= 'z')
-        || ('A' <= *message && *message <= 'Z')
-        || ('0' <= *message && *message <= '9') ) {
-      encodedMessage += *message;
-    } else {
-      encodedMessage += '%';
-      encodedMessage += hex[*message >> 4];
-      encodedMessage += hex[*message & 15];
-    }
-
-    message++;
-  }
-
-  return encodedMessage;
-}
-
-/*
- * URL encodes a given String object for safe use with HTTP
- *
- * DEPRECATED
- */
-String messageEncode(String message)
-{
-  char buffer[1024];
-  message.toCharArray(buffer, 1024);
-
-  return characterEncode(buffer);
-}
-
-/*
- * For a given pin number, works out the corresponding filename on the SD card storage
- */
-char* getPinFilename(int pin)
-{
-  String pinString = "pin";
-  pinString += String(pin);
-  pinString += ".txt";
-
-  char filename[(sizeof(pinString) + 1) / sizeof(char)];
-  pinString.toCharArray(filename, sizeof(filename));
-
-  return filename;
-}
-
 /*
  * Ramps specified pins to specified values at specified rate
  */
@@ -1013,4 +964,3 @@ boolean outputValueIsValid(int value) {
 String getErrorMessage(int errorLevel) {
   return requestErrorMessages[errorLevel];
 }
-

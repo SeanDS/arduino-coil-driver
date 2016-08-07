@@ -26,7 +26,7 @@
         </tr>
         <tr>
           <td>Coil contact</td>
-          <td><?=($status->getCoilContact()) ? "<span class=\"text-danger\">Yes</span>" : "<span class=\"text-success\">No</span>"?></td>
+          <td><?=($status->getCoilContact()) ? "<span class=\"text-danger\">Yes</span> (first: " . $this->e($status->getFirstCoilContactString()) . ", second: " . $this->e($status->getSecondCoilContactString()) . ")" : "<span class=\"text-success\">No</span>"?></td>
         </tr>
       </tbody>
     </table>

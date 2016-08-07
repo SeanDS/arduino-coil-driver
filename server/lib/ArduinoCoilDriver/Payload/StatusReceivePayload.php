@@ -31,8 +31,8 @@ class StatusReceivePayload extends ReceivePayload {
         $this->mac = implode(':', $pieces);
         $this->ip = $this->content['ip'];
         $this->version = $this->content['version'];
-        $this->digital_input_1 = ($this->content['digital_input_1']);
-        $this->digital_input_2 = ($this->content['digital_input_2']);
+        $this->digital_input_1 = intval($this->content['digital_input_1']);
+        $this->digital_input_2 = intval($this->content['digital_input_2']);
     }
     
     public function getMessage() {
@@ -64,10 +64,33 @@ class StatusReceivePayload extends ReceivePayload {
     }
     
     public function getCoilContact() {
-        return $this->digital_input_1 || $this->digital_input_2;
+        // There are two digital pins used to sense coil contact.
+        // These should be pulled up, i.e. the normal, no coil contact
+        // situation is 1. When coil contact occurs the pin should read
+        // 0. Therefore the overall coil contact flag (1 = yes, 0 = no)
+        // is set if either input is 0, i.e. NAND
+        return ! ($this->digital_input_1 && $this->digital_input_2);
     }
     
     public function getCoilContactString() {
         return ($this->getCoilContact()) ? "yes" : "no";
+    }
+    
+    public function getFirstCoilContact() {
+        // Coil is contacting if the input is not 1
+        return ! $this->digital_input_1;
+    }
+    
+    public function getFirstCoilContactString() {
+        return ($this->getFirstCoilContact()) ? "yes" : "no";
+    }
+    
+    public function getSecondCoilContact() {
+        // Coil is contacting if the input is not 1
+        return ! $this->digital_input_2;
+    }
+    
+    public function getSecondCoilContactString() {
+        return ($this->getSecondCoilContact()) ? "yes" : "no";
     }
 }

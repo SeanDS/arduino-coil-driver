@@ -9,10 +9,14 @@ use ArduinoCoilDriver\Exceptions\NoContactException;
 
 abstract class ReceivePayload
 {
+    // Payload representing a message received from a Driver, either
+    // as a check-in message or as a reply to a command sent to the
+    // driver.
+
     protected $content;
     protected $timeTaken;
 
-    public function __construct($content, $timeTaken) {
+    public function __construct($content, $timeTaken = 0) {
         $this->content = $content;
         $this->timeTaken = $timeTaken;
     }
@@ -64,10 +68,10 @@ abstract class ReceivePayload
         $endTime = microtime(true);
 
         // create payload
-        return self::createFromMessage($header, $body, $endTime - $startTime);
+        return self::createFromReply($header, $body, $endTime - $startTime);
     }
     
-    public static function createFromMessage($header, $body, $timeTaken) {
+    public static function createFromReply($header, $body, $timeTaken) {
         // decode JSON message
         $json = json_decode($body, true);
       
@@ -112,6 +116,41 @@ abstract class ReceivePayload
             }
         } else {
             throw new InvalidHttpHeaderException($header);
+        }
+    }
+
+    public static function createFromReceivedPost($rawBody) {
+        // creates appropriate ReceivePayload object from the body of a
+        // received POST message (e.g. posted to registry.php from a driver)
+    
+        // get JSON body (from 8th character, to skip "message=")
+        $body = substr($rawBody, 8);
+    
+        // decode JSON message
+        $json = json_decode($body, true);
+      
+        // check for errors
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidJsonException(json_last_error_msg(), $body);
+        }
+        
+        if (array_key_exists('type', $json)) {
+            // type key exists
+            $type = $json['type'];
+        } else {
+            throw new InvalidJsonMessageException("JSON array must contain a \"type\" key", $json);
+        }
+        
+        // create payload based on type
+        if ($type === "status") {
+            return new StatusReceivePayload($json, $timeTaken);
+        } elseif ($type === "outputs") {
+            return new OutputReceivePayload($json, $timeTaken);
+        } elseif ($type === "error") {
+            return new ErrorReceivePayload($json, $timeTaken);
+        } else {
+            // unknown payload type
+            throw new InvalidJsonMessageException("Message type not recognised", $json);
         }
     }
     
