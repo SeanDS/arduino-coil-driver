@@ -45,7 +45,7 @@
                     </div>
                     <div class="form-group">
                         <p>
-                            <input class="switchramp" type="checkbox" data-on-text="Ramp" data-off-text="Snap" data-handle-width="100" data-label-text="Mode" data-driver-output-id="<?=$this->e($driverOutput->getId())?>" checked>
+                            <input class="switchramp" type="checkbox" data-on-text="Ramp" data-off-text="Snap" data-handle-width="100" data-label-text="Mode" data-driver-output-id="<?=$this->e($driverOutput->getId())?>">
                         </p>
                     </div>
                 </form>
