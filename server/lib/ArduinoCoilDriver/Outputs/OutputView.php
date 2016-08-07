@@ -47,9 +47,12 @@ class OutputView extends BaseOutputView
         
         // add output view driver outputs
         foreach ($driverOutputs as $driverOutput) {
-            // first index is the driver output, second is display order
-            OutputViewOutput::createFromDriverOutput($driverOutput[0], $driverOutput[1], $outputView);
-        }
+            // only do anything if the box is ticked
+            if ($driverOutput[0]) {
+                // first index is the driver output, second is display order
+                OutputViewOutput::createFromDriverOutput($driverOutput[0], $driverOutput[1], $outputView);
+            }
+        }            
         
         // commit transaction
         $connection->commit();
@@ -77,8 +80,11 @@ class OutputView extends BaseOutputView
         
         // add new outputs
         foreach ($driverOutputs as $outputViewOutput) {
-            // first index is the driver output, second is display order
-            OutputViewOutput::createFromDriverOutput($outputViewOutput[0], $outputViewOutput[1], $this);
+            // only do anything if the box is ticked
+            if ($outputViewOutput[0]) {
+                // first index is the driver output, second is display order
+                OutputViewOutput::createFromDriverOutput($outputViewOutput[0], $outputViewOutput[1], $this);
+            }
         }
         
         // commit transaction

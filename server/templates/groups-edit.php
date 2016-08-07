@@ -39,9 +39,9 @@
                 <label for="driver_outputs_<?=$driverOutput->getId()?>"><?=$driverOutput->getFullName()?></label>
                 <div class="input-group col-md-8">
                     <span class="input-group-addon">
-                        <input type="checkbox" name="driver_outputs[]" id="driver_outputs_<?=$driverOutput->getId()?>" value="<?=$driverOutput->getId()?>"<?php if (in_array($driverOutput->getId(), $checkedOutputIds)): ?> checked<?php endif; ?>>
+                        <input type="checkbox" name="driver_outputs[<?=$driverOutput->getId()?>][id]" id="driver_outputs_<?=$driverOutput->getId()?>" value="<?=$driverOutput->getId()?>"<?php if (in_array($driverOutput->getId(), $checkedOutputIds)): ?> checked<?php endif; ?>>
                     </span>
-                    <input class="form-control" type="number" name="driver_outputs_display_order[]" id="driver_outputs_display_order_<?=$driverOutput->getId()?>" placeholder="Display order" maxlength="3"<?php if (in_array($driverOutput->getId(), $checkedOutputIds)): ?> value="<?=$checkedOutputDisplayOrders[$driverOutput->getId()]?>"<?php endif; ?>/>
+                    <input class="form-control" type="number" name="driver_outputs[<?=$driverOutput->getId()?>][order]" id="driver_outputs_display_order_<?=$driverOutput->getId()?>" placeholder="Display order" maxlength="3"<?php if (in_array($driverOutput->getId(), $checkedOutputIds)): ?> value="<?=$checkedOutputDisplayOrders[$driverOutput->getId()]?>"<?php endif; ?>/>
                 </div>
             </div>
             <?php endforeach; ?>

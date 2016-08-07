@@ -57,10 +57,6 @@ if (empty($do)) {
             'driver_outputs'    =>  array(
                                     'filter'    => FILTER_VALIDATE_INT,
                                     'flags'     => FILTER_REQUIRE_ARRAY
-                                ),
-            'driver_outputs_display_order'  =>  array(
-                                    'filter'    => FILTER_VALIDATE_INT,
-                                    'flags'     => FILTER_REQUIRE_ARRAY
                                 )
         )
     );
@@ -72,22 +68,17 @@ if (empty($do)) {
         $driverOutputs = array();
 
         if (count($post['driver_outputs'])) {
-            for ($i = 0; $i < count($post['driver_outputs']); $i++) {
-                $driverOutputId = $post['driver_outputs'][$i];
-                $displayOrder = $post['driver_outputs_display_order'][$i];
+            foreach (array_keys($post['driver_outputs']) as $i) {
+                $driverOutputId = intval($post['driver_outputs'][$i]['id']);
+                $displayOrder = intval($post['driver_outputs'][$i]['order']);
                 
                 $driverOutput = DriverOutputQuery::create()->findPK($driverOutputId);
                 
-                if ($driverOutput === null) {
-                    // invalid driver output specified
+                if ($driverOutput !== null) {
+                    // driver output found
                     
-                    $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
-                    
-                    echo $templates->render('error', ['message' => 'Invalid driver output id specified', 'returnUrl' => 'groups.php?do=new']);
-                    exit();
+                    $driverOutputs[] = array($driverOutput, $displayOrder);
                 }
-                
-                $driverOutputs[] = array($driverOutput, $displayOrder);
             }
         }
         
@@ -117,10 +108,6 @@ if (empty($do)) {
             'driver_outputs'    =>  array(
                                     'filter'    => FILTER_VALIDATE_INT,
                                     'flags'     => FILTER_REQUIRE_ARRAY
-                                ),
-            'driver_outputs_display_order'  =>  array(
-                                    'filter'    => FILTER_VALIDATE_INT,
-                                    'flags'     => FILTER_REQUIRE_ARRAY
                                 )
         )
     );
@@ -134,22 +121,17 @@ if (empty($do)) {
         $driverOutputs = array();
 
         if (count($post['driver_outputs'])) {
-            for ($i = 0; $i < count($post['driver_outputs']); $i++) {
-                $driverOutputId = $post['driver_outputs'][$i];
-                $displayOrder = $post['driver_outputs_display_order'][$i];
+            foreach (array_keys($post['driver_outputs']) as $i) {
+                $driverOutputId = intval($post['driver_outputs'][$i]['id']);
+                $displayOrder = intval($post['driver_outputs'][$i]['order']);
                 
                 $driverOutput = DriverOutputQuery::create()->findPK($driverOutputId);
                 
-                if ($driverOutput === null) {
-                    // invalid driver output specified
+                if ($driverOutput !== null) {
+                    // driver output found
                     
-                    $errorLogger->addError(sprintf('Specified driver output id %d doesn\'t exist', $driverOutputId));
-                    
-                    echo $templates->render('error', ['message' => 'Invalid driver output id specified', 'returnUrl' => 'groups.php?do=edit&amp;id=' . $group->getId()]);
-                    exit();
+                    $driverOutputs[] = array($driverOutput, $displayOrder);
                 }
-                
-                $driverOutputs[] = array($driverOutput, $displayOrder);
             }
         }
         
